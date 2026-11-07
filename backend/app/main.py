@@ -1,17 +1,33 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app.api.router import api_router
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
+from app.core.db import create_engine, create_session_factory
 
 
-def create_app() -> FastAPI:
-    settings = get_settings()
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or get_settings()
+    # The engine connects lazily, so creating it here is cheap and also works
+    # in tests that drive the app without running the lifespan.
+    engine = create_engine(settings.database_url, echo=settings.database_echo)
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        yield
+        await engine.dispose()
+
     app = FastAPI(
         title=settings.app_name,
         openapi_url=f"{settings.api_prefix}/openapi.json",
         docs_url=f"{settings.api_prefix}/docs",
         redoc_url=None,
+        lifespan=lifespan,
     )
+    app.state.engine = engine
+    app.state.session_factory = create_session_factory(engine)
     app.include_router(api_router, prefix=settings.api_prefix)
     return app
 
