@@ -11,6 +11,8 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    // Polling is needed for HMR when sources are bind-mounted into docker.
+    watch: process.env.VITE_USE_POLLING ? { usePolling: true, interval: 300 } : null,
     proxy: {
       '/api': { target: apiTarget, changeOrigin: true },
     },
