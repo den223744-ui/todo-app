@@ -36,17 +36,37 @@ async def list_tasks(session: AsyncSession, workspace_id: uuid.UUID) -> Sequence
 
 
 async def _get_task(
-    session: AsyncSession, workspace_id: uuid.UUID, task_id: uuid.UUID, *, deleted: bool
+    session: AsyncSession,
+    workspace_id: uuid.UUID,
+    task_id: uuid.UUID,
+    *,
+    deleted: bool,
+    lock: bool = False,
 ) -> Task:
     deleted_filter = Task.deleted_at.is_not(None) if deleted else Task.deleted_at.is_(None)
-    task = await session.scalar(_scoped(workspace_id).where(Task.id == task_id, deleted_filter))
+    query = _scoped(workspace_id).where(Task.id == task_id, deleted_filter)
+    if lock:
+        # Row lock until commit; populate_existing so a cached object is refreshed
+        # with the state we waited for.
+        query = query.with_for_update().execution_options(populate_existing=True)
+    task = await session.scalar(query)
     if task is None:
         raise NotFoundError("Task not found")
     return task
 
 
-async def get_task(session: AsyncSession, workspace_id: uuid.UUID, task_id: uuid.UUID) -> Task:
-    return await _get_task(session, workspace_id, task_id, deleted=False)
+async def get_task(
+    session: AsyncSession, workspace_id: uuid.UUID, task_id: uuid.UUID, *, lock: bool = False
+) -> Task:
+    """A live task of the workspace.
+
+    ``lock=True`` serializes operations that touch a parent together with its
+    subtasks (create subtask, restore subtask, delete parent). Without it, a
+    parent could be deleted between "parent is alive" and "write the subtask",
+    leaving a live subtask under a deleted parent. PostgreSQL takes a row lock;
+    SQLite serializes whole write transactions (see app/core/db.py).
+    """
+    return await _get_task(session, workspace_id, task_id, deleted=False, lock=lock)
 
 
 async def _next_position(
@@ -71,7 +91,7 @@ async def create_task(
     now = now or utcnow()
     if data.parent_id is not None:
         try:
-            parent = await get_task(session, workspace_id, data.parent_id)
+            parent = await get_task(session, workspace_id, data.parent_id, lock=True)
         except NotFoundError:
             raise NotFoundError("Parent task not found") from None
         if parent.parent_id is not None:
@@ -150,7 +170,9 @@ async def delete_task(
     apart from subtasks deleted earlier on their own.
     """
     now = now or utcnow()
-    task = await get_task(session, workspace_id, task_id)
+    # Lock first, then update in a separate statement: on PostgreSQL the UPDATE
+    # gets a fresh snapshot and so also sees subtasks committed while we waited.
+    task = await get_task(session, workspace_id, task_id, lock=True)
     await session.execute(
         update(Task)
         .where(
@@ -176,9 +198,10 @@ async def restore_task(
     task = await _get_task(session, workspace_id, task_id, deleted=True)
 
     if task.parent_id is not None:
-        parent = await session.get(Task, task.parent_id)
-        if parent is None or parent.deleted_at is not None:
-            raise ConflictError("Restore the parent task first")
+        try:
+            await get_task(session, workspace_id, task.parent_id, lock=True)
+        except NotFoundError:
+            raise ConflictError("Restore the parent task first") from None
 
     deleted_at = task.deleted_at
     await session.execute(

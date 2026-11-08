@@ -16,18 +16,31 @@ from sqlalchemy.ext.asyncio import (
 def create_engine(database_url: str, *, echo: bool = False) -> AsyncEngine:
     engine = create_async_engine(database_url, echo=echo, pool_pre_ping=True)
     if engine.dialect.name == "sqlite":
-        _enable_sqlite_foreign_keys(engine)
+        _configure_sqlite(engine)
     return engine
 
 
-def _enable_sqlite_foreign_keys(engine: AsyncEngine) -> None:
-    """SQLite ignores FOREIGN KEY constraints (and ON DELETE CASCADE) unless asked."""
+def _configure_sqlite(engine: AsyncEngine) -> None:
+    """Make SQLite behave like the PostgreSQL we run in production, where it matters.
+
+    - Foreign keys: SQLite ignores FOREIGN KEY constraints (and ON DELETE
+      CASCADE) unless asked.
+    - Locking: SQLite has no SELECT ... FOR UPDATE. Every transaction starts
+      with BEGIN IMMEDIATE, taking the write lock up front, so check-then-write
+      sequences (e.g. "parent is alive" -> "insert subtask") cannot interleave
+      with another writer. The driver's own lazy BEGIN is switched off for this.
+    """
 
     @event.listens_for(engine.sync_engine, "connect")
     def _on_connect(dbapi_connection: Any, _record: Any) -> None:
+        dbapi_connection.isolation_level = None
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
+
+    @event.listens_for(engine.sync_engine, "begin")
+    def _on_begin(connection: Any) -> None:
+        connection.exec_driver_sql("BEGIN IMMEDIATE")
 
 
 def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
