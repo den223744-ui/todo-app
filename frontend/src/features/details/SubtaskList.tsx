@@ -4,6 +4,7 @@ import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { EDIT_ISSUES, EDIT_TEXTS, TEXTS } from '../../constants/texts';
 import { TITLE_MAX_LENGTH, codePoints } from '../../domain/limits';
 import type { EditIssue } from '../../domain/taskEdit';
+import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
 import { SubtaskTitle } from './SubtaskTitle';
 
 interface SubtaskListProps {
@@ -50,37 +51,52 @@ export function SubtaskList({
         {EDIT_TEXTS.subtasks}
       </h3>
       <ul className="space-y-1">
-        {subtasks.map((subtask) => (
-          <li key={subtask.id} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={subtask.completed_at !== null}
-              aria-disabled={busyIds.has(subtask.id) || undefined}
-              aria-label={
-                subtask.completed_at === null
-                  ? TEXTS.completeTask(subtask.title)
-                  : TEXTS.reopenTask(subtask.title)
-              }
-              onChange={() => {
-                if (!busyIds.has(subtask.id)) {
-                  onUpdate(subtask, { completed: subtask.completed_at === null });
-                }
-              }}
-              className="size-4 shrink-0 cursor-pointer accent-accent"
-            />
-            <SubtaskTitle subtask={subtask} onUpdate={onUpdate} />
-            <button
-              type="button"
-              aria-label={EDIT_TEXTS.deleteSubtask(subtask.title)}
-              onClick={() => {
-                onDelete(subtask);
-              }}
-              className="flex size-8 shrink-0 items-center justify-center rounded text-ink-muted hover:bg-subtle hover:text-danger"
+        {subtasks.map((subtask) => {
+          // Not saved yet: it has no server id to write to. Shown, but locked
+          // until the server answers (the row then remounts under its real id).
+          const unsaved = subtask.id.startsWith(OPTIMISTIC_ID_PREFIX);
+          const locked = unsaved || busyIds.has(subtask.id);
+          return (
+            <li
+              key={subtask.id}
+              aria-busy={unsaved || undefined}
+              className="flex items-center gap-2"
             >
-              ×
-            </button>
-          </li>
-        ))}
+              <input
+                type="checkbox"
+                checked={subtask.completed_at !== null}
+                aria-disabled={locked || undefined}
+                aria-label={
+                  subtask.completed_at === null
+                    ? TEXTS.completeTask(subtask.title)
+                    : TEXTS.reopenTask(subtask.title)
+                }
+                onChange={() => {
+                  if (!locked) onUpdate(subtask, { completed: subtask.completed_at === null });
+                }}
+                className="size-4 shrink-0 cursor-pointer accent-accent aria-disabled:cursor-default"
+              />
+              {unsaved ? (
+                <span className="min-w-0 flex-1 truncate px-1.5 py-1 text-sm text-ink-muted">
+                  {subtask.title}
+                </span>
+              ) : (
+                <SubtaskTitle subtask={subtask} onUpdate={onUpdate} />
+              )}
+              <button
+                type="button"
+                aria-label={EDIT_TEXTS.deleteSubtask(subtask.title)}
+                disabled={unsaved}
+                onClick={() => {
+                  onDelete(subtask);
+                }}
+                className="flex size-8 shrink-0 items-center justify-center rounded text-ink-muted hover:bg-subtle hover:text-danger disabled:invisible"
+              >
+                ×
+              </button>
+            </li>
+          );
+        })}
       </ul>
       {canAdd && (
         <div className="mt-2">

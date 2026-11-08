@@ -310,6 +310,36 @@ describe('TaskDetailsContainer', () => {
     queryClient.clear();
   });
 
+  it('locks a subtask until the server has saved it', async () => {
+    const { panel, create, update, remove, queryClient } = open('p');
+    // The fake server saves the subtask only when released.
+    const save = create.getMockImplementation();
+    let release!: () => void;
+    create.mockImplementationOnce(
+      (body) =>
+        new Promise((resolve, reject) => {
+          release = () => {
+            save?.(body).then(resolve, reject);
+          };
+        }),
+    );
+
+    await userEvent.type(within(panel).getByLabelText('Новая подзадача'), 'Ключ{Enter}');
+    const checkbox = within(panel).getByRole('checkbox', { name: 'Выполнить: Ключ' });
+    expect(checkbox.closest('li')).toHaveAttribute('aria-busy', 'true');
+    expect(within(panel).queryByLabelText('Название подзадачи: Ключ')).toBeNull();
+    expect(within(panel).getByRole('button', { name: /Удалить подзадачу: Ключ/ })).toBeDisabled();
+    await userEvent.click(checkbox);
+    expect(update).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+
+    act(() => {
+      release();
+    });
+    expect(await within(panel).findByLabelText('Название подзадачи: Ключ')).toBeInTheDocument();
+    queryClient.clear();
+  });
+
   it('adds, completes, renames and deletes subtasks', async () => {
     const { panel, update, create, remove, queryClient } = open('p');
 
