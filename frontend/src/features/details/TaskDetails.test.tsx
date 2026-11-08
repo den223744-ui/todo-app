@@ -272,6 +272,44 @@ describe('TaskDetailsContainer', () => {
     queryClient.clear();
   });
 
+  it('brings a subtask title back when creating it fails', async () => {
+    const { panel, create, queryClient } = open('p');
+    create.mockRejectedValueOnce(new Error('offline'));
+    const input = within(panel).getByLabelText('Новая подзадача');
+
+    await userEvent.type(input, 'Купить ключ{Enter}');
+
+    await waitFor(() => {
+      expect(input).toHaveValue('Купить ключ');
+    });
+    expect(within(panel).queryByLabelText('Название подзадачи: Купить ключ')).toBeNull();
+    queryClient.clear();
+  });
+
+  it('keeps new typing when an earlier subtask create fails', async () => {
+    const { panel, create, queryClient } = open('p');
+    let reject!: (error: Error) => void;
+    create.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, rej) => {
+          reject = rej;
+        }),
+    );
+    const input = within(panel).getByLabelText('Новая подзадача');
+
+    await userEvent.type(input, 'Первая{Enter}');
+    await userEvent.type(input, 'Вторая');
+    act(() => {
+      reject(new Error('offline'));
+    });
+
+    await waitFor(() => {
+      expect(within(panel).queryByLabelText('Название подзадачи: Первая')).toBeNull();
+    });
+    expect(input).toHaveValue('Вторая');
+    queryClient.clear();
+  });
+
   it('adds, completes, renames and deletes subtasks', async () => {
     const { panel, update, create, remove, queryClient } = open('p');
 

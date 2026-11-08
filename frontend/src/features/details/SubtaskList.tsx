@@ -12,7 +12,8 @@ interface SubtaskListProps {
   /** False while the parent itself is not saved yet (it has no server id). */
   canAdd: boolean;
   onUpdate: (task: TaskRead, patch: TaskUpdate) => void;
-  onCreate: (title: string) => void;
+  /** Resolves when saved; rejects when the server refused (the row is rolled back). */
+  onCreate: (title: string) => Promise<unknown>;
   onDelete: (task: TaskRead) => void;
 }
 
@@ -35,8 +36,12 @@ export function SubtaskList({
       setIssue('title-too-long');
       return;
     }
-    onCreate(title);
     setDraft('');
+    // On failure the optimistic row disappears: bring the text back so it is
+    // not lost — unless the user is already typing the next subtask.
+    onCreate(title).catch(() => {
+      setDraft((current) => (current === '' ? title : current));
+    });
   };
 
   return (

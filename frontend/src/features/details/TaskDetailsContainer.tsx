@@ -51,9 +51,7 @@ export function TaskDetailsContainer() {
           onUpdate={(target, patch) => {
             update.mutate({ id: target.id, patch });
           }}
-          onCreateSubtask={(title) => {
-            create.mutate({ title, parent_id: task.id });
-          }}
+          onCreateSubtask={(title) => create.mutateAsync({ title, parent_id: task.id })}
           onDelete={(target) => {
             remove.mutate(target.id);
             if (target.id === task.id) navigate({ taskId: null });

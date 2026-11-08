@@ -22,7 +22,7 @@ interface TaskDetailsProps {
   busyIds: ReadonlySet<string>;
   canAddSubtasks: boolean;
   onUpdate: (task: TaskRead, patch: TaskUpdate) => void;
-  onCreateSubtask: (title: string) => void;
+  onCreateSubtask: (title: string) => Promise<unknown>;
   onDelete: (task: TaskRead) => void;
 }
 
