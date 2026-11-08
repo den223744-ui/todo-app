@@ -23,7 +23,7 @@ function openApp(search = '/?list=inbox', initial: TaskRead[] = [TASK, SUB]) {
   const update = vi.spyOn(api, 'updateTask').mockImplementation((id, patch) => {
     store = store.map((task) =>
       task.id === id && patch.completed !== undefined
-        ? { ...task, completed_at: patch.completed ? '2026-11-09T10:00:00Z' : null }
+        ? { ...task, completed_at: patch.completed ? new Date().toISOString() : null }
         : task,
     );
     return Promise.resolve(store.find((task) => task.id === id) as TaskRead);
