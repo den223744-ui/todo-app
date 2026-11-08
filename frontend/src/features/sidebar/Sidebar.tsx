@@ -58,7 +58,10 @@ export function Sidebar({
       <div className="flex flex-col gap-7 px-4 pt-6 pb-4">
         {/* Full-bleed wordmark: a little wider than the panel, its edges cut off. */}
         <div className="-mx-4 -mt-3 overflow-hidden">
-          <BrandLogo className="-mx-3 flex w-[calc(100%+1.5rem)] justify-between text-[108px] leading-[0.8] tracking-tight" />
+          <BrandLogo
+            className="-mx-3 flex w-[calc(100%+1.5rem)] justify-between text-[136px] leading-[0.8] font-bold tracking-tight"
+            letterClassName="-mx-[0.045em] scale-x-[0.84]"
+          />
         </div>
 
         <nav aria-label={TEXTS.smartLists}>

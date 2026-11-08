@@ -12,7 +12,14 @@ const LETTER = {
 };
 
 /** The wordmark; a click makes its letters hop in a little wave (not with reduced motion). */
-export function BrandLogo({ className = '' }: { className?: string }) {
+export function BrandLogo({
+  className = '',
+  letterClassName = '',
+}: {
+  className?: string;
+  /** Extra classes for each letter's glyph, e.g. a horizontal squeeze. */
+  letterClassName?: string;
+}) {
   const controls = useAnimationControls();
   const reduceMotion = useReducedMotion();
 
@@ -23,7 +30,7 @@ export function BrandLogo({ className = '' }: { className?: string }) {
       onClick={() => {
         if (!reduceMotion) void controls.start('play');
       }}
-      className={`inline-flex cursor-pointer rounded-md font-display font-extrabold text-ink uppercase ${className}`}
+      className={`inline-flex cursor-pointer rounded-md font-display text-ink uppercase ${className}`}
     >
       {Array.from(TEXTS.brand).map((letter, index) => (
         <motion.span
@@ -36,7 +43,7 @@ export function BrandLogo({ className = '' }: { className?: string }) {
           initial="rest"
           animate={controls}
         >
-          {letter}
+          <span className={`inline-block ${letterClassName}`}>{letter}</span>
         </motion.span>
       ))}
     </button>
