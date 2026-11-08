@@ -39,6 +39,12 @@ describe('needsRebalance', () => {
     expect(halvings).toBeLessThan(60);
   });
 
+  it('is true at the ends of a list when the number is too large to step', () => {
+    expect(needsRebalance(2 ** 53, null)).toBe(true);
+    expect(needsRebalance(null, -(2 ** 53))).toBe(true);
+    expect(needsRebalance(2 ** 52, null)).toBe(false);
+  });
+
   it('is true for equal neighbours', () => {
     expect(needsRebalance(3, 3)).toBe(true);
   });
@@ -68,6 +74,21 @@ describe('moveTo', () => {
   it('works in an empty list and for a task from elsewhere', () => {
     expect(moveTo([], 'x', 0)).toEqual({ kind: 'single', id: 'x', position: 1 });
     expect(moveTo(list, 'new', 1)).toEqual({ kind: 'single', id: 'new', position: 1.5 });
+  });
+
+  it('renumbers when moving past a huge last position', () => {
+    const huge: Positioned[] = [
+      { id: 'a', position: 1 },
+      { id: 'b', position: 2 ** 53 },
+    ];
+
+    expect(moveTo(huge, 'a', 1)).toEqual({
+      kind: 'rebalance',
+      positions: [
+        { id: 'b', position: 1 },
+        { id: 'a', position: 2 },
+      ],
+    });
   });
 
   it('renumbers the whole list when the gap is exhausted', () => {

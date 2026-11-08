@@ -16,11 +16,16 @@ export function positionBetween(prev: number | null, next: number | null): numbe
   return prev + (next - prev) / 2;
 }
 
-/** True when there is no float strictly between the neighbours any more. */
+/**
+ * True when the new position would not land strictly between the neighbours:
+ * the gap is used up, or at an end of the list the number is so large that
+ * +1 / -1 no longer changes it (2 ** 53 + 1 === 2 ** 53).
+ */
 export function needsRebalance(prev: number | null, next: number | null): boolean {
-  if (prev === null || next === null) return false;
-  const middle = positionBetween(prev, next);
-  return !(middle > prev && middle < next);
+  const candidate = positionBetween(prev, next);
+  const afterPrev = prev === null || candidate > prev;
+  const beforeNext = next === null || candidate < next;
+  return !(afterPrev && beforeNext);
 }
 
 export interface Positioned {
