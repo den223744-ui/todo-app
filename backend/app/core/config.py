@@ -4,6 +4,13 @@ from functools import lru_cache
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
+
+ASYNC_DRIVERS = {
+    "postgres": "postgresql+asyncpg",
+    "postgresql": "postgresql+asyncpg",
+    "sqlite": "sqlite+aiosqlite",
+}
 
 
 class Settings(BaseSettings):
@@ -16,14 +23,32 @@ class Settings(BaseSettings):
 
     @field_validator("database_url")
     @classmethod
-    def use_async_driver(cls, value: str) -> str:
-        """Hosting providers hand out sync URLs; the app needs the async driver."""
-        for prefix in ("postgres://", "postgresql://"):
-            if value.startswith(prefix):
-                return "postgresql+asyncpg://" + value.removeprefix(prefix)
-        if value.startswith("sqlite://"):
-            return "sqlite+aiosqlite://" + value.removeprefix("sqlite://")
-        return value
+    def _normalize_database_url(cls, value: str) -> str:
+        return normalize_database_url(value)
+
+
+def normalize_database_url(raw_url: str) -> str:
+    """Turn a URL from a hosting provider into one the async engine can use.
+
+    Providers (Render, Neon) hand out libpq-style URLs: a sync scheme plus libpq
+    query parameters. asyncpg receives URL query parameters as keyword arguments
+    of ``asyncpg.connect()``, which knows ``ssl`` but not ``sslmode`` or
+    ``channel_binding``.
+    """
+    url = make_url(raw_url)
+    url = url.set(drivername=ASYNC_DRIVERS.get(url.drivername, url.drivername))
+
+    if url.drivername == "postgresql+asyncpg":
+        query = dict(url.query)
+        sslmode = query.pop("sslmode", None)
+        if sslmode is not None:
+            # asyncpg accepts the same mode names: disable ... require ... verify-full.
+            query.setdefault("ssl", sslmode)
+        # Not supported by asyncpg. TLS is still enforced through ``ssl``.
+        query.pop("channel_binding", None)
+        url = url.set(query=query)
+
+    return url.render_as_string(hide_password=False)
 
 
 @lru_cache
