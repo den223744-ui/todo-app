@@ -3,9 +3,11 @@
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from app.core.config import Settings
 from app.main import create_app
+from app.schemas.task import TaskUpdate
 
 EXPECTED_OPERATIONS = {
     ("get", "/api/health"): ("getHealth", set()),
@@ -63,3 +65,20 @@ def test_task_read_fields_are_all_required(schema: dict[str, Any]) -> None:
 def test_inputs_reject_unknown_fields(schema: dict[str, Any]) -> None:
     for name in ("TaskCreate", "TaskUpdate"):
         assert schema["components"]["schemas"][name]["additionalProperties"] is False
+
+
+def test_update_schema_nullability_matches_validation(schema: dict[str, Any]) -> None:
+    # The generated TS type must allow null exactly where the server accepts it.
+    properties = schema["components"]["schemas"]["TaskUpdate"]["properties"]
+
+    for name, prop in properties.items():
+        schema_allows_null = {"type": "null"} in prop.get("anyOf", [])
+        try:
+            TaskUpdate.model_validate({name: None})
+            server_accepts_null = True
+        except ValidationError:
+            server_accepts_null = False
+        assert schema_allows_null == server_accepts_null, name
+
+    nullable = {name for name, prop in properties.items() if "anyOf" in prop}
+    assert nullable == {"notes", "due_date", "due_time"}
