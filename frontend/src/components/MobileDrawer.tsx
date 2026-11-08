@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 
 import { TEXTS } from '../constants/texts';
 import { IconButton } from './IconButton';
+import { useFocusTrap } from './useFocusTrap';
 import { CloseIcon } from './icons/CloseIcon';
 
 interface MobileDrawerProps {
@@ -15,6 +16,8 @@ interface MobileDrawerProps {
  */
 export function MobileDrawer({ onClose, children }: MobileDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  // aria-modal promises that the page behind is out of reach: keep Tab inside.
+  useFocusTrap(panelRef, true);
 
   useEffect(() => {
     const previouslyFocused = document.activeElement;

@@ -9,11 +9,30 @@ import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../tasks/
 import { DetailsPanel } from './DetailsPanel';
 import { TaskDetails } from './TaskDetails';
 
+const rowLink = (taskId: string) =>
+  document.querySelector<HTMLElement>(`[data-task-link="${CSS.escape(taskId)}"]`);
+
 /** Focus the task's row link again after the panel closes. */
 function focusTaskRow(taskId: string) {
   requestAnimationFrame(() => {
-    document.querySelector<HTMLElement>(`[data-task-link="${CSS.escape(taskId)}"]`)?.focus();
+    rowLink(taskId)?.focus();
   });
+}
+
+/**
+ * Where focus goes when the open task is deleted: the next task in the list,
+ * else the previous one, else the quick add field. Found before the delete,
+ * while the row is still there.
+ */
+function focusTargetAfterDelete(taskId: string): HTMLElement | null {
+  const row = rowLink(taskId)?.closest('li');
+  const neighbour = (element: Element | null | undefined) =>
+    element?.querySelector<HTMLElement>('[data-task-link]') ?? null;
+  return (
+    neighbour(row?.nextElementSibling) ??
+    neighbour(row?.previousElementSibling) ??
+    document.querySelector<HTMLElement>('[data-quick-add-input]')
+  );
 }
 
 /** Shows the task from ?task=<id> in the detail panel. */
@@ -53,8 +72,14 @@ export function TaskDetailsContainer() {
           }}
           onCreateSubtask={(title) => create.mutateAsync({ title, parent_id: task.id })}
           onDelete={(target) => {
-            remove.mutate(target.id);
-            if (target.id === task.id) navigate({ taskId: null });
+            if (target.id !== task.id) {
+              remove.mutate(target.id); // a subtask: the panel stays
+              return;
+            }
+            const next = focusTargetAfterDelete(task.id);
+            remove.mutate(task.id);
+            navigate({ taskId: null });
+            requestAnimationFrame(() => next?.focus());
           }}
         />
       ) : (

@@ -69,6 +69,7 @@ export function HighlightedInput({
       <input
         ref={inputRef}
         id={id}
+        data-quick-add-input
         type="text"
         value={value}
         aria-invalid={invalid || undefined}

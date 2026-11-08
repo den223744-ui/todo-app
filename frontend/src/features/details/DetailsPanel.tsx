@@ -2,6 +2,8 @@ import { useEffect, useRef, type ReactNode } from 'react';
 
 import { IconButton } from '../../components/IconButton';
 import { CloseIcon } from '../../components/icons/CloseIcon';
+import { useFocusTrap } from '../../components/useFocusTrap';
+import { useMediaQuery } from '../../components/useMediaQuery';
 import { EDIT_TEXTS } from '../../constants/texts';
 
 interface DetailsPanelProps {
@@ -17,6 +19,10 @@ interface DetailsPanelProps {
  */
 export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  // Below lg the panel covers the page: there it is a modal dialog.
+  const modal = useMediaQuery('(max-width: 1023.98px)');
+  useFocusTrap(panelRef, modal);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -24,6 +30,9 @@ export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) 
 
   return (
     <aside
+      ref={panelRef}
+      role={modal ? 'dialog' : undefined}
+      aria-modal={modal || undefined}
       aria-labelledby="task-details-heading"
       onKeyDown={(event) => {
         if (event.key === 'Escape' && !event.defaultPrevented) {
