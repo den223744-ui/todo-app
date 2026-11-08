@@ -8,7 +8,8 @@ interface TaskListProps {
   groups: TaskGroup[];
   location: AppLocation;
   now: Date;
-  pending: boolean;
+  /** Tasks with a write in flight. */
+  busyIds: ReadonlySet<string>;
   onToggle: (task: TaskRead) => void;
   onOpen: (id: string) => void;
 }
@@ -20,9 +21,10 @@ const dayFormat = new Intl.DateTimeFormat('ru-RU', {
   year: 'numeric',
 });
 
-export function TaskList({ groups, location, now, pending, onToggle, onOpen }: TaskListProps) {
+export function TaskList({ groups, location, now, busyIds, onToggle, onOpen }: TaskListProps) {
   return (
-    <div aria-label={TEXTS.taskList} className="space-y-6">
+    // Each group is a labelled section; a plain div may not carry aria-label.
+    <div className="space-y-6">
       {groups.map((group) => {
         const title =
           group.key === 'all'
@@ -46,7 +48,7 @@ export function TaskList({ groups, location, now, pending, onToggle, onOpen }: T
                   task={task}
                   location={location}
                   now={now}
-                  pending={pending}
+                  busy={busyIds.has(task.id)}
                   onToggle={onToggle}
                   onOpen={onOpen}
                 />

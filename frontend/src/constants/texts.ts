@@ -14,9 +14,8 @@ export const TEXTS = {
   quickAddPlaceholder: 'Купить молоко завтра в 18:00 #дом !!',
   quickAddHint: 'Enter — добавить. Даты, #теги и !приоритет распознаются автоматически.',
   quickAddSubmit: 'Добавить',
-  quickAddSaving: 'Сохраняем…',
   quickAddSuccess: 'Задача добавлена.',
-  quickAddError: 'Не удалось создать задачу. Текст сохранён — попробуйте ещё раз.',
+  quickAddError: (title: string) => `Не удалось создать задачу «${title}». Попробуйте ещё раз.`,
   taskList: 'Список задач',
   loadingTasks: 'Загружаем задачи…',
   loadTasksError: 'Не удалось загрузить задачи.',
@@ -30,13 +29,14 @@ export const TEXTS = {
   tagEmptyHint: 'Здесь появятся невыполненные задачи с этим тегом.',
   completeTask: (title: string) => `Выполнить: ${title}`,
   reopenTask: (title: string) => `Вернуть в работу: ${title}`,
-  taskTag: (tag: string) => `Тег: ${tag}`,
   taskCount: (count: number) => `${String(count)} ${plural(count, 'задача', 'задачи', 'задач')}`,
 } as const;
 
 export const QUICK_ADD_ISSUES: Record<QuickAddIssue, string> = {
   'title-required': 'Добавьте название задачи, кроме даты, тегов и приоритета.',
   'title-too-long': 'Название задачи должно быть не длиннее 500 символов.',
+  'too-many-tags': 'У задачи может быть не больше 20 тегов.',
+  'tag-too-long': 'Тег должен быть не длиннее 50 символов.',
 };
 
 export const PRIORITY_LABELS: Readonly<Record<number, string>> = {

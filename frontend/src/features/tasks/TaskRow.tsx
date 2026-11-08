@@ -8,7 +8,8 @@ interface TaskRowProps {
   task: TaskRead;
   now: Date;
   location: AppLocation;
-  pending: boolean;
+  /** This task has a write in flight: a second toggle would race the first. */
+  busy: boolean;
   onToggle: (task: TaskRead) => void;
   onOpen: (id: string) => void;
 }
@@ -19,7 +20,7 @@ const dateFormat = new Intl.DateTimeFormat('ru-RU', {
   year: 'numeric',
 });
 
-export function TaskRow({ task, now, location, pending, onToggle, onOpen }: TaskRowProps) {
+export function TaskRow({ task, now, location, busy, onToggle, onOpen }: TaskRowProps) {
   const completed = task.completed_at !== null;
   const overdue = isOverdue(task, toLocalDateString(now));
   const selected = location.taskId === task.id;
@@ -32,12 +33,13 @@ export function TaskRow({ task, now, location, pending, onToggle, onOpen }: Task
         <input
           type="checkbox"
           checked={completed}
-          disabled={pending}
+          // aria-disabled, not disabled: a disabled element loses keyboard focus.
+          aria-disabled={busy || undefined}
           aria-label={completed ? TEXTS.reopenTask(task.title) : TEXTS.completeTask(task.title)}
           onChange={() => {
-            onToggle(task);
+            if (!busy) onToggle(task);
           }}
-          className="size-4 cursor-pointer accent-accent disabled:cursor-wait"
+          className="size-4 cursor-pointer accent-accent aria-disabled:cursor-wait"
         />
       </label>
       <a
@@ -87,11 +89,7 @@ export function TaskRow({ task, now, location, pending, onToggle, onOpen }: Task
               </span>
             )}
             {task.tags.map((tag) => (
-              <span
-                key={tag}
-                aria-label={TEXTS.taskTag(tag)}
-                className="max-w-full rounded bg-subtle px-1.5 py-0.5 wrap-anywhere"
-              >
+              <span key={tag} className="max-w-full rounded bg-subtle px-1.5 py-0.5 wrap-anywhere">
                 #{tag}
               </span>
             ))}

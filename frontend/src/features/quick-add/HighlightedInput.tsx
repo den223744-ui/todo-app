@@ -9,7 +9,6 @@ interface HighlightedInputProps {
   value: string;
   tokens: readonly QuickAddToken[];
   inputRef: RefObject<HTMLInputElement>;
-  readOnly: boolean;
   invalid: boolean;
   describedBy: string;
   onChange: (value: string) => void;
@@ -22,7 +21,6 @@ export function HighlightedInput({
   value,
   tokens,
   inputRef,
-  readOnly,
   invalid,
   describedBy,
   onChange,
@@ -73,7 +71,6 @@ export function HighlightedInput({
         id={id}
         type="text"
         value={value}
-        readOnly={readOnly}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         placeholder={TEXTS.quickAddPlaceholder}

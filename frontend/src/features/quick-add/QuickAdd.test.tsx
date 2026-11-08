@@ -118,35 +118,41 @@ describe('QuickAdd', () => {
     queryClient.clear();
   });
 
-  it('adds an undated task to today optimistically and prevents duplicate submissions', async () => {
+  it('adds an undated task to today optimistically and clears the field at once', async () => {
     const response = deferred<TaskRead>();
     const created = makeTask({ id: 't1', title: 'Задача', due_date: '2026-11-08' });
+    const other = makeTask({ id: 'o', title: 'Другая', due_date: '2026-11-08', position: 0 });
     const request = vi.spyOn(api, 'createTask').mockReturnValue(response.promise);
-    vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
-    const { queryClient } = renderWithClient(<App />);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([other, created]);
+    const { queryClient } = renderWithClient(<App />, [other]);
     const input = screen.getByRole('textbox');
     await userEvent.type(input, 'Задача');
     fireEvent.submit(screen.getByRole('form', { name: TEXTS.quickAdd }));
-    fireEvent.submit(screen.getByRole('form', { name: TEXTS.quickAdd }));
-    expect(await screen.findByRole('link', { name: /Задача/ })).toBeInTheDocument();
+    fireEvent.submit(screen.getByRole('form', { name: TEXTS.quickAdd })); // empty now: ignored
+
+    expect(await screen.findByRole('link', { name: /^Задача/ })).toBeInTheDocument();
     expect(request).toHaveBeenCalledTimes(1);
     expect(request).toHaveBeenCalledWith(expect.objectContaining({ due_date: '2026-11-08' }));
-    expect(input).toHaveAttribute('readonly');
-    expect(screen.getByRole('button', { name: TEXTS.quickAddSaving })).toBeDisabled();
-    expect(screen.getByRole('checkbox')).toBeDisabled();
+    // The server has not answered, yet the field is free for the next task...
+    expect(input).toHaveValue('');
+    expect(input).not.toHaveAttribute('readonly');
+    await userEvent.type(input, 'Следующая');
+    expect(input).toHaveValue('Следующая');
+    // ...and other tasks stay usable.
+    expect(screen.getByRole('checkbox', { name: /Другая/ })).not.toHaveAttribute('aria-disabled');
+
     act(() => {
       response.resolve(created);
     });
-    await waitFor(() => {
-      expect(input).toHaveValue('');
-    });
+    expect(await screen.findByRole('status')).toHaveTextContent(TEXTS.quickAddSuccess);
     expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())?.map((task) => task.id)).toEqual([
+      'o',
       't1',
     ]);
     queryClient.clear();
   });
 
-  it('rolls back a failed create, keeps the full draft and allows retry', async () => {
+  it('rolls back a failed create, brings the text back and allows retry', async () => {
     const response = deferred<TaskRead>();
     const created = makeTask({ id: 't1', title: 'Задача', due_date: '2026-11-08', tags: ['дом'] });
     const request = vi
@@ -157,33 +163,73 @@ describe('QuickAdd', () => {
     const { queryClient } = renderWithClient(<QuickAdd />);
     const input = screen.getByRole('textbox');
     await userEvent.type(input, 'Задача #дом{Enter}');
-    await waitFor(() => {
-      expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())).toHaveLength(1);
-    });
+    expect(input).toHaveValue('');
+    expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())).toHaveLength(1);
+
     act(() => {
       response.reject(new Error('offline'));
     });
-    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTS.quickAddError);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTS.quickAddError('Задача'));
     expect(input).toHaveValue('Задача #дом');
     expect(queryClient.getQueryData(taskKeys.list())).toEqual([]);
     listRequest.mockResolvedValue([created]);
+    await userEvent.click(input);
     await userEvent.keyboard('{Enter}');
     await waitFor(() => {
-      expect(input).toHaveValue('');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
+    expect(input).toHaveValue('');
     expect(request).toHaveBeenCalledTimes(2);
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     queryClient.clear();
   });
 
-  it('clears a network error when the draft is edited', async () => {
-    vi.spyOn(api, 'createTask').mockRejectedValue(new Error('offline'));
+  it('keeps new typing when an earlier create fails, and names the failed task', async () => {
+    const response = deferred<TaskRead>();
+    vi.spyOn(api, 'createTask').mockReturnValue(response.promise);
     vi.spyOn(api, 'listTasks').mockResolvedValue([]);
     const { queryClient } = renderWithClient(<QuickAdd />);
     const input = screen.getByRole('textbox');
-    await userEvent.type(input, 'Задача{Enter}');
+    await userEvent.type(input, 'Первая{Enter}');
+    await userEvent.type(input, 'Вторая в работе');
+
+    act(() => {
+      response.reject(new Error('offline'));
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTS.quickAddError('Первая'));
+    expect(input).toHaveValue('Вторая в работе');
+    queryClient.clear();
+  });
+
+  it('reports a failure of an earlier create even after a later one was sent', async () => {
+    const first = deferred<TaskRead>();
+    const second = makeTask({ id: 't2', title: 'Вторая' });
+    vi.spyOn(api, 'createTask').mockReturnValueOnce(first.promise).mockResolvedValueOnce(second);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([second]);
+    const { queryClient } = renderWithClient(<QuickAdd />);
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'Первая{Enter}');
+    await userEvent.type(input, 'Вторая{Enter}');
+
+    act(() => {
+      first.reject(new Error('offline'));
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTS.quickAddError('Первая'));
+    expect(input).toHaveValue('Первая');
+    queryClient.clear();
+  });
+
+  it('can dismiss the error', async () => {
+    vi.spyOn(api, 'createTask').mockRejectedValue(new Error('offline'));
+    vi.spyOn(api, 'listTasks').mockResolvedValue([]);
+    const { queryClient } = renderWithClient(<QuickAdd />);
+    await userEvent.type(screen.getByRole('textbox'), 'Задача{Enter}');
     await screen.findByRole('alert');
-    await userEvent.type(input, ' 2');
+
+    await userEvent.click(screen.getByRole('button', { name: TEXTS.dismissError }));
+
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     queryClient.clear();
   });

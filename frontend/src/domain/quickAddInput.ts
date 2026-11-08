@@ -9,7 +9,16 @@ import {
 } from './quickAdd';
 import type { View } from './view';
 
-export type QuickAddIssue = 'title-required' | 'title-too-long';
+export type QuickAddIssue = 'title-required' | 'title-too-long' | 'too-many-tags' | 'tag-too-long';
+
+// The API's limits (backend/app/schemas/task.py), checked before sending so the
+// user gets a specific hint instead of a generic "could not create" error.
+export const TITLE_MAX_LENGTH = 500;
+export const TAGS_MAX_COUNT = 20;
+export const TAG_MAX_LENGTH = 50;
+
+/** Python validates Unicode code points, not UTF-16 code units. */
+const codePoints = (text: string) => Array.from(text).length;
 
 export interface PreparedQuickAdd {
   parsed: QuickAddResult;
@@ -22,8 +31,14 @@ export function prepareQuickAdd(input: string, view: View, now: Date): PreparedQ
   const parsed = parseQuickAdd(input, now);
   const task = toTaskCreate(parsed);
   if (!task) return { parsed, task: null, issue: 'title-required' };
-  // Python validates Unicode code points, not UTF-16 code units.
-  if (Array.from(parsed.title).length > 500) return { parsed, task: null, issue: 'title-too-long' };
+  if (codePoints(parsed.title) > TITLE_MAX_LENGTH) {
+    return { parsed, task: null, issue: 'title-too-long' };
+  }
+  const tags = view.kind === 'tag' ? [...new Set([...parsed.tags, view.tag])] : parsed.tags;
+  if (tags.some((tag) => codePoints(tag) > TAG_MAX_LENGTH)) {
+    return { parsed, task: null, issue: 'tag-too-long' };
+  }
+  if (tags.length > TAGS_MAX_COUNT) return { parsed, task: null, issue: 'too-many-tags' };
   return {
     parsed,
     task: {
@@ -31,7 +46,7 @@ export function prepareQuickAdd(input: string, view: View, now: Date): PreparedQ
       due_date:
         parsed.dueDate ??
         (view.kind === 'list' && view.list === 'today' ? toLocalDateString(now) : null),
-      tags: view.kind === 'tag' ? [...new Set([...parsed.tags, view.tag])] : parsed.tags,
+      tags,
     },
     issue: null,
   };

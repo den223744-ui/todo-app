@@ -109,3 +109,36 @@ describe('quickAddSegments', () => {
     ]);
   });
 });
+
+describe('API limits for tags', () => {
+  const inbox = { kind: 'list', list: 'inbox' } as const;
+  const now = new Date(2026, 10, 8, 12);
+
+  it('accepts a tag of 50 characters and 20 tags', () => {
+    const twenty = Array.from({ length: 20 }, (_, i) => `#t${String(i)}`).join(' ');
+    expect(prepareQuickAdd(`Задача #${'я'.repeat(50)}`, inbox, now).issue).toBeNull();
+    expect(prepareQuickAdd(`Задача ${twenty}`, inbox, now).issue).toBeNull();
+  });
+
+  it('rejects a tag longer than 50 characters', () => {
+    expect(prepareQuickAdd(`Задача #${'я'.repeat(51)}`, inbox, now)).toMatchObject({
+      task: null,
+      issue: 'tag-too-long',
+    });
+  });
+
+  it('rejects more than 20 tags, counting the tag of the current view', () => {
+    const twenty = Array.from({ length: 20 }, (_, i) => `#t${String(i)}`).join(' ');
+    expect(prepareQuickAdd(`Задача ${twenty} #t21`, inbox, now).issue).toBe('too-many-tags');
+    expect(prepareQuickAdd(`Задача ${twenty}`, { kind: 'tag', tag: 'дом' }, now)).toMatchObject({
+      task: null,
+      issue: 'too-many-tags',
+    });
+    // The view tag is already among the typed ones: still 20.
+    expect(prepareQuickAdd(`Задача ${twenty}`, { kind: 'tag', tag: 't0' }, now).issue).toBeNull();
+  });
+
+  it('counts emoji as one character, like the server', () => {
+    expect(prepareQuickAdd(`Задача #${'😀'.repeat(50)}`, inbox, now).issue).toBeNull();
+  });
+});

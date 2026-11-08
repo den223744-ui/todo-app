@@ -24,7 +24,7 @@ describe('TaskRow', () => {
           task={makeTask({ id: 't1' })}
           now={now}
           location={DEFAULT_LOCATION}
-          pending={false}
+          busy={false}
           onToggle={vi.fn()}
           onOpen={onOpen}
         />
@@ -52,7 +52,7 @@ describe('TaskRow', () => {
           task={makeTask({ id: 't1' })}
           now={now}
           location={DEFAULT_LOCATION}
-          pending={false}
+          busy={false}
           onToggle={onToggle}
           onOpen={onOpen}
         />
@@ -64,7 +64,7 @@ describe('TaskRow', () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
-  it('disables completion while a write is pending', async () => {
+  it('ignores toggles while its own write is in flight, keeping focus', async () => {
     const onToggle = vi.fn();
     render(
       <ul>
@@ -72,15 +72,20 @@ describe('TaskRow', () => {
           task={makeTask({ id: 't1' })}
           now={now}
           location={DEFAULT_LOCATION}
-          pending
+          busy
           onToggle={onToggle}
           onOpen={vi.fn()}
         />
       </ul>,
     );
-    expect(screen.getByRole('checkbox')).toBeDisabled();
-    await userEvent.click(screen.getByRole('checkbox'));
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).toHaveAttribute('aria-disabled', 'true');
+    expect(checkbox).toBeEnabled(); // still focusable for keyboard users
+    checkbox.focus();
+    await userEvent.keyboard(' ');
     expect(onToggle).not.toHaveBeenCalled();
+    expect(checkbox).toHaveFocus();
+    expect(checkbox).not.toBeChecked();
   });
 
   it.each([
@@ -100,7 +105,7 @@ describe('TaskRow', () => {
             })}
             now={now}
             location={DEFAULT_LOCATION}
-            pending={false}
+            busy={false}
             onToggle={vi.fn()}
             onOpen={vi.fn()}
           />

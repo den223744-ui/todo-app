@@ -176,3 +176,12 @@ export function restoreTaskMutation(
     onSettled: settle,
   };
 }
+
+/** The task a mutation writes: update/restore send {id}, delete sends the id, create none. */
+export function mutationTaskId(variables: unknown): string | null {
+  if (typeof variables === 'string') return variables;
+  if (typeof variables === 'object' && variables !== null && 'id' in variables) {
+    return typeof variables.id === 'string' ? variables.id : null;
+  }
+  return null;
+}

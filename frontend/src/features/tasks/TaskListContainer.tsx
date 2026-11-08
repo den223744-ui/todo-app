@@ -1,4 +1,4 @@
-import { useIsMutating } from '@tanstack/react-query';
+import { useMutationState } from '@tanstack/react-query';
 
 import { TEXTS } from '../../constants/texts';
 import { selectTaskGroups } from '../../domain/taskGroups';
@@ -7,13 +7,20 @@ import { useNow } from '../time/useNow';
 import { TaskList } from './TaskList';
 import { TaskListEmpty } from './TaskListEmpty';
 import { TaskListSkeleton } from './TaskListSkeleton';
+import { mutationTaskId } from './taskMutations';
 import { taskKeys } from './taskQueries';
 import { useTasks, useUpdateTask } from './useTasks';
 
 export function TaskListContainer() {
   const { data, isPending, isError, refetch } = useTasks();
   const update = useUpdateTask();
-  const pending = useIsMutating({ mutationKey: taskKeys.mutation() }) > 0;
+  // Only the tasks being written are locked; the rest stay usable (optimistic UI).
+  const busyIds = new Set(
+    useMutationState({
+      filters: { mutationKey: taskKeys.mutation(), status: 'pending' },
+      select: (mutation) => mutationTaskId(mutation.state.variables),
+    }).filter((id): id is string => id !== null),
+  );
   const now = useNow();
   const [location, navigate] = useAppLocation();
   const groups = selectTaskGroups(data ?? [], location, now);
@@ -62,7 +69,7 @@ export function TaskListContainer() {
             groups={groups}
             now={now}
             location={location}
-            pending={pending}
+            busyIds={busyIds}
             onToggle={(task) => {
               update.mutate({ id: task.id, patch: { completed: task.completed_at === null } });
             }}
