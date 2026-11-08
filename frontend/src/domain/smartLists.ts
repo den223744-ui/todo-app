@@ -12,7 +12,7 @@
  * date of `now`, passed in by the caller.
  */
 import type { TaskRead } from '../api/schema';
-import { toLocalDateString } from './dates';
+import { canonicalTime, toLocalDateString } from './dates';
 import { compareByPosition } from './taskCache';
 
 export const SMART_LISTS = ['inbox', 'today', 'upcoming', 'overdue', 'completed'] as const;
@@ -49,7 +49,7 @@ export function belongsTo(task: TaskRead, list: SmartList, today: string): boole
 export function compareByDue(a: TaskRead, b: TaskRead): number {
   return (
     (a.due_date ?? '').localeCompare(b.due_date ?? '') ||
-    (a.due_time ?? '99').localeCompare(b.due_time ?? '99') ||
+    canonicalTime(a.due_time ?? '99:99').localeCompare(canonicalTime(b.due_time ?? '99:99')) ||
     compareByPosition(a, b)
   );
 }

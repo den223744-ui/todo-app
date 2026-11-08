@@ -180,6 +180,27 @@ describe('comparators', () => {
   });
 });
 
+describe('time formats', () => {
+  it('equal times sort by position whether written as HH:MM or HH:MM:SS', () => {
+    // Optimistic task from quick add ('09:00') vs. the server's answer ('09:00:00').
+    const optimistic = makeTask({
+      id: 'new',
+      due_date: '2026-11-10',
+      due_time: '09:00',
+      position: 5,
+    });
+    const saved = makeTask({
+      id: 'old',
+      due_date: '2026-11-10',
+      due_time: '09:00:00',
+      position: 1,
+    });
+
+    expect(ids(selectList([optimistic, saved], 'upcoming', NOW))).toEqual(['old', 'new']);
+    expect(ids(selectList([saved, optimistic], 'upcoming', NOW))).toEqual(['old', 'new']);
+  });
+});
+
 describe('selectTag', () => {
   const tagged = [
     makeTask({ id: 'b', tags: ['дом'], position: 2 }),

@@ -93,7 +93,7 @@ describe('buildOptimisticTask', () => {
       notes: 'n',
       priority: 2,
       due_date: '2026-11-09',
-      due_time: '18:00',
+      due_time: '18:00:00', // the server's form, like the API answer
       tags: ['дом'],
       position: 5.5,
     });
@@ -177,7 +177,7 @@ describe('applyUpdate', () => {
 
   it('a new date keeps the time; explicit time wins', () => {
     expect(applyUpdate(task, { due_date: '2026-12-01' }, NOW).due_time).toBe('18:00:00');
-    expect(applyUpdate(task, { due_date: null, due_time: '09:00' }, NOW).due_time).toBe('09:00');
+    expect(applyUpdate(task, { due_date: null, due_time: '09:00' }, NOW).due_time).toBe('09:00:00');
     expect(applyUpdate(task, { due_time: null }, NOW).due_date).toBe('2026-11-09');
   });
 

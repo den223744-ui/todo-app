@@ -6,6 +6,7 @@
  * Time comes in as `now`, never from the clock.
  */
 import type { TaskCreate, TaskRead, TaskUpdate } from '../api/schema';
+import { canonicalTime } from './dates';
 import { normalizeTags } from './tags';
 
 /** Same order as GET /api/tasks: position, then creation time, then id. */
@@ -39,7 +40,7 @@ export function buildOptimisticTask(
     notes: input.notes ?? null,
     priority: input.priority ?? 0,
     due_date: input.due_date ?? null,
-    due_time: input.due_time ?? null,
+    due_time: input.due_time ? canonicalTime(input.due_time) : null,
     tags: normalizeTags(input.tags ?? []),
     position: input.position ?? nextPosition(tasks, parentId),
     completed_at: null,
@@ -72,7 +73,9 @@ export function applyUpdate(task: TaskRead, patch: TaskUpdate, now: Date): TaskR
   if (patch.priority !== undefined) next.priority = patch.priority;
   if (patch.tags !== undefined) next.tags = normalizeTags(patch.tags);
   if (patch.position !== undefined) next.position = patch.position;
-  if (patch.due_time !== undefined) next.due_time = patch.due_time;
+  if (patch.due_time !== undefined) {
+    next.due_time = patch.due_time === null ? null : canonicalTime(patch.due_time);
+  }
   if (patch.due_date !== undefined) {
     next.due_date = patch.due_date;
     // A time without a date means nothing: clearing the date clears the time.

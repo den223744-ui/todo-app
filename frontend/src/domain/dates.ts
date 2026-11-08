@@ -22,3 +22,12 @@ export function startOfDay(date: Date): Date {
 export function addDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
+
+/**
+ * Times in the server's form 'HH:MM:SS'. The API returns '18:00:00' while
+ * quick add produces '18:00'; comparing the two as strings would order equal
+ * times differently before and after the server answers.
+ */
+export function canonicalTime(time: string): string {
+  return /^\d{2}:\d{2}$/.test(time) ? `${time}:00` : time;
+}
