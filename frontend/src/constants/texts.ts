@@ -26,6 +26,10 @@ export const TEXTS = {
   searchEmptyHint: 'Попробуйте другой запрос или выберите другой список.',
   tagEmpty: 'В этом теге пока нет задач',
   tagEmptyHint: 'Здесь появятся невыполненные задачи с этим тегом.',
+  listEmpty: 'В этом списке пока нет задач',
+  listEmptyHint: 'Добавьте задачу — она попадёт в этот список.',
+  listFallbackTitle: 'Список',
+  noList: 'Без списка',
   completeTask: (title: string) => `Выполнить: ${title}`,
   reopenTask: (title: string) => `Вернуть в работу: ${title}`,
   taskCount: (count: number) => `${String(count)} ${plural(count, 'задача', 'задачи', 'задач')}`,
@@ -131,5 +135,7 @@ export const TOAST_TEXTS = {
   updateFailed: 'Не удалось сохранить изменение — оно отменено.',
   deleteFailed: 'Не удалось удалить задачу — она возвращена в список.',
   restoreFailed: 'Не удалось восстановить задачу.',
+  createListFailed: (name: string) => `Не удалось создать список «${name}».`,
+  listNameTaken: 'Список с таким названием уже есть.',
   offline: 'Нет связи с сервером. Проверьте подключение.',
 } as const;

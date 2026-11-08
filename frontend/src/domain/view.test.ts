@@ -22,6 +22,15 @@ describe('parseLocation', () => {
     });
   });
 
+  it('reads one of the user lists: after a tag, before a smart list', () => {
+    expect(parseLocation('?listId=abc&list=inbox').view).toEqual({
+      kind: 'taskList',
+      listId: 'abc',
+    });
+    expect(parseLocation('?listId=abc&tag=x').view).toEqual({ kind: 'tag', tag: 'x' });
+    expect(parseLocation('?listId=%20&list=inbox').view).toEqual({ kind: 'list', list: 'inbox' });
+  });
+
   it('ignores an empty tag', () => {
     expect(parseLocation('?tag=%23&list=upcoming').view).toEqual({
       kind: 'list',
@@ -39,6 +48,12 @@ describe('parseLocation', () => {
 });
 
 describe('serializeLocation', () => {
+  it('writes one of the user lists', () => {
+    expect(
+      serializeLocation({ ...DEFAULT_LOCATION, view: { kind: 'taskList', listId: 'abc' } }),
+    ).toBe('?listId=abc');
+  });
+
   it('leaves the default location empty', () => {
     expect(serializeLocation(DEFAULT_LOCATION)).toBe('');
   });
@@ -75,6 +90,9 @@ describe('sameView', () => {
     [{ kind: 'tag', tag: 'a' }, { kind: 'tag', tag: 'b' }, false],
     [{ kind: 'tag', tag: 'a' }, { kind: 'list', list: 'today' }, false],
     [{ kind: 'list', list: 'today' }, { kind: 'tag', tag: 'a' }, false],
+    [{ kind: 'taskList', listId: 'x' }, { kind: 'taskList', listId: 'x' }, true],
+    [{ kind: 'taskList', listId: 'x' }, { kind: 'taskList', listId: 'y' }, false],
+    [{ kind: 'taskList', listId: 'x' }, { kind: 'list', list: 'today' }, false],
   ] as const)('%o vs %o -> %s', (a, b, expected) => {
     expect(sameView(a, b)).toBe(expected);
   });

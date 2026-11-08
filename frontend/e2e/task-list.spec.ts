@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-import type { TaskRead } from '../src/api/schema';
+import type { TaskListRead, TaskRead } from '../src/api/schema';
 
 function task(id: string, fields: Partial<TaskRead>): TaskRead {
   return {
     id,
     title: id,
     parent_id: null,
+    list_id: null,
     notes: null,
     priority: 0,
     due_date: null,
@@ -27,6 +28,7 @@ const fixtures = [
     due_time: '18:30:00',
     priority: 3,
     tags: ['работа'],
+    list_id: 'work',
   }),
   task('today', {
     title: 'Купить продукты на неделю',
@@ -46,15 +48,27 @@ const fixtures = [
   task('inbox', { title: 'Разобрать заметки', tags: ['работа'] }),
 ];
 
+const lists: TaskListRead[] = [
+  {
+    id: 'work',
+    name: 'Работа',
+    color: 'blue',
+    position: 1,
+    created_at: '2026-11-08T10:00:00Z',
+    updated_at: '2026-11-08T10:00:00Z',
+  },
+];
+
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date(2026, 10, 8, 12) });
   await page.route('**/api/tasks', (route) => route.fulfill({ json: fixtures }));
+  await page.route('**/api/lists', (route) => route.fulfill({ json: lists }));
 });
 
 test('task groups, URL navigation and history', async ({ page }, testInfo) => {
   await page.goto('/');
   const main = page.getByRole('main');
-  await expect(main.getByRole('heading', { level: 2 })).toHaveText(['Просроченные', 'Сегодня']);
+  await expect(main.getByRole('heading', { level: 2 })).toHaveText(['Работа', 'Без списка']);
   await expect(main.getByRole('checkbox')).toHaveCount(3);
   await expect(main.getByRole('link', { name: /Отправить отчёт/ })).toContainText('18:30');
   await expect(main.getByRole('link', { name: /Отправить отчёт/ })).toBeVisible();
@@ -70,7 +84,7 @@ test('task groups, URL navigation and history', async ({ page }, testInfo) => {
   await expect(page).toHaveURL(/list=upcoming$/);
   await expect(main.getByRole('heading', { level: 2 })).toContainText('10 ноября');
   await page.goBack();
-  await expect(main.getByRole('heading', { level: 2 })).toHaveText(['Просроченные', 'Сегодня']);
+  await expect(main.getByRole('heading', { level: 2 })).toHaveText(['Работа', 'Без списка']);
 });
 
 test('mobile drawer, dark theme and long content fit 375px', async ({ page }, testInfo) => {

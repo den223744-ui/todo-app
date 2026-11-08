@@ -314,6 +314,231 @@
           }
         }
       }
+    },
+    "/api/lists": {
+      "get": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "List Lists",
+        "description": "The workspace's lists in display order.\n\nStarts the anonymous session on the first visit (sets the session cookie).",
+        "operationId": "listLists",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaskListRead"
+                  },
+                  "type": "array",
+                  "title": "Response Listlists"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Create List",
+        "description": "Create a list. 409 when the workspace already has one with this name (any case).",
+        "operationId": "createList",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskListCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListRead"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session. Writes need a session started by a GET (session_required).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state (conflict).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request is invalid (validation_error).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lists/{list_id}": {
+      "patch": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Update List",
+        "description": "Rename, recolour or move a list. 409 for a name another list already has.",
+        "operationId": "updateList",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "List Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskListUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListRead"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session. Writes need a session started by a GET (session_required).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found, deleted, or owned by another workspace (not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state (conflict).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request is invalid (validation_error).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Delete List",
+        "description": "Delete the list; its tasks stay and lose their list.",
+        "operationId": "deleteList",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "List Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "No valid session. Writes need a session started by a GET (session_required).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found, deleted, or owned by another workspace (not_found).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request is invalid (validation_error).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -433,6 +658,18 @@
             ],
             "title": "Parent Id"
           },
+          "list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "List Id"
+          },
           "position": {
             "anyOf": [
               {
@@ -452,6 +689,130 @@
         ],
         "title": "TaskCreate"
       },
+      "TaskListCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "blue",
+                  "brown",
+                  "gray",
+                  "green",
+                  "red",
+                  "olive"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "TaskListCreate"
+      },
+      "TaskListRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "blue",
+              "brown",
+              "gray",
+              "green",
+              "red",
+              "olive"
+            ],
+            "title": "Color"
+          },
+          "position": {
+            "type": "number",
+            "title": "Position"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "color",
+          "position",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskListRead"
+      },
+      "TaskListUpdate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "blue",
+              "brown",
+              "gray",
+              "green",
+              "red",
+              "olive"
+            ],
+            "title": "Color"
+          },
+          "position": {
+            "type": "number",
+            "title": "Position"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "TaskListUpdate"
+      },
       "TaskRead": {
         "properties": {
           "id": {
@@ -470,6 +831,18 @@
               }
             ],
             "title": "Parent Id"
+          },
+          "list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "List Id"
           },
           "title": {
             "type": "string",
@@ -552,6 +925,7 @@
         "required": [
           "id",
           "parent_id",
+          "list_id",
           "title",
           "notes",
           "priority",
@@ -622,6 +996,18 @@
             "type": "array",
             "title": "Tags"
           },
+          "list_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "List Id"
+          },
           "position": {
             "type": "number",
             "title": "Position"
@@ -634,7 +1020,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "TaskUpdate",
-        "description": "Partial update: only the fields present in the request are applied.\n\n``null`` clears notes, due_date and due_time; for any other field it is an\nerror. Rules that depend on the stored task (due_time needs due_date) are\nchecked by the service."
+        "description": "Partial update: only the fields present in the request are applied.\n\n``null`` clears notes, due_date, due_time and list_id; for any other field\nit is an error. Rules that depend on the stored task (due_time needs\ndue_date, only top-level tasks have a list) are checked by the service."
       }
     }
   }

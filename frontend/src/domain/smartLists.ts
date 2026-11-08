@@ -2,7 +2,7 @@
  * Smart lists, tag lists, counts and ordering (rules: SPEC.md, "Умные списки").
  *
  *   inbox     — no due date
- *   today     — due today + overdue (overdue as a separate group on top)
+ *   today     — due today + overdue (shown with the tasks completed today)
  *   upcoming  — due after today
  *   overdue   — due before today (by date; the time does not matter)
  *   completed — completed
@@ -75,17 +75,26 @@ export function selectList(tasks: readonly TaskRead[], list: SmartList, now: Dat
     .sort(LIST_ORDER[list]);
 }
 
-/** "Today" as shown: overdue on top as its own group, then today's tasks. */
-export function selectTodayGroups(
-  tasks: readonly TaskRead[],
-  now: Date,
-): { overdue: TaskRead[]; today: TaskRead[] } {
+/**
+ * "Today" as shown: tasks due today or overdue, plus those already ticked off
+ * today, so the day's progress stays visible. In the manual order.
+ */
+export function selectToday(tasks: readonly TaskRead[], now: Date): TaskRead[] {
   const today = toLocalDateString(now);
-  const open = tasks.filter((task) => isTopLevel(task) && isOpen(task));
-  return {
-    overdue: open.filter((task) => isOverdue(task, today)).sort(compareByDue),
-    today: open.filter((task) => task.due_date === today).sort(compareByPosition),
-  };
+  return tasks
+    .filter(
+      (task) =>
+        isTopLevel(task) &&
+        task.due_date !== null &&
+        task.due_date <= today &&
+        (isOpen(task) || completedOn(task, today)),
+    )
+    .sort(compareByPosition);
+}
+
+/** Completed on this local date. */
+function completedOn(task: TaskRead, day: string): boolean {
+  return task.completed_at !== null && toLocalDateString(new Date(task.completed_at)) === day;
 }
 
 /** "Upcoming" grouped by day, days in order. */

@@ -59,6 +59,7 @@ describe('buildOptimisticTask', () => {
     expect(task).toEqual({
       id: 'tmp',
       parent_id: null,
+      list_id: null,
       title: 'Купить молоко',
       notes: null,
       priority: 0,
@@ -83,6 +84,7 @@ describe('buildOptimisticTask', () => {
         due_time: '18:00',
         tags: ['#Дом', 'дом'],
         parent_id: 'p',
+        list_id: 'L',
         position: 5.5,
       },
       'tmp',
@@ -97,6 +99,7 @@ describe('buildOptimisticTask', () => {
       due_date: '2026-11-09',
       due_time: '18:00:00', // the server's form, like the API answer
       tags: ['дом'],
+      list_id: 'L',
       position: 5.5,
     });
   });
@@ -155,7 +158,7 @@ describe('applyUpdate', () => {
   it('applies every field the server accepts', () => {
     const next = applyUpdate(
       task,
-      { title: ' new ', notes: null, priority: 3, tags: ['#A', 'a'], position: 9 },
+      { title: ' new ', notes: null, priority: 3, tags: ['#A', 'a'], position: 9, list_id: 'L' },
       NOW,
     );
 
@@ -165,6 +168,7 @@ describe('applyUpdate', () => {
       priority: 3,
       tags: ['a'],
       position: 9,
+      list_id: 'L',
       updated_at: NOW.toISOString(),
     });
     expect(next.created_at).toBe(task.created_at);
@@ -228,6 +232,7 @@ describe('patchedFields', () => {
         priority: 1,
         tags: [],
         position: 2,
+        list_id: null,
         due_date: '2026-11-09',
         due_time: '10:00',
         completed: false,
@@ -239,6 +244,7 @@ describe('patchedFields', () => {
         'priority',
         'tags',
         'position',
+        'list_id',
         'due_date',
         'due_time',
         'completed_at',

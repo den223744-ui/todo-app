@@ -10,6 +10,7 @@ import type { TaskRead } from '../../api/schema';
 import { EMPTY_LIST_TEXTS, TEXTS } from '../../constants/texts';
 import { SMART_LISTS } from '../../domain/smartLists';
 import { navigateTo } from '../navigation/useAppLocation';
+import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
 import { taskKeys } from './taskQueries';
@@ -35,30 +36,35 @@ describe('TaskListContainer', () => {
     vi.useRealTimers();
   });
 
-  it('renders today as two groups, with overdue first and full task metadata', () => {
-    renderWithClient(<TaskListContainer />, [
-      makeTask({ id: 'today', due_date: '2026-11-08' }),
-      makeTask({
-        id: 'late',
-        title: 'Отправить отчёт',
-        due_date: '2026-11-07',
-        due_time: '18:30:00',
-        priority: 3,
-        tags: ['работа'],
-      }),
-      makeTask({ id: 'future', due_date: '2026-11-09' }),
-      makeTask({ id: 'child', parent_id: 'today', due_date: '2026-11-08' }),
-    ]);
+  it('renders today grouped by list, loose tasks last, with full task metadata', () => {
+    renderWithClient(
+      <TaskListContainer />,
+      [
+        makeTask({ id: 'today', due_date: '2026-11-08' }),
+        makeTask({
+          id: 'late',
+          title: 'Отправить отчёт',
+          due_date: '2026-11-07',
+          due_time: '18:30:00',
+          priority: 3,
+          tags: ['работа'],
+          list_id: 'work',
+        }),
+        makeTask({ id: 'future', due_date: '2026-11-09', list_id: 'work' }),
+        makeTask({ id: 'child', parent_id: 'today', due_date: '2026-11-08' }),
+      ],
+      [makeList({ id: 'work', name: 'Работа' })],
+    );
     expect(screen.getAllByRole('heading', { level: 2 }).map((node) => node.textContent)).toEqual([
-      'Просроченные',
-      'Сегодня',
+      'Работа',
+      'Без списка',
     ]);
-    const late = screen.getByRole('region', { name: 'Просроченные' });
-    expect(within(late).getByText('Высокий приоритет')).toBeInTheDocument();
-    expect(within(late).getByText('#работа')).toBeInTheDocument();
-    expect(late.querySelector('time')).toHaveAttribute('datetime', '2026-11-07T18:30:00');
-    expect(late.querySelector('time')).toHaveTextContent('18:30');
-    expect(late.querySelector('time')).toHaveClass('text-danger');
+    const work = screen.getByRole('region', { name: 'Работа' });
+    expect(within(work).getByText('Высокий приоритет')).toBeInTheDocument();
+    expect(within(work).getByText('#работа')).toBeInTheDocument();
+    expect(work.querySelector('time')).toHaveAttribute('datetime', '2026-11-07T18:30:00');
+    expect(work.querySelector('time')).toHaveTextContent('18:30');
+    expect(work.querySelector('time')).toHaveClass('text-danger'); // overdue
     expect(screen.queryByRole('link', { name: /future|child/ })).not.toBeInTheDocument();
   });
 

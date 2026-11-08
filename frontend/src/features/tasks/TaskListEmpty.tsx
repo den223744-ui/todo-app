@@ -6,7 +6,9 @@ export function TaskListEmpty({ location }: { location: AppLocation }) {
     ? { title: TEXTS.searchEmpty, hint: TEXTS.searchEmptyHint }
     : location.view.kind === 'tag'
       ? { title: TEXTS.tagEmpty, hint: TEXTS.tagEmptyHint }
-      : EMPTY_LIST_TEXTS[location.view.list];
+      : location.view.kind === 'taskList'
+        ? { title: TEXTS.listEmpty, hint: TEXTS.listEmptyHint }
+        : EMPTY_LIST_TEXTS[location.view.list];
 
   return (
     <div

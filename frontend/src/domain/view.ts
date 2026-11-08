@@ -4,6 +4,7 @@
  *
  *   ?list=upcoming        a smart list (today is the default and is omitted)
  *   ?tag=дом              a tag list (wins over list when both are present)
+ *   ?listId=<id>          one of the user's lists (after tag, before list)
  *   &q=молоко             search text
  *   &task=<id>            the task open in the detail panel
  *
@@ -12,7 +13,10 @@
 import { isSmartList, type SmartList } from './smartLists';
 import { normalizeTag } from './tags';
 
-export type View = { kind: 'list'; list: SmartList } | { kind: 'tag'; tag: string };
+export type View =
+  | { kind: 'list'; list: SmartList }
+  | { kind: 'tag'; tag: string }
+  | { kind: 'taskList'; listId: string };
 
 export interface AppLocation {
   view: View;
@@ -32,9 +36,12 @@ export function parseLocation(search: string): AppLocation {
   const params = new URLSearchParams(search);
   const tag = normalizeTag(params.get('tag') ?? '');
   const list = params.get('list') ?? '';
+  const listId = params.get('listId')?.trim() ?? '';
   const view: View = tag
     ? { kind: 'tag', tag }
-    : { kind: 'list', list: isSmartList(list) ? list : DEFAULT_LIST };
+    : listId
+      ? { kind: 'taskList', listId }
+      : { kind: 'list', list: isSmartList(list) ? list : DEFAULT_LIST };
   return {
     view,
     query: params.get('q')?.trim() ?? '',
@@ -47,6 +54,7 @@ export function serializeLocation(location: AppLocation): string {
   const params = new URLSearchParams();
   const { view } = location;
   if (view.kind === 'tag') params.set('tag', view.tag);
+  else if (view.kind === 'taskList') params.set('listId', view.listId);
   else if (view.list !== DEFAULT_LIST) params.set('list', view.list);
   const query = location.query.trim();
   if (query) params.set('q', query);
@@ -56,7 +64,12 @@ export function serializeLocation(location: AppLocation): string {
 }
 
 export function sameView(a: View, b: View): boolean {
-  return a.kind === 'tag'
-    ? b.kind === 'tag' && a.tag === b.tag
-    : b.kind === 'list' && a.list === b.list;
+  switch (a.kind) {
+    case 'tag':
+      return b.kind === 'tag' && a.tag === b.tag;
+    case 'taskList':
+      return b.kind === 'taskList' && a.listId === b.listId;
+    case 'list':
+      return b.kind === 'list' && a.list === b.list;
+  }
 }

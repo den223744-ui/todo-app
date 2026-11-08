@@ -1,29 +1,37 @@
-import type { TaskRead } from '../api/schema';
+import type { TaskListRead, TaskRead } from '../api/schema';
 import { searchTasks } from './search';
-import { groupByDueDate, selectList, selectTag, selectTodayGroups } from './smartLists';
+import { groupByDueDate, selectList, selectTag, selectToday } from './smartLists';
+import { groupByList, selectInList } from './taskLists';
 import type { AppLocation } from './view';
 
 export interface TaskGroup {
   key: string;
   tasks: TaskRead[];
+  /** Groups by list: the list, or null for tasks without one. */
+  list?: TaskListRead | null;
 }
 
 /** Apply search within the selected view; only nonempty groups reach the UI. */
 export function selectTaskGroups(
   tasks: readonly TaskRead[],
+  lists: readonly TaskListRead[],
   { view, query }: AppLocation,
   now: Date,
 ): TaskGroup[] {
   const matching = searchTasks(tasks, query);
   if (view.kind === 'list' && view.list === 'today') {
-    const { overdue, today } = selectTodayGroups(matching, now);
-    return [
-      { key: 'overdue', tasks: overdue },
-      { key: 'today', tasks: today },
-    ].filter((group) => group.tasks.length > 0);
+    return groupByList(selectToday(matching, now), lists).map(({ list, tasks: grouped }) => ({
+      key: list ? `list:${list.id}` : 'list:none',
+      tasks: grouped,
+      list,
+    }));
   }
   const selected =
-    view.kind === 'tag' ? selectTag(matching, view.tag) : selectList(matching, view.list, now);
+    view.kind === 'tag'
+      ? selectTag(matching, view.tag)
+      : view.kind === 'taskList'
+        ? selectInList(matching, view.listId)
+        : selectList(matching, view.list, now);
   if (view.kind === 'list' && view.list === 'upcoming') {
     return groupByDueDate(selected).map(({ date, tasks: grouped }) => ({
       key: date,

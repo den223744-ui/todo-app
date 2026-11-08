@@ -39,6 +39,8 @@ export function prepareQuickAdd(input: string, view: View, now: Date): PreparedQ
         parsed.dueDate ??
         (view.kind === 'list' && view.list === 'today' ? toLocalDateString(now) : null),
       tags,
+      // Typed into one of the user's lists: the task goes into that list.
+      ...(view.kind === 'taskList' ? { list_id: view.listId } : {}),
     },
     issue: null,
   };

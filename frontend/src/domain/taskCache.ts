@@ -36,6 +36,7 @@ export function buildOptimisticTask(
   return {
     id,
     parent_id: parentId,
+    list_id: input.list_id ?? null,
     title: input.title.trim(),
     notes: input.notes ?? null,
     priority: input.priority ?? 0,
@@ -73,6 +74,7 @@ export function applyUpdate(task: TaskRead, patch: TaskUpdate, now: Date): TaskR
   if (patch.priority !== undefined) next.priority = patch.priority;
   if (patch.tags !== undefined) next.tags = normalizeTags(patch.tags);
   if (patch.position !== undefined) next.position = patch.position;
+  if (patch.list_id !== undefined) next.list_id = patch.list_id;
   if (patch.due_time !== undefined) {
     next.due_time = patch.due_time === null ? null : canonicalTime(patch.due_time);
   }
@@ -104,6 +106,7 @@ export function patchedFields(patch: TaskUpdate): Set<TaskField> {
     'priority',
     'tags',
     'position',
+    'list_id',
     'due_date',
     'due_time',
   ] as const;

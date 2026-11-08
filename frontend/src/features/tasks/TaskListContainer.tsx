@@ -10,6 +10,7 @@ import { TaskListEmpty } from './TaskListEmpty';
 import { TaskListSkeleton } from './TaskListSkeleton';
 import { mutationTaskId } from './taskMutations';
 import { taskKeys } from './taskQueries';
+import { useLists } from '../lists/useLists';
 import { useTasks, useUpdateTask } from './useTasks';
 
 export function TaskListContainer() {
@@ -27,7 +28,8 @@ export function TaskListContainer() {
   const editingId = useUiStore((state) => state.editingTaskId);
   const startEditing = useUiStore((state) => state.startEditing);
   const stopEditing = useUiStore((state) => state.stopEditing);
-  const groups = selectTaskGroups(data ?? [], location, now);
+  const { data: lists } = useLists();
+  const groups = selectTaskGroups(data ?? [], lists ?? [], location, now);
 
   return (
     <div className="mt-6 space-y-4">

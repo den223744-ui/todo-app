@@ -98,6 +98,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Lists
+         * @description The workspace's lists in display order.
+         *
+         *     Starts the anonymous session on the first visit (sets the session cookie).
+         */
+        get: operations["listLists"];
+        put?: never;
+        /**
+         * Create List
+         * @description Create a list. 409 when the workspace already has one with this name (any case).
+         */
+        post: operations["createList"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lists/{list_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete List
+         * @description Delete the list; its tasks stay and lose their list.
+         */
+        delete: operations["deleteList"];
+        options?: never;
+        head?: never;
+        /**
+         * Update List
+         * @description Rename, recolour or move a list. 409 for a name another list already has.
+         */
+        patch: operations["updateList"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -143,8 +193,58 @@ export interface components {
             tags?: string[];
             /** Parent Id */
             parent_id?: string | null;
+            /** List Id */
+            list_id?: string | null;
             /** Position */
             position?: number | null;
+        };
+        /** TaskListCreate */
+        TaskListCreate: {
+            /** Name */
+            name: string;
+            /** Color */
+            color?: ("blue" | "brown" | "gray" | "green" | "red" | "olive") | null;
+            /** Position */
+            position?: number | null;
+        };
+        /** TaskListRead */
+        TaskListRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Color
+             * @enum {string}
+             */
+            color: "blue" | "brown" | "gray" | "green" | "red" | "olive";
+            /** Position */
+            position: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** TaskListUpdate */
+        TaskListUpdate: {
+            /** Name */
+            name?: string;
+            /**
+             * Color
+             * @enum {string}
+             */
+            color?: "blue" | "brown" | "gray" | "green" | "red" | "olive";
+            /** Position */
+            position?: number;
         };
         /** TaskRead */
         TaskRead: {
@@ -155,6 +255,8 @@ export interface components {
             id: string;
             /** Parent Id */
             parent_id: string | null;
+            /** List Id */
+            list_id: string | null;
             /** Title */
             title: string;
             /** Notes */
@@ -186,9 +288,9 @@ export interface components {
          * TaskUpdate
          * @description Partial update: only the fields present in the request are applied.
          *
-         *     ``null`` clears notes, due_date and due_time; for any other field it is an
-         *     error. Rules that depend on the stored task (due_time needs due_date) are
-         *     checked by the service.
+         *     ``null`` clears notes, due_date, due_time and list_id; for any other field
+         *     it is an error. Rules that depend on the stored task (due_time needs
+         *     due_date, only top-level tasks have a list) are checked by the service.
          */
         TaskUpdate: {
             /** Title */
@@ -203,6 +305,8 @@ export interface components {
             due_time?: string | null;
             /** Tags */
             tags?: string[];
+            /** List Id */
+            list_id?: string | null;
             /** Position */
             position?: number;
             /** Completed */
@@ -219,6 +323,9 @@ export type ErrorDetail = components['schemas']['ErrorDetail'];
 export type ErrorResponse = components['schemas']['ErrorResponse'];
 export type HealthResponse = components['schemas']['HealthResponse'];
 export type TaskCreate = components['schemas']['TaskCreate'];
+export type TaskListCreate = components['schemas']['TaskListCreate'];
+export type TaskListRead = components['schemas']['TaskListRead'];
+export type TaskListUpdate = components['schemas']['TaskListUpdate'];
 export type TaskRead = components['schemas']['TaskRead'];
 export type TaskUpdate = components['schemas']['TaskUpdate'];
 export type $defs = Record<string, never>;
@@ -432,6 +539,186 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaskRead"];
+                };
+            };
+            /** @description No valid session. Writes need a session started by a GET (session_required). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Task not found, deleted, or owned by another workspace (not_found). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current state (conflict). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request is invalid (validation_error). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listLists: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListRead"][];
+                };
+            };
+        };
+    };
+    createList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListRead"];
+                };
+            };
+            /** @description No valid session. Writes need a session started by a GET (session_required). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request conflicts with the current state (conflict). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request is invalid (validation_error). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    deleteList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No valid session. Writes need a session started by a GET (session_required). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Task not found, deleted, or owned by another workspace (not_found). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request is invalid (validation_error). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateList: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskListUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskListRead"];
                 };
             };
             /** @description No valid session. Writes need a session started by a GET (session_required). */

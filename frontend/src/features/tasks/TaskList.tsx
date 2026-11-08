@@ -1,5 +1,5 @@
 import type { TaskRead, TaskUpdate } from '../../api/schema';
-import { LIST_TITLES, TEXTS } from '../../constants/texts';
+import { TEXTS } from '../../constants/texts';
 import type { TaskGroup } from '../../domain/taskGroups';
 import type { AppLocation } from '../../domain/view';
 import { TaskRow } from './TaskRow';
@@ -42,20 +42,14 @@ export function TaskList({
     <div className="space-y-6">
       {groups.map((group) => {
         const title =
-          group.key === 'all'
-            ? null
-            : group.key === 'today' || group.key === 'overdue'
-              ? LIST_TITLES[group.key]
+          group.list !== undefined
+            ? (group.list?.name ?? TEXTS.noList)
+            : group.key === 'all'
+              ? null
               : dayFormat.format(new Date(`${group.key}T00:00:00`));
         return (
           <section key={group.key} aria-label={title ?? TEXTS.taskList}>
-            {title && (
-              <h2
-                className={`mb-2 text-xs font-medium ${group.key === 'overdue' ? 'text-danger' : 'text-ink-muted'}`}
-              >
-                {title}
-              </h2>
-            )}
+            {title && <h2 className="mb-2 text-xs font-medium text-ink-muted">{title}</h2>}
             <ul className="space-y-2">
               {group.tasks.map((task) => (
                 <TaskRow

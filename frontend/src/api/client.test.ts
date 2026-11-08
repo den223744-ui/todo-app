@@ -6,6 +6,7 @@ import type { TaskRead } from './schema';
 const TASK: TaskRead = {
   id: '6f1c1c3e-8a4b-4a49-9a4f-3f8a8f0f2d11',
   parent_id: null,
+  list_id: null,
   title: 'Купить молоко',
   notes: null,
   priority: 0,

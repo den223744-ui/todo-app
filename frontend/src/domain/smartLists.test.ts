@@ -13,7 +13,7 @@ import {
   isSmartList,
   selectList,
   selectTag,
-  selectTodayGroups,
+  selectToday,
 } from './smartLists';
 
 const NOW = new Date(2026, 10, 9, 10, 30); // Monday, 9 Nov 2026, local time
@@ -132,19 +132,24 @@ describe('selectList', () => {
   });
 });
 
-describe('selectTodayGroups', () => {
-  it('overdue on top (oldest first), then today in manual order', () => {
-    const groups = selectTodayGroups(ALL, NOW);
-
-    expect(ids(groups.overdue)).toEqual(['overdue-old', 'overdue']);
-    expect(ids(groups.today)).toEqual(['today-first', 'today']);
+describe('selectToday', () => {
+  it('due today and overdue, in the manual order', () => {
+    expect(ids(selectToday(ALL, NOW))).toEqual(['overdue', 'today-first', 'today', 'overdue-old']);
   });
 
-  it('completed and subtasks stay out', () => {
-    const doneToday = makeTask({ id: 'd', due_date: TODAY, completed_at: '2026-11-09T09:00:00Z' });
-    const groups = selectTodayGroups([doneToday, subtask], NOW);
+  it('keeps tasks completed today; earlier completions, undated and subtasks stay out', () => {
+    // Local midday today, whatever the test machine's time zone.
+    const doneToday = makeTask({
+      id: 'd',
+      due_date: TODAY,
+      completed_at: new Date(2026, 10, 9, 9).toISOString(),
+    });
+    const undatedDoneToday = makeTask({
+      id: 'u',
+      completed_at: new Date(2026, 10, 9, 9).toISOString(),
+    });
 
-    expect(groups).toEqual({ overdue: [], today: [] });
+    expect(ids(selectToday([doneToday, undatedDoneToday, done, subtask], NOW))).toEqual(['d']);
   });
 });
 

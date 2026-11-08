@@ -24,6 +24,22 @@ describe('mutationErrorToast', () => {
     );
   });
 
+  it('names the list that could not be created, or says the name is taken', () => {
+    expect(mutationErrorToast({ kind: 'createList' }, { name: 'Дом' }, SERVER)).toBe(
+      TOAST_TEXTS.createListFailed('Дом'),
+    );
+    expect(mutationErrorToast({ kind: 'createList' }, undefined, SERVER)).toBe(
+      TOAST_TEXTS.createListFailed(''),
+    );
+    expect(
+      mutationErrorToast(
+        { kind: 'createList' },
+        { name: 'Дом' },
+        new ApiError(409, 'conflict', 'taken'),
+      ),
+    ).toBe(TOAST_TEXTS.listNameTaken);
+  });
+
   it('says so when the network is down, whatever the operation', () => {
     const offline = new ApiError(0, 'network_error', 'offline');
     expect(mutationErrorToast({ kind: 'update' }, {}, offline)).toBe(TOAST_TEXTS.offline);

@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useAppLocation } from './useAppLocation';
+import { makeList } from '../../test/makeList';
 import { viewTitle } from './viewTitle';
 
 describe('useAppLocation', () => {
@@ -82,5 +83,11 @@ describe('viewTitle', () => {
   it('names smart lists and tags', () => {
     expect(viewTitle({ kind: 'list', list: 'today' })).toBe('Сегодня');
     expect(viewTitle({ kind: 'tag', tag: 'дом' })).toBe('#дом');
+  });
+
+  it('names one of the user lists, with a fallback while lists load', () => {
+    const lists = [makeList({ id: 'work', name: 'Работа' })];
+    expect(viewTitle({ kind: 'taskList', listId: 'work' }, lists)).toBe('Работа');
+    expect(viewTitle({ kind: 'taskList', listId: 'work' })).toBe('Список');
   });
 });

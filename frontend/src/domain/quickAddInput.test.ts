@@ -28,6 +28,15 @@ describe('prepareQuickAdd', () => {
     },
   );
 
+  it('puts a task typed into one of the user lists into that list', () => {
+    expect(prepareQuickAdd('Отчёт', { kind: 'taskList', listId: 'work' }, now).task).toMatchObject({
+      title: 'Отчёт',
+      due_date: null,
+      list_id: 'work',
+    });
+    expect(prepareQuickAdd('Отчёт', today, now).task).not.toHaveProperty('list_id');
+  });
+
   it('preserves an explicit date and time in today', () => {
     expect(prepareQuickAdd('Молоко завтра в 18:00 #дом !!', today, now).task).toEqual({
       title: 'Молоко',
