@@ -65,6 +65,7 @@ describe('buildOptimisticTask', () => {
       priority: 0,
       due_date: null,
       due_time: null,
+      duration_minutes: null,
       tags: [],
       position: 1,
       completed_at: null,
@@ -158,7 +159,15 @@ describe('applyUpdate', () => {
   it('applies every field the server accepts', () => {
     const next = applyUpdate(
       task,
-      { title: ' new ', notes: null, priority: 3, tags: ['#A', 'a'], position: 9, list_id: 'L' },
+      {
+        title: ' new ',
+        notes: null,
+        priority: 3,
+        tags: ['#A', 'a'],
+        position: 9,
+        list_id: 'L',
+        duration_minutes: 90,
+      },
       NOW,
     );
 
@@ -169,6 +178,7 @@ describe('applyUpdate', () => {
       tags: ['a'],
       position: 9,
       list_id: 'L',
+      duration_minutes: 90,
       updated_at: NOW.toISOString(),
     });
     expect(next.created_at).toBe(task.created_at);
@@ -233,6 +243,7 @@ describe('patchedFields', () => {
         tags: [],
         position: 2,
         list_id: null,
+        duration_minutes: 45,
         due_date: '2026-11-09',
         due_time: '10:00',
         completed: false,
@@ -245,6 +256,7 @@ describe('patchedFields', () => {
         'tags',
         'position',
         'list_id',
+        'duration_minutes',
         'due_date',
         'due_time',
         'completed_at',

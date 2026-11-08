@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { greeting, TEXTS } from './texts';
+import { durationLabel, greeting, TEXTS } from './texts';
 
 describe('greeting', () => {
   it.each([
@@ -29,5 +29,16 @@ describe('taskCount', () => {
     [114, '114 задач'],
   ])('%i -> %s', (count, expected) => {
     expect(TEXTS.taskCount(count)).toBe(expected);
+  });
+});
+
+describe('durationLabel', () => {
+  it.each([
+    [15, '15 мин'],
+    [60, '1 ч'],
+    [90, '1 ч 30 мин'],
+    [240, '4 ч'],
+  ])('%i -> %s', (minutes, expected) => {
+    expect(durationLabel(minutes)).toBe(expected);
   });
 });

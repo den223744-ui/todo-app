@@ -12,6 +12,7 @@ function task(id: string, fields: Partial<TaskRead>): TaskRead {
     priority: 0,
     due_date: null,
     due_time: null,
+    duration_minutes: null,
     tags: [],
     position: 1,
     completed_at: null,

@@ -639,6 +639,19 @@
             ],
             "title": "Due Time"
           },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
           "tags": {
             "items": {
               "type": "string"
@@ -887,6 +900,17 @@
             ],
             "title": "Due Time"
           },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
           "tags": {
             "items": {
               "type": "string"
@@ -931,6 +955,7 @@
           "priority",
           "due_date",
           "due_time",
+          "duration_minutes",
           "tags",
           "position",
           "completed_at",
@@ -989,6 +1014,19 @@
             ],
             "title": "Due Time"
           },
+          "duration_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Minutes"
+          },
           "tags": {
             "items": {
               "type": "string"
@@ -1020,7 +1058,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "TaskUpdate",
-        "description": "Partial update: only the fields present in the request are applied.\n\n``null`` clears notes, due_date, due_time and list_id; for any other field\nit is an error. Rules that depend on the stored task (due_time needs\ndue_date, only top-level tasks have a list) are checked by the service."
+        "description": "Partial update: only the fields present in the request are applied.\n\n``null`` clears notes, due_date, due_time, duration_minutes and list_id; for any other field\nit is an error. Rules that depend on the stored task (due_time needs\ndue_date, only top-level tasks have a list) are checked by the service."
       }
     }
   }

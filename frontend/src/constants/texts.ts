@@ -168,6 +168,21 @@ export const DAY_NAV_TEXTS = {
   today: 'Сегодня',
 } as const;
 
+/** 30 -> '30 мин', 60 -> '1 ч', 90 -> '1 ч 30 мин'. */
+export function durationLabel(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${String(rest)} мин`;
+  return rest === 0 ? `${String(hours)} ч` : `${String(hours)} ч ${String(rest)} мин`;
+}
+
+export const DURATION_TEXTS = {
+  label: 'Длительность',
+  none: 'Не задана',
+  /** Choices in the details panel, in minutes. */
+  options: [15, 30, 45, 60, 90, 120, 180, 240],
+} as const;
+
 export const TIMELINE_TEXTS = {
   region: 'Таймлайн дня',
   tab: 'Таймлайн',
@@ -176,6 +191,7 @@ export const TIMELINE_TEXTS = {
   untimed: 'Без времени',
   empty: 'На этот день нет задач со временем.',
   count: (count: number) => TEXTS.taskCount(count),
+  planned: (total: string) => `запланировано ${total}`,
 } as const;
 
 export const STATS_TEXTS = {

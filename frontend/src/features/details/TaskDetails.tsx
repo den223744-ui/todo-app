@@ -1,7 +1,13 @@
 import { useId, useState } from 'react';
 
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
-import { EDIT_ISSUES, EDIT_TEXTS, TEXTS } from '../../constants/texts';
+import {
+  DURATION_TEXTS,
+  EDIT_ISSUES,
+  EDIT_TEXTS,
+  TEXTS,
+  durationLabel,
+} from '../../constants/texts';
 import {
   editDueDate,
   editDueTime,
@@ -207,6 +213,34 @@ export function TaskDetails({
           {issueFor('time')}
         </p>
       )}
+
+      <div>
+        <label
+          htmlFor={`${ids}-duration`}
+          className="mb-1.5 block text-xs font-medium text-ink-muted"
+        >
+          {DURATION_TEXTS.label}
+        </label>
+        <select
+          id={`${ids}-duration`}
+          value={task.duration_minutes ?? ''}
+          onChange={(event) => {
+            const value = event.currentTarget.value;
+            const minutes = value === '' ? null : Number(value);
+            if (minutes !== task.duration_minutes) onUpdate(task, { duration_minutes: minutes });
+          }}
+          className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm"
+        >
+          <option value="">{DURATION_TEXTS.none}</option>
+          {[...new Set([...DURATION_TEXTS.options, task.duration_minutes ?? 15])]
+            .sort((a, b) => a - b)
+            .map((minutes) => (
+              <option key={minutes} value={minutes}>
+                {durationLabel(minutes)}
+              </option>
+            ))}
+        </select>
+      </div>
 
       {task.parent_id === null && (
         <div>

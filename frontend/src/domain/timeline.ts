@@ -1,7 +1,7 @@
 /**
  * The day timeline: timed top-level tasks of one day placed on an hour grid.
  *
- * Tasks have no duration yet, so each block lasts SLOT_MINUTES. Blocks that
+ * A block lasts the task's duration, SLOT_MINUTES when it has none. Blocks that
  * overlap in time go side by side in lanes (like a calendar); the grid always
  * covers 08:00–22:00 and grows to fit earlier or later tasks.
  */
@@ -28,6 +28,8 @@ export interface TimelineLayout {
   items: TimelineItem[];
   /** Tasks of the day without a time: listed apart, they have no place on the grid. */
   untimed: TaskRead[];
+  /** Sum of the durations the day's tasks have (tasks without one count nothing). */
+  plannedMinutes: number;
 }
 
 function minutesOf(time: string): number {
@@ -41,7 +43,8 @@ export function layoutTimeline(tasks: readonly TaskRead[], day: string): Timelin
     .flatMap((task) => {
       if (task.due_time === null) return [];
       const start = minutesOf(task.due_time);
-      return [{ task, start, end: Math.min(start + SLOT_MINUTES, 24 * 60) }];
+      const length = task.duration_minutes ?? SLOT_MINUTES;
+      return [{ task, start, end: Math.min(start + length, 24 * 60) }];
     })
     .sort((a, b) => a.start - b.start || a.task.position - b.task.position);
 
@@ -75,5 +78,6 @@ export function layoutTimeline(tasks: readonly TaskRead[], day: string): Timelin
     endHour: Math.min(lastHour, 24),
     items,
     untimed: ofDay.filter((task) => task.due_time === null),
+    plannedMinutes: ofDay.reduce((sum, task) => sum + (task.duration_minutes ?? 0), 0),
   };
 }

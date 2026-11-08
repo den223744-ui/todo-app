@@ -189,6 +189,8 @@ export interface components {
             due_date?: string | null;
             /** Due Time */
             due_time?: string | null;
+            /** Duration Minutes */
+            duration_minutes?: number | null;
             /** Tags */
             tags?: string[];
             /** Parent Id */
@@ -267,6 +269,8 @@ export interface components {
             due_date: string | null;
             /** Due Time */
             due_time: string | null;
+            /** Duration Minutes */
+            duration_minutes: number | null;
             /** Tags */
             tags: string[];
             /** Position */
@@ -288,7 +292,7 @@ export interface components {
          * TaskUpdate
          * @description Partial update: only the fields present in the request are applied.
          *
-         *     ``null`` clears notes, due_date, due_time and list_id; for any other field
+         *     ``null`` clears notes, due_date, due_time, duration_minutes and list_id; for any other field
          *     it is an error. Rules that depend on the stored task (due_time needs
          *     due_date, only top-level tasks have a list) are checked by the service.
          */
@@ -303,6 +307,8 @@ export interface components {
             due_date?: string | null;
             /** Due Time */
             due_time?: string | null;
+            /** Duration Minutes */
+            duration_minutes?: number | null;
             /** Tags */
             tags?: string[];
             /** List Id */

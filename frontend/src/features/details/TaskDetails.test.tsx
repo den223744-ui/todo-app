@@ -392,6 +392,20 @@ describe('TaskDetailsContainer', () => {
     queryClient.clear();
   });
 
+  it('sets, changes and clears the duration', async () => {
+    const { panel, update, queryClient } = open('p');
+    const picker = within(panel).getByRole('combobox', { name: 'Длительность' });
+
+    await userEvent.selectOptions(picker, '90');
+    await userEvent.selectOptions(picker, '');
+
+    expect(update.mock.calls).toEqual([
+      ['p', { duration_minutes: 90 }],
+      ['p', { duration_minutes: null }],
+    ]);
+    queryClient.clear();
+  });
+
   it('completes the task itself', async () => {
     const { panel, update, queryClient } = open('p');
 

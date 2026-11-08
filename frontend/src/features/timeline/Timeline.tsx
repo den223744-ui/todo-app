@@ -1,7 +1,7 @@
 import type { TaskListRead, TaskRead } from '../../api/schema';
-import { TIMELINE_TEXTS } from '../../constants/texts';
+import { TIMELINE_TEXTS, durationLabel } from '../../constants/texts';
 import { parseLocalDate } from '../../domain/dates';
-import { SLOT_MINUTES, layoutTimeline } from '../../domain/timeline';
+import { layoutTimeline } from '../../domain/timeline';
 
 interface TimelineProps {
   tasks: readonly TaskRead[];
@@ -67,7 +67,11 @@ export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProp
           {day === today ? `${TIMELINE_TEXTS.today} · ` : ''}
           {date ? dayFormat.format(date) : day}
         </h2>
-        <span className="text-xs text-ink-muted">{TIMELINE_TEXTS.count(count)}</span>
+        <span className="text-xs text-ink-muted">
+          {layout.plannedMinutes > 0
+            ? TIMELINE_TEXTS.planned(durationLabel(layout.plannedMinutes))
+            : TIMELINE_TEXTS.count(count)}
+        </span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2 pb-4 [scrollbar-width:thin]">
@@ -86,7 +90,7 @@ export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProp
           ))}
 
           <ol className="absolute top-0 right-0 bottom-0 left-12">
-            {layout.items.map(({ task, start, lane, lanes }) => {
+            {layout.items.map(({ task, start, end, lane, lanes }) => {
               const list = task.list_id ? byId.get(task.list_id) : undefined;
               const done = task.completed_at !== null;
               return (
@@ -95,7 +99,7 @@ export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProp
                   className="absolute px-0.5"
                   style={{
                     top: top(start) + 2,
-                    height: (SLOT_MINUTES / 60) * HOUR - 4,
+                    height: Math.max(((end - start) / 60) * HOUR - 4, 20),
                     left: `${String((lane / lanes) * 100)}%`,
                     width: `${String(100 / lanes)}%`,
                   }}
@@ -114,7 +118,10 @@ export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProp
                     <span className={`truncate font-medium ${done ? 'line-through' : ''}`}>
                       {task.title}
                     </span>
-                    <span className="shrink-0 opacity-75 tabular-nums">{clock(start)}</span>
+                    <span className="shrink-0 opacity-75 tabular-nums">
+                      <span className="sr-only">{clock(start)}, </span>
+                      {durationLabel(end - start)}
+                    </span>
                   </button>
                 </li>
               );

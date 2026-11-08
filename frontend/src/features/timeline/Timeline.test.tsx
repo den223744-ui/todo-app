@@ -19,7 +19,13 @@ function renderTimeline(day = TODAY) {
       now={NOW}
       lists={[makeList({ id: 'work', name: 'Работа' })]}
       tasks={[
-        makeTask({ id: 'plan', title: 'Спланировать день', due_date: TODAY, due_time: '09:00:00' }),
+        makeTask({
+          id: 'plan',
+          title: 'Спланировать день',
+          due_date: TODAY,
+          due_time: '09:00:00',
+          duration_minutes: 90,
+        }),
         makeTask({
           id: 'sync',
           title: 'Созвон',
@@ -46,7 +52,11 @@ describe('Timeline', () => {
     const { region } = renderTimeline();
 
     expect(within(region).getByRole('heading', { level: 2 })).toHaveTextContent(/^Сегодня · /);
-    expect(within(region).getByText('3 задачи')).toBeInTheDocument();
+    expect(within(region).getByText('запланировано 1 ч 30 мин')).toBeInTheDocument();
+    expect(
+      within(region).getByRole('button', { name: /Спланировать день.*1 ч 30 мин/ }),
+    ).toBeVisible();
+    expect(within(region).getByRole('button', { name: /Созвон.*30 мин/ })).toBeInTheDocument();
     expect(within(region).getByRole('button', { name: /Спланировать день\s*09:00/ })).toBeVisible();
     expect(within(region).getByRole('button', { name: /Созвон\s*11:00/ })).toBeInTheDocument();
     expect(

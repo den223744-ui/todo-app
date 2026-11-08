@@ -49,6 +49,25 @@ describe('layoutTimeline', () => {
     ]);
   });
 
+  it('makes a block as long as its task, and sums the planned time of the day', () => {
+    const layout = layoutTimeline(
+      [
+        at('long', '09:00:00', { duration_minutes: 90 }),
+        at('next', '10:00:00'),
+        at('later', '11:00:00', { duration_minutes: 15 }),
+        at('untimed', null, { duration_minutes: 60 }),
+      ],
+      DAY,
+    );
+
+    expect(layout.items.map((item) => [item.task.id, item.start, item.end, item.lanes])).toEqual([
+      ['long', 540, 630, 2],
+      ['next', 600, 630, 2], // no duration: one slot; overlaps the long one
+      ['later', 660, 675, 1],
+    ]);
+    expect(layout.plannedMinutes).toBe(90 + 15 + 60);
+  });
+
   it('grows the grid for early and late tasks, never past midnight', () => {
     const layout = layoutTimeline([at('dawn', '06:30:00'), at('night', '23:45:00')], DAY);
 
@@ -64,6 +83,7 @@ describe('layoutTimeline', () => {
       endHour: 22,
       items: [],
       untimed: [untimed],
+      plannedMinutes: 0,
     });
   });
 });
