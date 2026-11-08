@@ -4,5 +4,5 @@ test('app shell loads', async ({ page }) => {
   await page.goto('/');
 
   await expect(page).toHaveTitle('Todo');
-  await expect(page.getByRole('heading', { level: 1, name: 'Задачи' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Сегодня' })).toBeVisible();
 });
