@@ -158,6 +158,49 @@ describe('update', () => {
     expect(cached()).toEqual([A, B]);
   });
 
+  it('an earlier answer does not wipe a later edit still in flight', async () => {
+    // The server applies writes in order and answers each one when told to.
+    let stored: TaskRead = A;
+    const answers: Array<() => void> = [];
+    const sent: string[][] = [];
+    const updateTask = vi.fn(
+      (_id: string, patch: { tags?: string[] | null }) =>
+        new Promise<TaskRead>((resolve) => {
+          sent.push(patch.tags ?? []);
+          stored = { ...stored, tags: patch.tags ?? [] };
+          const snapshot = stored;
+          answers.push(() => {
+            resolve(snapshot);
+          });
+        }),
+    );
+    const deps = setup(fakeApi({ updateTask }), [A]);
+    const observer = () => new MutationObserver(queryClient, updateTaskMutation(deps));
+    // Like the tag editor: the new list is built from what the cache shows now.
+    const addTag = async (tag: string) => {
+      const tags = [...(cached()[0]?.tags ?? []), tag];
+      const done = observer().mutate({ id: 'a', patch: { tags } });
+      await flush(); // the optimistic change is in the cache before the next edit
+      return { done }; // wrapped: returning the promise itself would wait for it
+    };
+
+    const first = await addTag('first');
+    const second = await addTag('second');
+    answers[0]?.(); // the first answer arrives, the second request is still out
+    await first.done;
+    expect(cached()[0]?.tags).toEqual(['first', 'second']);
+
+    const third = await addTag('third');
+    answers[1]?.();
+    await second.done;
+    await flush();
+    answers[2]?.();
+    await third.done;
+
+    expect(sent.at(-1)).toEqual(['first', 'second', 'third']);
+    expect(cached()[0]?.tags).toEqual(['first', 'second', 'third']);
+  });
+
   it('does nothing extra for a task missing from the cache', async () => {
     const deps = setup(fakeApi({ updateTask: () => Promise.reject(FAIL) }), [A]);
     const observer = new MutationObserver(queryClient, updateTaskMutation(deps));
