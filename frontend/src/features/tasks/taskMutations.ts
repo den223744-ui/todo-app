@@ -129,7 +129,10 @@ export function updateTaskMutation(
     },
     onError: (_error, { id }, context) => {
       const previous = context?.previous;
-      if (previous) write((tasks) => replaceTask(tasks, id, previous));
+      // With a later write still pending, the snapshot would also wipe that
+      // write's change, which is already on its way to the server; the list
+      // refetch after the last write brings the server's state instead.
+      if (previous && isLatestWrite(id)) write((tasks) => replaceTask(tasks, id, previous));
     },
     onSettled: (_data, _error, { id }) => settle(id),
   };

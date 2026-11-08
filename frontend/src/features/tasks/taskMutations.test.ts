@@ -186,19 +186,60 @@ describe('update', () => {
 
     const first = await addTag('first');
     const second = await addTag('second');
-    answers[0]?.(); // the first answer arrives, the second request is still out
-    await first.done;
-    expect(cached()[0]?.tags).toEqual(['first', 'second']);
+    try {
+      answers[0]?.(); // the first answer arrives, the second request is still out
+      await first.done;
+      expect(cached()[0]?.tags).toEqual(['first', 'second']);
 
-    const third = await addTag('third');
-    answers[1]?.();
-    await second.done;
-    await flush();
-    answers[2]?.();
-    await third.done;
+      const third = await addTag('third');
+      answers[1]?.();
+      await second.done;
+      await flush();
+      answers[2]?.();
+      await third.done;
+    } finally {
+      // Never leave the module's write queue for this task blocked.
+      for (const answer of answers) answer();
+    }
 
     expect(sent.at(-1)).toEqual(['first', 'second', 'third']);
     expect(cached()[0]?.tags).toEqual(['first', 'second', 'third']);
+  });
+
+  it('a failed earlier write does not wipe a later edit still in flight', async () => {
+    const answers: Array<() => void> = [];
+    const updateTask = vi.fn(
+      (_id: string, patch: { tags?: string[] | null }) =>
+        new Promise<TaskRead>((resolve, reject) => {
+          const tags = patch.tags ?? [];
+          answers.push(() => {
+            if (tags.includes('second') && !tags.includes('third')) reject(FAIL);
+            else resolve({ ...A, tags });
+          });
+        }),
+    );
+    const deps = setup(fakeApi({ updateTask }), [A]);
+    const addTag = async (tag: string) => {
+      const tags = [...(cached()[0]?.tags ?? []), tag];
+      const observer = new MutationObserver(queryClient, updateTaskMutation(deps));
+      const done = observer.mutate({ id: 'a', patch: { tags } }).catch(() => undefined);
+      await flush();
+      return { done };
+    };
+
+    const second = await addTag('second');
+    const third = await addTag('third');
+    try {
+      answers[0]?.(); // the first write fails while the next one is pending
+      await second.done;
+
+      expect(cached()[0]?.tags).toEqual(['second', 'third']);
+    } finally {
+      // Never leave the module's write queue for this task blocked.
+      await flush();
+      answers[1]?.();
+      await third.done;
+    }
   });
 
   it('does nothing extra for a task missing from the cache', async () => {
