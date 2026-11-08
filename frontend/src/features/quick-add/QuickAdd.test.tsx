@@ -130,7 +130,8 @@ describe('QuickAdd', () => {
     fireEvent.submit(screen.getByRole('form', { name: TEXTS.quickAdd }));
     fireEvent.submit(screen.getByRole('form', { name: TEXTS.quickAdd })); // empty now: ignored
 
-    expect(await screen.findByRole('link', { name: /^Задача/ })).toBeInTheDocument();
+    // Shown at once, as an unsaved row (not a link until the server answers).
+    expect(await screen.findByText('Задача')).toBeInTheDocument();
     expect(request).toHaveBeenCalledTimes(1);
     expect(request).toHaveBeenCalledWith(expect.objectContaining({ due_date: '2026-11-08' }));
     // The server has not answered, yet the field is free for the next task...

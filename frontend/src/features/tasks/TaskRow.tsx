@@ -6,6 +6,7 @@ import { toLocalDateString } from '../../domain/dates';
 import { isOverdue } from '../../domain/smartLists';
 import { serializeLocation, type AppLocation } from '../../domain/view';
 import { InlineTitleEditor } from './InlineTitleEditor';
+import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
 
 interface TaskRowProps {
   task: TaskRead;
@@ -52,6 +53,51 @@ export function TaskRow({
     wasEditing.current = editing;
   }, [editing]);
 
+  // Not saved yet: the id is temporary and the API does not know it, so the
+  // task cannot be opened, renamed or completed until the server answers.
+  const unsaved = task.id.startsWith(OPTIMISTIC_ID_PREFIX);
+  const locked = busy || unsaved;
+  const content = (
+    <>
+      <span
+        className={`block text-sm leading-5 wrap-anywhere ${completed ? 'text-ink-faint line-through' : 'text-ink'}`}
+      >
+        {task.title}
+      </span>
+      {(task.due_date || task.priority > 0 || task.tags.length > 0) && (
+        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+          {task.due_date && (
+            <time
+              dateTime={task.due_time ? `${task.due_date}T${task.due_time}` : task.due_date}
+              className={overdue ? 'text-danger' : undefined}
+            >
+              {dateFormat.format(new Date(`${task.due_date}T00:00:00`))}
+              {task.due_time && `, ${task.due_time.slice(0, 5)}`}
+            </time>
+          )}
+          {task.priority > 0 && (
+            <span
+              className={
+                task.priority === 3
+                  ? 'text-danger'
+                  : task.priority === 2
+                    ? 'text-warning'
+                    : 'text-ink-muted'
+              }
+            >
+              {PRIORITY_LABELS[task.priority]}
+            </span>
+          )}
+          {task.tags.map((tag) => (
+            <span key={tag} className="max-w-full rounded bg-subtle px-1.5 py-0.5 wrap-anywhere">
+              #{tag}
+            </span>
+          ))}
+        </span>
+      )}
+    </>
+  );
+
   return (
     <li
       className={`flex items-start rounded-lg border ${selected ? 'border-accent-ink bg-accent-soft' : 'border-line bg-surface hover:bg-subtle'}`}
@@ -61,15 +107,19 @@ export function TaskRow({
           type="checkbox"
           checked={completed}
           // aria-disabled, not disabled: a disabled element loses keyboard focus.
-          aria-disabled={busy || undefined}
+          aria-disabled={locked || undefined}
           aria-label={completed ? TEXTS.reopenTask(task.title) : TEXTS.completeTask(task.title)}
           onChange={() => {
-            if (!busy) onToggle(task);
+            if (!locked) onToggle(task);
           }}
           className="size-4 cursor-pointer accent-accent aria-disabled:cursor-wait"
         />
       </label>
-      {editing ? (
+      {unsaved ? (
+        <div aria-busy="true" className="min-w-0 flex-1 py-3 pr-4 opacity-70">
+          {content}
+        </div>
+      ) : editing ? (
         <div className="min-w-0 flex-1 py-2 pr-4">
           <InlineTitleEditor
             task={task}
@@ -103,45 +153,7 @@ export function TaskRow({
           }}
           className="min-w-0 flex-1 rounded-lg py-3 pr-4"
         >
-          <span
-            className={`block text-sm leading-5 wrap-anywhere ${completed ? 'text-ink-faint line-through' : 'text-ink'}`}
-          >
-            {task.title}
-          </span>
-          {(task.due_date || task.priority > 0 || task.tags.length > 0) && (
-            <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-              {task.due_date && (
-                <time
-                  dateTime={task.due_time ? `${task.due_date}T${task.due_time}` : task.due_date}
-                  className={overdue ? 'text-danger' : undefined}
-                >
-                  {dateFormat.format(new Date(`${task.due_date}T00:00:00`))}
-                  {task.due_time && `, ${task.due_time.slice(0, 5)}`}
-                </time>
-              )}
-              {task.priority > 0 && (
-                <span
-                  className={
-                    task.priority === 3
-                      ? 'text-danger'
-                      : task.priority === 2
-                        ? 'text-warning'
-                        : 'text-ink-muted'
-                  }
-                >
-                  {PRIORITY_LABELS[task.priority]}
-                </span>
-              )}
-              {task.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="max-w-full rounded bg-subtle px-1.5 py-0.5 wrap-anywhere"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </span>
-          )}
+          {content}
         </a>
       )}
     </li>

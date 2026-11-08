@@ -76,7 +76,8 @@ test('today supplies the date, shows the task at once and frees the field', asyn
   const input = page.getByRole('textbox', { name: 'Новая задача' });
   await input.fill('Проверить отчёт');
   await input.press('Enter');
-  await expect(page.getByRole('main').getByRole('link', { name: /Проверить отчёт/ })).toBeVisible();
+  // Shown at once; it becomes a link once the server has saved it.
+  await expect(page.getByRole('main').getByText('Проверить отчёт')).toBeVisible();
   // Optimistic: the field is empty while the server still has not answered.
   await expect(input).toHaveValue('');
   await input.press('Enter'); // nothing to send: no second request

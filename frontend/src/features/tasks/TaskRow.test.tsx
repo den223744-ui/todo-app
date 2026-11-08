@@ -127,3 +127,38 @@ describe('TaskRow', () => {
     },
   );
 });
+
+describe('a task the server has not saved yet', () => {
+  it('cannot be opened, renamed or completed', async () => {
+    const onToggle = vi.fn();
+    const onOpen = vi.fn();
+    const onStartEdit = vi.fn();
+    render(
+      <ul>
+        <TaskRow
+          task={makeTask({ id: 'optimistic-1', title: 'Сохраняется' })}
+          now={now}
+          location={DEFAULT_LOCATION}
+          busy={false}
+          onToggle={onToggle}
+          onOpen={onOpen}
+          editing={false}
+          onStartEdit={onStartEdit}
+          onRename={vi.fn()}
+          onStopEdit={vi.fn()}
+        />
+      </ul>,
+    );
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByText('Сохраняется').closest('[aria-busy="true"]')).not.toBeNull();
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(checkbox);
+    await userEvent.dblClick(screen.getByText('Сохраняется'));
+
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(onStartEdit).not.toHaveBeenCalled();
+  });
+});
