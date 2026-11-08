@@ -22,6 +22,7 @@ import {
 } from '../../domain/taskCache';
 import { beginTaskMutation, endTaskMutation } from './pendingMutations';
 import { taskKeys } from './taskQueries';
+import { enqueueTaskWrite } from './writeQueue';
 
 export interface MutationDeps {
   api: ApiClient;
@@ -106,7 +107,7 @@ export function updateTaskMutation(
   return {
     mutationKey: taskKeys.mutation(),
     meta: { kind: 'update' },
-    mutationFn: ({ id, patch }) => deps.api.updateTask(id, patch),
+    mutationFn: ({ id, patch }) => enqueueTaskWrite(id, () => deps.api.updateTask(id, patch)),
     onMutate: async ({ id, patch }) => {
       await begin();
       const previous = read().find((task) => task.id === id);
@@ -137,7 +138,7 @@ export function deleteTaskMutation(
   return {
     mutationKey: taskKeys.mutation(),
     meta: { kind: 'delete' },
-    mutationFn: (id) => deps.api.deleteTask(id),
+    mutationFn: (id) => enqueueTaskWrite(id, () => deps.api.deleteTask(id)),
     onMutate: async (id) => {
       await begin();
       const current = queryClient.getQueryData<TaskRead[]>(taskKeys.list()) ?? [];
@@ -165,7 +166,7 @@ export function restoreTaskMutation(
   return {
     mutationKey: taskKeys.mutation(),
     meta: { kind: 'restore' },
-    mutationFn: ({ id }) => deps.api.restoreTask(id),
+    mutationFn: ({ id }) => enqueueTaskWrite(id, () => deps.api.restoreTask(id)),
     onMutate: async ({ tasks = [] }) => {
       await begin();
       const present = new Set(read().map((task) => task.id));
