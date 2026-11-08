@@ -1,5 +1,6 @@
 import type { TaskCreate } from '../api/schema';
 import { toLocalDateString } from './dates';
+import { TAGS_MAX_COUNT, TAG_MAX_LENGTH, TITLE_MAX_LENGTH, codePoints } from './limits';
 import {
   parseQuickAdd,
   toTaskCreate,
@@ -10,15 +11,6 @@ import {
 import type { View } from './view';
 
 export type QuickAddIssue = 'title-required' | 'title-too-long' | 'too-many-tags' | 'tag-too-long';
-
-// The API's limits (backend/app/schemas/task.py), checked before sending so the
-// user gets a specific hint instead of a generic "could not create" error.
-export const TITLE_MAX_LENGTH = 500;
-export const TAGS_MAX_COUNT = 20;
-export const TAG_MAX_LENGTH = 50;
-
-/** Python validates Unicode code points, not UTF-16 code units. */
-const codePoints = (text: string) => Array.from(text).length;
 
 export interface PreparedQuickAdd {
   parsed: QuickAddResult;

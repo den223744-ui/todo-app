@@ -1,5 +1,6 @@
 import type { SmartList } from '../domain/smartLists';
 import type { QuickAddIssue } from '../domain/quickAddInput';
+import type { EditIssue } from '../domain/taskEdit';
 
 /** All UI texts (AGENTS.md: Russian UI texts live in constants). */
 export const TEXTS = {
@@ -78,3 +79,42 @@ export const LIST_TITLES: Record<SmartList, string> = {
   overdue: 'Просроченные',
   completed: 'Выполненные',
 };
+
+/** Hints for edits that the API would reject. */
+export const EDIT_ISSUES: Record<EditIssue, string> = {
+  'title-required': 'Название не может быть пустым.',
+  'title-too-long': 'Название должно быть не длиннее 500 символов.',
+  'notes-too-long': 'Заметки должны быть не длиннее 10 000 символов.',
+  'tag-too-long': 'Тег должен быть не длиннее 50 символов.',
+  'too-many-tags': 'У задачи может быть не больше 20 тегов.',
+  'time-needs-date': 'Сначала выберите дату — время без даты не сохраняется.',
+};
+
+/** Task editing: inline title and the detail panel. */
+export const EDIT_TEXTS = {
+  editTitle: (title: string) => `Изменить название: ${title}`,
+  details: 'Детали задачи',
+  closeDetails: 'Закрыть детали',
+  notFound: 'Задача не найдена',
+  notFoundHint: 'Возможно, она удалена или открыта ссылка из другого браузера.',
+  title: 'Название',
+  notes: 'Заметки',
+  notesPlaceholder: 'Добавьте детали…',
+  dueDate: 'Дата',
+  dueTime: 'Время',
+  clearDate: 'Убрать дату',
+  priority: 'Приоритет',
+  priorityNone: 'Нет',
+  tags: 'Теги',
+  addTag: 'Добавить тег',
+  addTagPlaceholder: 'Новый тег',
+  removeTag: (tag: string) => `Убрать тег ${tag}`,
+  subtasks: 'Подзадачи',
+  addSubtask: 'Новая подзадача',
+  addSubtaskPlaceholder: 'Добавить подзадачу…',
+  subtaskTitle: (title: string) => `Название подзадачи: ${title}`,
+  deleteSubtask: (title: string) => `Удалить подзадачу: ${title}`,
+  deleteTask: 'Удалить задачу',
+  saveError: 'Не удалось сохранить изменение. Оно отменено.',
+  createdAt: (date: string) => `Создана ${date}`,
+} as const;
