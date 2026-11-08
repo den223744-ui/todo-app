@@ -45,23 +45,6 @@ export function TaskListContainer() {
           </button>
         </div>
       )}
-      {update.isError && (
-        <div
-          role="alert"
-          className="flex items-center gap-3 rounded-lg border border-line bg-surface p-4 text-sm"
-        >
-          <p className="flex-1 text-danger">{TEXTS.updateTaskError}</p>
-          <button
-            type="button"
-            onClick={() => {
-              update.reset();
-            }}
-            className="min-h-11 rounded-lg px-3 text-ink-muted hover:bg-subtle"
-          >
-            {TEXTS.dismissError}
-          </button>
-        </div>
-      )}
       {isPending ? (
         <TaskListSkeleton />
       ) : (

@@ -191,8 +191,7 @@ describe('TaskListContainer', () => {
       response.reject(new Error('offline'));
     });
     expect(await screen.findByRole('checkbox')).not.toBeChecked();
-    expect(screen.getByRole('alert')).toHaveTextContent(TEXTS.updateTaskError);
-    await userEvent.click(screen.getByRole('button', { name: TEXTS.dismissError }));
+    // The failure is reported by the app-wide toast (see Toaster tests), not inline.
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     queryClient.clear();
   });

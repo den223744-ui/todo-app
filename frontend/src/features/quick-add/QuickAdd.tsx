@@ -25,7 +25,8 @@ export function QuickAdd() {
   const [location] = useAppLocation();
   const now = useNow();
   const { data } = useTasks();
-  const create = useCreateTask();
+  // Errors are shown next to the field (with the text restored), not as a toast.
+  const create = useCreateTask({ silent: true });
   const prepared = prepareQuickAdd(value, location.view, now);
   const issue = value.trim() && prepared.issue ? QUICK_ADD_ISSUES[prepared.issue] : null;
 

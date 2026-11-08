@@ -21,7 +21,6 @@ export const TEXTS = {
   loadingTasks: 'Загружаем задачи…',
   loadTasksError: 'Не удалось загрузить задачи.',
   refreshTasksError: 'Не удалось обновить список. Показаны сохранённые данные.',
-  updateTaskError: 'Не удалось изменить задачу. Изменение отменено.',
   retry: 'Повторить',
   dismissError: 'Закрыть сообщение',
   searchEmpty: 'Ничего не найдено',

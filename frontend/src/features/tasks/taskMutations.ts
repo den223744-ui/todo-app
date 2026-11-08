@@ -28,6 +28,8 @@ export interface MutationDeps {
   queryClient: QueryClient;
   now?: () => Date;
   newId?: () => string;
+  /** The caller reports failures itself: no toast (quick add). */
+  silent?: boolean;
 }
 
 export const OPTIMISTIC_ID_PREFIX = 'optimistic-';
@@ -71,6 +73,7 @@ export function createTaskMutation(
   const newId = deps.newId ?? defaultNewId;
   return {
     mutationKey: taskKeys.mutation(),
+    meta: { kind: 'create', silent: deps.silent ?? false },
     mutationFn: (input) => deps.api.createTask(input),
     onMutate: async (input) => {
       await begin();
@@ -102,6 +105,7 @@ export function updateTaskMutation(
   const now = deps.now ?? defaultNow;
   return {
     mutationKey: taskKeys.mutation(),
+    meta: { kind: 'update' },
     mutationFn: ({ id, patch }) => deps.api.updateTask(id, patch),
     onMutate: async ({ id, patch }) => {
       await begin();
@@ -132,6 +136,7 @@ export function deleteTaskMutation(
   const { queryClient } = deps;
   return {
     mutationKey: taskKeys.mutation(),
+    meta: { kind: 'delete' },
     mutationFn: (id) => deps.api.deleteTask(id),
     onMutate: async (id) => {
       await begin();
@@ -159,6 +164,7 @@ export function restoreTaskMutation(
   const { begin, read, write, settle } = helpers(deps);
   return {
     mutationKey: taskKeys.mutation(),
+    meta: { kind: 'restore' },
     mutationFn: ({ id }) => deps.api.restoreTask(id),
     onMutate: async ({ tasks = [] }) => {
       await begin();

@@ -3,6 +3,7 @@ import { TaskDetailsContainer } from './features/details/TaskDetailsContainer';
 import { useAppLocation } from './features/navigation/useAppLocation';
 import { viewTitle } from './features/navigation/viewTitle';
 import { SearchField } from './features/search/SearchField';
+import { Toaster } from './features/toasts/Toaster';
 import { QuickAdd } from './features/quick-add/QuickAdd';
 import { SidebarContainer } from './features/sidebar/SidebarContainer';
 import { TaskListContainer } from './features/tasks/TaskListContainer';
@@ -20,6 +21,7 @@ export function App() {
         <QuickAdd />
         <TaskListContainer />
       </div>
+      <Toaster />
     </AppShell>
   );
 }
