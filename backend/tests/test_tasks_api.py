@@ -147,6 +147,10 @@ async def test_list_is_flat_with_subtasks(alice: AsyncClient) -> None:
         pytest.param({"title": "t", "due_date": "2026-02-31"}, id="impossible-date"),
         pytest.param({"title": "t", "workspace_id": str(uuid.uuid4())}, id="unknown-field"),
         pytest.param({"title": "t", "tags": "дом"}, id="tags-not-a-list"),
+        pytest.param(
+            {"title": "t", "due_date": "2026-11-09", "due_time": "18:00:00+03:00"},
+            id="time-with-offset",
+        ),
     ],
 )
 async def test_create_validation(alice: AsyncClient, payload: dict[str, Any]) -> None:
@@ -225,6 +229,7 @@ async def test_patch_clears_nullable_fields(alice: AsyncClient) -> None:
         pytest.param({"title": None}, id="null-title"),
         pytest.param({"priority": 7}, id="bad-priority"),
         pytest.param({"due_time": "10:00"}, id="time-without-date"),
+        pytest.param({"due_time": "10:00+03:00"}, id="time-with-offset"),
         pytest.param({"parent_id": None}, id="parent-not-updatable"),
         pytest.param({"completed_at": "2026-01-01T00:00:00Z"}, id="server-owned"),
     ],

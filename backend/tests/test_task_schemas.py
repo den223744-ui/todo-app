@@ -124,3 +124,18 @@ def test_update_rejects_null_for_required_fields(field: str) -> None:
 def test_update_rejects(payload: dict[str, Any]) -> None:
     with pytest.raises(ValidationError):
         TaskUpdate.model_validate(payload)
+
+
+@pytest.mark.parametrize("value", ["18:00:00+03:00", "18:00Z", "18:00:00-05:00"])
+def test_due_time_with_utc_offset_is_rejected(value: str) -> None:
+    with pytest.raises(ValidationError, match="without a UTC offset"):
+        TaskCreate.model_validate({"title": "t", "due_date": "2026-11-09", "due_time": value})
+    with pytest.raises(ValidationError, match="without a UTC offset"):
+        TaskUpdate.model_validate({"due_time": value})
+
+
+def test_due_time_is_local_wall_clock_time() -> None:
+    task = TaskCreate.model_validate({"title": "t", "due_date": "2026-11-09", "due_time": "18:00"})
+
+    assert task.due_time == time(18, 0)
+    assert task.due_time.tzinfo is None
