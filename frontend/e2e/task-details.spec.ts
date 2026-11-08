@@ -183,6 +183,15 @@ test('a 50-character tag wraps inside the panel on a phone', async ({ page }) =>
     expect(box).not.toBeNull();
     expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(375);
   }
+  // The boxes stay in place even when the text spills out of them, so measure
+  // the text itself: every rendered line of it must end inside the chip.
+  const textRight = await chip.evaluate((element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    return Math.max(...[...range.getClientRects()].map((rect) => rect.right));
+  });
+  const chipBox = await chip.boundingBox();
+  expect(textRight).toBeLessThanOrEqual((chipBox?.x ?? 0) + (chipBox?.width ?? 0) + 0.5);
 });
 
 test('the desktop sidebar scrolls to reach every tag', async ({ page }) => {
