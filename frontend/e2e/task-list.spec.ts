@@ -103,7 +103,7 @@ test('failed completion rolls back task and sidebar count', async ({ page }) => 
   );
   await page.goto('/');
   await page.getByRole('checkbox', { name: 'Выполнить: Отправить отчёт по проекту' }).click();
-  await expect(page.getByRole('alert')).toContainText('Изменение отменено');
+  await expect(page.getByRole('region', { name: 'Уведомления' })).toContainText('оно отменено');
   await expect(
     page.getByRole('checkbox', { name: 'Выполнить: Отправить отчёт по проекту' }),
   ).not.toBeChecked();

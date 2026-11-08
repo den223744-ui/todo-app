@@ -128,3 +128,35 @@ test('on a phone the panel covers the list and closes back to it', async ({ page
   await panel.getByRole('button', { name: 'Закрыть детали' }).click();
   await expect(panel).toBeHidden();
 });
+
+test('search filters the view and stays in the URL across a reload', async ({ page }) => {
+  await fakeServer(page, [
+    makeTask({ id: 'a', title: 'Купить хлеб', position: 1 }),
+    makeTask({ id: 'b', title: 'Позвонить маме', position: 2 }),
+  ]);
+  await page.goto('/?list=inbox');
+
+  await page.getByRole('searchbox', { name: 'Поиск по задачам' }).fill('купить ');
+  const main = page.getByRole('main');
+  await expect(main.getByRole('link', { name: /Купить хлеб/ })).toBeVisible();
+  await expect(main.getByRole('link', { name: /Позвонить маме/ })).toHaveCount(0);
+  await expect(page).toHaveURL(/q=/);
+
+  await page.reload();
+  await expect(page.getByRole('searchbox', { name: 'Поиск по задачам' })).toHaveValue('купить');
+  await expect(main.getByRole('link', { name: /Позвонить маме/ })).toHaveCount(0);
+});
+
+test('a failed delete puts the task back and shows a toast', async ({ page }) => {
+  await fakeServer(page, [makeTask({ id: 'p', title: 'Важная задача' })]);
+  await page.route('**/api/tasks/p', (route) =>
+    route.request().method() === 'DELETE' ? route.abort('failed') : route.fallback(),
+  );
+  await page.goto('/?list=inbox&task=p');
+
+  await page.getByRole('button', { name: 'Удалить задачу' }).click();
+
+  const toasts = page.getByRole('region', { name: 'Уведомления' });
+  await expect(toasts).toContainText('Нет связи с сервером');
+  await expect(page.getByRole('main').getByRole('link', { name: /Важная задача/ })).toBeVisible();
+});
