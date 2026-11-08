@@ -22,6 +22,7 @@ import {
   updateTaskMutation,
   type MutationDeps,
 } from './taskMutations';
+import { hasPendingTaskMutations } from './pendingMutations';
 import { taskKeys, tasksQueryOptions } from './taskQueries';
 
 const NOW = new Date('2026-11-08T12:00:00.000Z');
@@ -357,6 +358,51 @@ describe('concurrent mutations', () => {
     list();
     focusManager.setFocused(undefined);
     onlineManager.setOnline(true);
+  });
+
+  it('a mutation whose onMutate throws does not leave the counter stuck', async () => {
+    const listTasks = vi.fn(() => Promise.resolve([A]));
+    const deps = setup(fakeApi({ listTasks }), [A]);
+    const list = watchList(deps);
+    const broken = createTaskMutation({
+      ...deps,
+      newId: () => {
+        throw new Error('no id');
+      },
+    });
+    const observer = new MutationObserver(queryClient, broken);
+
+    await expect(observer.mutate({ title: 'x' })).rejects.toThrow('no id');
+    await flush();
+
+    expect(hasPendingTaskMutations(queryClient)).toBe(false);
+    expect(cachedIds()).toEqual(['a']);
+    expect(listTasks).toHaveBeenCalledTimes(1); // the settle refetch still ran
+    list();
+  });
+
+  it('a mutation paused offline stays pending and settles after reconnect', async () => {
+    const listTasks = vi.fn(() => Promise.resolve([{ ...A, title: 'new' }]));
+    const updateTask = vi.fn(() => Promise.resolve({ ...A, title: 'new' }));
+    const deps = setup(fakeApi({ listTasks, updateTask }), [A]);
+    const list = watchList(deps);
+    onlineManager.setOnline(false);
+    const observer = new MutationObserver(queryClient, updateTaskMutation(deps));
+
+    const done = observer.mutate({ id: 'a', patch: { title: 'new' } });
+    await flush();
+    expect(updateTask).not.toHaveBeenCalled(); // paused: no network
+    expect(hasPendingTaskMutations(queryClient)).toBe(true);
+    expect(cached()[0]?.title).toBe('new'); // the optimistic change is visible offline
+
+    onlineManager.setOnline(true);
+    await done;
+    await flush();
+
+    expect(updateTask).toHaveBeenCalledTimes(1);
+    expect(hasPendingTaskMutations(queryClient)).toBe(false);
+    expect(listTasks).toHaveBeenCalledTimes(1);
+    list();
   });
 
   it('background refetches run normally when nothing is pending', async () => {
