@@ -118,16 +118,21 @@ describe('через N дней', () => {
     ['через 365 дней', '2027-11-09'],
     ['через 366 дней', '2027-11-10'],
     ['через 1000 дней', '2029-08-05'],
+    // The last date the API accepts: 9999-12-31 is 2912130 days after 2026-11-09.
+    ['через 2912130 дней', '9999-12-31'],
   ])('%s -> %s', (phrase, expected) => {
     expect(dueDate(`задача ${phrase}`)).toBe(expected);
   });
 
-  it.each(['через 0 дней', 'через 000 дней', `через ${'9'.repeat(30)} дней`])(
-    '%s is not recognized',
-    (phrase) => {
-      expect(parse(phrase)).toMatchObject({ title: phrase, dueDate: null, tokens: [] });
-    },
-  );
+  it.each([
+    'через 0 дней',
+    'через 000 дней',
+    'через 2912131 дней', // 10000-01-01: beyond what the API stores
+    'через 3000000 дней',
+    `через ${'9'.repeat(30)} дней`,
+  ])('%s is not recognized', (phrase) => {
+    expect(parse(phrase)).toMatchObject({ title: phrase, dueDate: null, tokens: [] });
+  });
 });
 
 describe('дд.мм', () => {

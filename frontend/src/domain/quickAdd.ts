@@ -5,7 +5,7 @@
  * Grammar (SPEC.md), case-insensitive, whole words only:
  *   сегодня | завтра | послезавтра
  *   пн…вс | понедельник…воскресенье   (optionally "в"/"во" before: "в пятницу")
- *   через N дней                       (день / дня / дней, N ≥ 1)
+ *   через N дней                       (день / дня / дней, N ≥ 1, up to 9999-12-31)
  *   дд.мм                              (a past date means next year)
  *   в ЧЧ:ММ | в ЧЧ
  *   #тег
@@ -44,6 +44,9 @@ export interface QuickAddResult {
   /** Recognized parts, in input order. */
   tokens: QuickAddToken[];
 }
+
+// The API stores due dates as Python dates, which end at 9999-12-31.
+const LAST_API_DATE = new Date(9999, 11, 31);
 
 const RELATIVE_DAYS = { сегодня: 0, завтра: 1, послезавтра: 2 } as const;
 type RelativeWord = keyof typeof RELATIVE_DAYS;
@@ -172,10 +175,11 @@ function parseDate(groups: Record<string, string | undefined>, today: Date): Dat
     return addDays(today, ahead);
   }
   if (groups.inDays !== undefined) {
-    // "через" means the future: N >= 1. No upper limit beyond what a date can hold.
+    // "через" means the future: N >= 1. The only upper limit is the last date
+    // the API accepts (an invalid Date compares as NaN and fails too).
     const days = Number(groups.inDays);
     const date = addDays(today, days);
-    return days >= 1 && Number.isFinite(date.getTime()) ? date : null;
+    return days >= 1 && date.getTime() <= LAST_API_DATE.getTime() ? date : null;
   }
   return parseDayMonth(Number(groups.day), Number(groups.month), today);
 }
