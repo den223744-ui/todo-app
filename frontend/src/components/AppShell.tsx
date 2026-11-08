@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { TEXTS } from '../constants/texts';
 import { useUiStore } from '../store/uiStore';
+import { BrandLogo } from './BrandLogo';
 import { IconButton } from './IconButton';
 import { MobileDrawer } from './MobileDrawer';
 import { MenuIcon } from './icons/MenuIcon';
@@ -37,9 +38,7 @@ export function AppShell({ sidebar, details, children }: AppShellProps) {
           <IconButton label={TEXTS.openMenu} aria-expanded={drawerOpen} onClick={openDrawer}>
             <MenuIcon />
           </IconButton>
-          <span className="font-serif text-sm font-semibold tracking-[0.28em] uppercase">
-            {TEXTS.brand}
-          </span>
+          <BrandLogo className="text-base" />
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>

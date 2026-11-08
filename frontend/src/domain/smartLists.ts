@@ -12,7 +12,7 @@
  * date of `now`, passed in by the caller.
  */
 import type { TaskRead } from '../api/schema';
-import { canonicalTime, toLocalDateString } from './dates';
+import { addDays, canonicalTime, toLocalDateString } from './dates';
 import { compareByPosition } from './taskCache';
 
 export const SMART_LISTS = ['inbox', 'today', 'upcoming', 'overdue', 'completed'] as const;
@@ -90,6 +90,14 @@ export function selectToday(tasks: readonly TaskRead[], now: Date): TaskRead[] {
         (isOpen(task) || completedOn(task, today)),
     )
     .sort(compareByPosition);
+}
+
+/** Incomplete top-level tasks due tomorrow: the tail of the Today screen. By time, then order. */
+export function selectTomorrow(tasks: readonly TaskRead[], now: Date): TaskRead[] {
+  const tomorrow = toLocalDateString(addDays(now, 1));
+  return tasks
+    .filter((task) => isTopLevel(task) && isOpen(task) && task.due_date === tomorrow)
+    .sort(compareByDue);
 }
 
 /** Completed on this local date. */

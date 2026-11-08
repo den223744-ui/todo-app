@@ -104,7 +104,7 @@ export function TaskDetails({
                 setIssue(null);
               }
             }}
-            className={`w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-serif text-xl font-semibold hover:border-line focus:border-check ${
+            className={`w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-[22px] font-bold hover:border-line focus:border-check ${
               completed ? 'text-ink-faint line-through' : ''
             }`}
           />

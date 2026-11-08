@@ -58,6 +58,7 @@ describe('TaskListContainer', () => {
     expect(screen.getAllByRole('heading', { level: 2 }).map((node) => node.textContent)).toEqual([
       'Работа',
       'Без списка',
+      'Завтра',
     ]);
     const work = screen.getByRole('region', { name: 'Работа' });
     expect(within(work).getByText('Высокий приоритет')).toBeInTheDocument();
@@ -65,7 +66,10 @@ describe('TaskListContainer', () => {
     expect(work.querySelector('time')).toHaveAttribute('datetime', '2026-11-07T18:30:00');
     expect(work.querySelector('time')).toHaveTextContent('18:30');
     expect(work.querySelector('time')).toHaveClass('text-danger'); // overdue
-    expect(screen.queryByRole('link', { name: /future|child/ })).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Завтра' })).getByRole('link'),
+    ).toHaveTextContent('future');
+    expect(screen.queryByRole('link', { name: /child/ })).not.toBeInTheDocument();
   });
 
   it('renders upcoming dates in order with one heading per day', () => {

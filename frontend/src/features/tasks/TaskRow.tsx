@@ -30,15 +30,33 @@ const dateFormat = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'sh
 const PRIORITY_TONE: Readonly<Record<number, string>> = {
   1: 'text-ink-faint',
   2: 'text-warning',
-  3: 'text-accent',
+  3: 'text-accent-ink',
 };
 
-/** A small flame, coloured by priority; the label is for screen readers. */
+/**
+ * Priority as a hand-drawn exclamation mark: one, two or three strokes for
+ * low, medium and high. The label is for screen readers.
+ */
 function PriorityMark({ priority }: { priority: number }) {
+  const marks = Math.min(Math.max(priority, 1), 3);
   return (
     <span className={`inline-flex shrink-0 ${PRIORITY_TONE[priority] ?? ''}`}>
-      <svg className="size-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-        <path d="M8.6 1.5c.3 2-1 3-2 4.2C5.6 6.9 4.5 8.2 4.5 10a3.5 3.5 0 0 0 7 0c0-1.3-.6-2.3-1.2-3 0 1-.5 1.8-1.3 2 .8-2.6.2-5.6-.4-7.5Z" />
+      <svg
+        className="h-3.5"
+        style={{ width: `${String(4 + marks * 4)}px` }}
+        viewBox={`0 0 ${String(4 + marks * 4)} 16`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        {Array.from({ length: marks }, (_, index) => (
+          <g key={index} transform={`translate(${String(4 + index * 4)} 0)`}>
+            <path d="M0 2.4 0.2 9.6" />
+            <path d="M0.1 13.4v0.1" />
+          </g>
+        ))}
       </svg>
       <span className="sr-only">{PRIORITY_LABELS[priority]}</span>
     </span>

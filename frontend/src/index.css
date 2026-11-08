@@ -1,4 +1,4 @@
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/roboto-condensed';
 @import 'tailwindcss';
 
 /*
@@ -14,7 +14,7 @@
 :root {
   color-scheme: light;
   --canvas: #f9f4f1;
-  --sidebar: #f8f3f0;
+  --sidebar: #fffcfa; /* a touch lighter than the canvas */
   --surface: #fffdfb;
   --subtle: #f3ede9;
   --line: #ece4de;
@@ -67,7 +67,7 @@
   :root {
     color-scheme: dark;
     --canvas: #1a1715;
-    --sidebar: #1d1a18;
+    --sidebar: #26221f; /* a touch lighter than the canvas */
     --surface: #24201d;
     --subtle: #2e2926;
     --line: #3a3430;
@@ -107,9 +107,11 @@
 }
 
 @theme inline {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  /* Headings: a system serif (no extra font download), like the mockup. */
-  --font-serif: Georgia, 'Times New Roman', ui-serif, serif;
+  /* One family for everything; headings use its heavier weights (font-display). */
+  --font-sans:
+    'Roboto Condensed Variable', 'Roboto Condensed', ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    'Roboto Condensed Variable', 'Roboto Condensed', ui-sans-serif, system-ui, sans-serif;
 
   --color-canvas: var(--canvas);
   --color-sidebar: var(--sidebar);
@@ -132,10 +134,32 @@
   --shadow-soft: var(--shadow-soft);
 }
 
+/*
+ * The selected sidebar item: the tint sits at the edges and fades to clear
+ * towards the middle, instead of a flat fill.
+ */
+.nav-glow {
+  background: linear-gradient(
+    90deg,
+    var(--nav-active) 0%,
+    color-mix(in srgb, var(--nav-active) 35%, transparent) 30%,
+    transparent 50%,
+    color-mix(in srgb, var(--nav-active) 35%, transparent) 70%,
+    var(--nav-active) 100%
+  );
+}
+.nav-glow-hover:hover {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--nav-active) 70%, transparent) 0%,
+    transparent 50%,
+    color-mix(in srgb, var(--nav-active) 70%, transparent) 100%
+  );
+}
+
 @layer base {
   html {
     font-family: var(--font-sans);
-    font-feature-settings: 'cv11', 'ss01'; /* Inter: single-storey a, open digits */
     -webkit-font-smoothing: antialiased;
   }
 

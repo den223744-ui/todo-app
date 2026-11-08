@@ -36,9 +36,7 @@ export function SidebarLink({
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={`flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] ${
-        active
-          ? 'bg-nav-active font-medium text-ink'
-          : 'text-ink-muted hover:bg-subtle hover:text-ink'
+        active ? 'nav-glow font-medium text-ink' : 'nav-glow-hover text-ink-muted hover:text-ink'
       }`}
     >
       {icon}

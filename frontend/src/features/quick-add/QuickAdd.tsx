@@ -2,10 +2,13 @@ import { useId, useRef, useState } from 'react';
 
 import { QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
 import { prepareQuickAdd } from '../../domain/quickAddInput';
+import { compareLists } from '../../domain/taskLists';
+import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useCreateTask, useTasks } from '../tasks/useTasks';
 import { useNow } from '../time/useNow';
 import { HighlightedInput } from './HighlightedInput';
+import { ListPicker } from './ListPicker';
 
 /**
  * Natural-language task input.
@@ -26,6 +29,9 @@ export function QuickAdd() {
   const now = useNow();
   const { data } = useTasks();
   const create = useCreateTask();
+  const { data: lists } = useLists();
+  // The list picked with the folder button; it wins over the open list.
+  const [listId, setListId] = useState('');
   const prepared = prepareQuickAdd(value, location.view, now);
   const issue = value.trim() && prepared.issue ? QUICK_ADD_ISSUES[prepared.issue] : null;
 
@@ -40,13 +46,14 @@ export function QuickAdd() {
         // Re-evaluate the actual submit time, including a tab left open overnight.
         const { task } = prepareQuickAdd(draft, location.view, new Date());
         if (!task) return;
+        const target = listId ? { ...task, list_id: listId } : task;
         setValue('');
         setAdded(false);
         // Submitted with the button: put the caret back for the next task.
         if (event.currentTarget.contains(document.activeElement)) inputRef.current?.focus();
         // mutateAsync, not mutate: mutate's per-call callbacks only fire for the
         // latest call, so a failure of an earlier, still running create would be lost.
-        create.mutateAsync(task).then(
+        create.mutateAsync(target).then(
           () => {
             setAdded(true);
           },
@@ -74,6 +81,11 @@ export function QuickAdd() {
           onCompositionChange={(composing) => {
             composingRef.current = composing;
           }}
+        />
+        <ListPicker
+          lists={[...(lists ?? [])].sort(compareLists)}
+          value={lists?.some((list) => list.id === listId) ? listId : ''}
+          onChange={setListId}
         />
         <button
           type="submit"

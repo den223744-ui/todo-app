@@ -6,10 +6,10 @@ import { countLists, countTags, type SmartList } from '../../domain/smartLists';
 import { compareLists, countByList } from '../../domain/taskLists';
 import { sameView, serializeLocation, type AppLocation, type View } from '../../domain/view';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+import { BrandLogo } from '../../components/BrandLogo';
 import { ListFolderIcon } from './ListFolderIcon';
 import { NewListForm } from './NewListForm';
 import { SidebarLink } from './SidebarLink';
-import { SidebarMountains } from './SidebarMountains';
 import { SmartListIcon } from './SmartListIcon';
 
 /** Today first, as in the mockup. */
@@ -56,9 +56,7 @@ export function Sidebar({
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex flex-col gap-7 px-4 pt-6 pb-4">
-        <span className="px-2.5 font-serif text-[15px] font-semibold tracking-[0.28em] text-ink uppercase">
-          {TEXTS.brand}
-        </span>
+        <BrandLogo className="self-start px-2.5 text-lg" />
 
         <nav aria-label={TEXTS.smartLists}>
           <ul className="flex flex-col gap-1">
@@ -135,7 +133,6 @@ export function Sidebar({
           )}
         </nav>
       </div>
-      <SidebarMountains />
     </div>
   );
 }

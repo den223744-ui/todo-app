@@ -22,6 +22,7 @@ describe('TodayStats', () => {
           }),
           makeTask({ id: 'sub', parent_id: 'today', completed_at: '2026-11-09T08:00:00Z' }),
           makeTask({ id: 'later', due_date: '2026-11-20', priority: 3 }),
+          makeTask({ id: 'tomorrow', due_date: '2026-11-10' }),
         ]}
       />,
     );
@@ -31,6 +32,7 @@ describe('TodayStats', () => {
     expect(within(region).getByText('на сегодня').previousSibling).toHaveTextContent('2');
     expect(within(region).getByText('просрочено').previousSibling).toHaveTextContent('1');
     expect(within(region).getByText('высокий приоритет').previousSibling).toHaveTextContent('1');
+    expect(within(region).getByText('на завтра').previousSibling).toHaveTextContent('1');
   });
 
   it('shows an empty ring for an empty day', () => {

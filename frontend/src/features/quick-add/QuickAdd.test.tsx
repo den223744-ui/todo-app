@@ -9,6 +9,7 @@ import { createQueryClient } from '../../api/queryClient';
 import type { TaskRead } from '../../api/schema';
 import { App } from '../../App';
 import { QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
+import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
 import { navigateTo } from '../navigation/useAppLocation';
@@ -93,6 +94,28 @@ describe('QuickAdd', () => {
     });
     expect(input).toHaveFocus();
     expect(screen.getByRole('status')).toHaveTextContent(TEXTS.quickAddSuccess);
+    queryClient.clear();
+  });
+
+  it('puts the task into the list picked with the folder button', async () => {
+    const created = makeTask({ id: 't1', title: 'Отчёт', list_id: 'work' });
+    const request = vi.spyOn(api, 'createTask').mockResolvedValue(created);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
+    const { queryClient } = renderWithClient(
+      <QuickAdd />,
+      [],
+      [makeList({ id: 'work', name: 'Работа' }), makeList({ id: 'optimistic-9', name: 'Ещё нет' })],
+    );
+    const picker = screen.getByRole('combobox', { name: TEXTS.quickAddList });
+    expect(screen.getByRole('option', { name: 'Ещё нет' })).toBeDisabled();
+
+    await userEvent.selectOptions(picker, 'work');
+    await userEvent.type(screen.getByRole('textbox'), 'Отчёт{Enter}');
+
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledOnce();
+    });
+    expect(request.mock.calls[0]?.[0]).toMatchObject({ title: 'Отчёт', list_id: 'work' });
     queryClient.clear();
   });
 

@@ -14,6 +14,7 @@ import {
   selectList,
   selectTag,
   selectToday,
+  selectTomorrow,
 } from './smartLists';
 
 const NOW = new Date(2026, 10, 9, 10, 30); // Monday, 9 Nov 2026, local time
@@ -150,6 +151,22 @@ describe('selectToday', () => {
     });
 
     expect(ids(selectToday([doneToday, undatedDoneToday, done, subtask], NOW))).toEqual(['d']);
+  });
+});
+
+describe('selectTomorrow', () => {
+  it('open top-level tasks due tomorrow, by time (untimed last)', () => {
+    const doneTomorrow = makeTask({
+      id: 'done-tomorrow',
+      due_date: '2026-11-10',
+      completed_at: '2026-11-09T08:00:00Z',
+    });
+    const subTomorrow = makeTask({ id: 'sub-t', parent_id: 'inbox', due_date: '2026-11-10' });
+
+    expect(ids(selectTomorrow([...ALL, doneTomorrow, subTomorrow], NOW))).toEqual([
+      'tomorrow-9',
+      'tomorrow',
+    ]);
   });
 });
 

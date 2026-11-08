@@ -5,7 +5,9 @@ import type { EditIssue } from '../domain/taskEdit';
 /** All UI texts (AGENTS.md: Russian UI texts live in constants). */
 export const TEXTS = {
   appTitle: 'Задачи',
-  brand: 'Дела',
+  brand: 'TOOD',
+  quickAddList: 'Список для новой задачи',
+  quickAddNoList: 'Без списка',
   favorites: 'Избранное',
   newList: 'Новый список',
   newListName: 'Название списка',
@@ -34,6 +36,7 @@ export const TEXTS = {
   listEmptyHint: 'Добавьте задачу — она попадёт в этот список.',
   listFallbackTitle: 'Список',
   noList: 'Без списка',
+  tomorrow: 'Завтра',
   taskCount: (count: number) => {
     const ten = count % 10;
     const hundred = count % 100;
@@ -161,14 +164,14 @@ export const STATS_TEXTS = {
   done: (done: number, total: number) => `${String(done)} из ${String(total)}`,
   doneHint: 'выполнено',
   dueToday: 'на сегодня',
+  dueTomorrow: 'на завтра',
   overdue: 'просрочено',
   highPriority: 'высокий приоритет',
 } as const;
 
-/** Greeting above the date, by the local hour. */
+/** Greeting above the date, by the local hour: morning 5–11, day 12–17, evening otherwise. */
 export function greeting(hour: number): string {
   if (hour >= 5 && hour < 12) return 'Доброе утро';
   if (hour >= 12 && hour < 18) return 'Добрый день';
-  if (hour >= 18 && hour < 23) return 'Добрый вечер';
-  return 'Доброй ночи';
+  return 'Добрый вечер';
 }

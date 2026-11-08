@@ -48,7 +48,7 @@ export function App() {
             </p>
             <SearchField />
           </div>
-          <h1 className="mt-1 font-serif text-[32px] leading-tight font-semibold tracking-tight text-ink first-letter:uppercase md:text-[38px]">
+          <h1 className="mt-1 font-display text-[34px] leading-tight font-extrabold tracking-tight text-ink first-letter:uppercase md:text-[42px]">
             {isToday ? (
               <>
                 <span className="sr-only">{title}, </span>

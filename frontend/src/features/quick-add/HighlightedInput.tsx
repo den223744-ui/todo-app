@@ -46,7 +46,7 @@ export function HighlightedInput({
   }, [syncScroll]);
 
   return (
-    <div className="quick-add-field relative min-w-0 flex-1 rounded-xl border border-line bg-surface shadow-soft focus-within:border-check">
+    <div className="quick-add-field relative min-w-0 flex-1 rounded-xl border border-line bg-surface shadow-soft focus-within:border-check focus-within:ring-2 focus-within:ring-check/25">
       <div
         ref={mirrorRef}
         aria-hidden="true"
@@ -78,7 +78,7 @@ export function HighlightedInput({
         autoComplete="off"
         spellCheck={false}
         enterKeyHint="done"
-        className="quick-add-native relative block w-full min-w-0 rounded-lg bg-transparent px-3 py-3 text-base leading-6 text-transparent caret-ink placeholder:text-ink-faint selection:bg-accent-soft selection:text-ink md:text-sm"
+        className="quick-add-native relative block w-full min-w-0 rounded-lg bg-transparent px-3 py-3 outline-none text-base leading-6 text-transparent caret-ink placeholder:text-ink-faint selection:bg-accent-soft selection:text-ink md:text-sm"
         onChange={(event) => {
           onChange(event.currentTarget.value);
         }}

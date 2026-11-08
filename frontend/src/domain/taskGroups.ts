@@ -1,6 +1,6 @@
 import type { TaskListRead, TaskRead } from '../api/schema';
 import { searchTasks } from './search';
-import { groupByDueDate, selectList, selectTag, selectToday } from './smartLists';
+import { groupByDueDate, selectList, selectTag, selectToday, selectTomorrow } from './smartLists';
 import { groupByList, selectInList } from './taskLists';
 import type { AppLocation } from './view';
 
@@ -20,11 +20,16 @@ export function selectTaskGroups(
 ): TaskGroup[] {
   const matching = searchTasks(tasks, query);
   if (view.kind === 'list' && view.list === 'today') {
-    return groupByList(selectToday(matching, now), lists).map(({ list, tasks: grouped }) => ({
-      key: list ? `list:${list.id}` : 'list:none',
-      tasks: grouped,
-      list,
-    }));
+    // Today's tasks by list, then tomorrow's as one group at the very bottom.
+    const today: TaskGroup[] = groupByList(selectToday(matching, now), lists).map(
+      ({ list, tasks: grouped }) => ({
+        key: list ? `list:${list.id}` : 'list:none',
+        tasks: grouped,
+        list,
+      }),
+    );
+    const tomorrow = selectTomorrow(matching, now);
+    return tomorrow.length > 0 ? [...today, { key: 'tomorrow', tasks: tomorrow }] : today;
   }
   const selected =
     view.kind === 'tag'

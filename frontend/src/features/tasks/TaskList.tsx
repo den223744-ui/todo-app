@@ -83,13 +83,15 @@ export function TaskList({
             ? (group.list?.name ?? TEXTS.noList)
             : group.key === 'all'
               ? null
-              : dayFormat.format(new Date(`${group.key}T00:00:00`));
+              : group.key === 'tomorrow'
+                ? TEXTS.tomorrow
+                : dayFormat.format(new Date(`${group.key}T00:00:00`));
         return (
           <section key={group.key} aria-label={title ?? TEXTS.taskList}>
             {title && (
               <div className="mb-3 flex items-center gap-3">
                 <GroupBadge list={group.list} />
-                <h2 className="font-serif text-xl font-semibold tracking-tight text-ink first-letter:uppercase">
+                <h2 className="font-display text-[22px] font-bold tracking-tight text-ink first-letter:uppercase">
                   {title}
                 </h2>
                 <span className="text-xs text-ink-faint">

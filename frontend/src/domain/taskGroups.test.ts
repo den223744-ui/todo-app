@@ -25,7 +25,7 @@ const select = (view: View, query = '') =>
   selectTaskGroups(tasks, [home, work], { ...DEFAULT_LOCATION, view, query }, now);
 
 describe('selectTaskGroups', () => {
-  it('groups today by list in list order, loose tasks last, with the completions of today', () => {
+  it('groups today by list, loose tasks next, tomorrow last, with the completions of today', () => {
     expect(
       select({ kind: 'list', list: 'today' }).map(({ key, list, tasks: grouped }) => [
         key,
@@ -36,6 +36,8 @@ describe('selectTaskGroups', () => {
       ['list:work', 'Работа', ['today']],
       ['list:home', 'Дом', ['done-today', 'late']],
       ['list:none', null, ['loose']],
+      // Tomorrow's tasks last, as one group, by time.
+      ['tomorrow', null, ['future-a', 'future-c']],
     ]);
   });
 
