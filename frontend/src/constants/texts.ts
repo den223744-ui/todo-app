@@ -9,8 +9,45 @@ export const TEXTS = {
   smartLists: 'Списки',
   tags: 'Теги',
   tagsEmpty: 'Добавьте к задаче #тег — он появится здесь.',
+  taskList: 'Список задач',
+  loadingTasks: 'Загружаем задачи…',
+  loadTasksError: 'Не удалось загрузить задачи.',
+  refreshTasksError: 'Не удалось обновить список. Показаны сохранённые данные.',
+  updateTaskError: 'Не удалось изменить задачу. Изменение отменено.',
+  retry: 'Повторить',
+  dismissError: 'Закрыть сообщение',
+  searchEmpty: 'Ничего не найдено',
+  searchEmptyHint: 'Попробуйте другой запрос или выберите другой список.',
+  tagEmpty: 'В этом теге пока нет задач',
+  tagEmptyHint: 'Здесь появятся невыполненные задачи с этим тегом.',
+  completeTask: (title: string) => `Выполнить: ${title}`,
+  reopenTask: (title: string) => `Вернуть в работу: ${title}`,
+  taskTag: (tag: string) => `Тег: ${tag}`,
   taskCount: (count: number) => `${String(count)} ${plural(count, 'задача', 'задачи', 'задач')}`,
 } as const;
+
+export const PRIORITY_LABELS: Readonly<Record<number, string>> = {
+  1: 'Низкий приоритет',
+  2: 'Средний приоритет',
+  3: 'Высокий приоритет',
+};
+
+export const EMPTY_LIST_TEXTS: Record<SmartList, { title: string; hint: string }> = {
+  inbox: { title: 'Входящие пусты', hint: 'Здесь появятся задачи без даты.' },
+  today: {
+    title: 'На сегодня задач нет',
+    hint: 'Задачи на сегодня и просроченные появятся здесь.',
+  },
+  upcoming: {
+    title: 'Пока ничего не запланировано',
+    hint: 'Здесь появятся задачи на будущие дни.',
+  },
+  overdue: { title: 'Просроченных задач нет', hint: 'Все сроки под контролем.' },
+  completed: {
+    title: 'Выполненных задач пока нет',
+    hint: 'Отмечайте готовые задачи — они появятся здесь.',
+  },
+};
 
 /** Russian plural form: 1 задача, 2 задачи, 5 задач, 21 задача, 11 задач. */
 export function plural(count: number, one: string, few: string, many: string): string {
