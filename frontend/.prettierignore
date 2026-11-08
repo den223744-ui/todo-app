@@ -4,3 +4,5 @@ playwright-report
 test-results
 package-lock.json
 .vite
+openapi.json
+src/api/schema.ts

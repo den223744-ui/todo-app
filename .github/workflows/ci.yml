@@ -71,6 +71,29 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  api-contract:
+    name: API contract (generated types up to date)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run gen:api
+        working-directory: frontend
+      - name: Committed openapi.json and schema.ts match the backend
+        run: |
+          git diff --exit-code -- frontend/openapi.json frontend/src/api/schema.ts \
+            || { echo "::error::API types are stale. Run 'npm run gen:api' in frontend/ and commit."; exit 1; }
+
   e2e:
     name: E2E (playwright)
     runs-on: ubuntu-latest
