@@ -18,6 +18,7 @@ TASKS = "/api/tasks"
 READ_FIELDS = {
     "id",
     "parent_id",
+    "list_id",
     "title",
     "notes",
     "priority",
@@ -113,6 +114,7 @@ async def test_create_returns_the_task(alice: AsyncClient) -> None:
     assert task["tags"] == ["дом"]
     assert task["position"] == 1.0
     assert task["parent_id"] is None
+    assert task["list_id"] is None
     assert task["completed_at"] is None
     assert task["created_at"].endswith("Z") or task["created_at"].endswith("+00:00")
 

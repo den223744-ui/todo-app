@@ -32,6 +32,11 @@ class Task(Base):
     parent_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="CASCADE"), index=True
     )
+    # The user's list; only top-level tasks have one (subtasks follow their
+    # parent). Deleting the list leaves its tasks without a list.
+    list_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("task_lists.id", ondelete="SET NULL"), index=True
+    )
     title: Mapped[str] = mapped_column(String(TITLE_MAX_LENGTH))
     notes: Mapped[str | None] = mapped_column(Text)
     priority: Mapped[int] = mapped_column(default=PRIORITY_MIN)

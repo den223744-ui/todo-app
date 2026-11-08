@@ -72,6 +72,8 @@ class TaskCreate(TaskInput):
     due_time: LocalTime | None = None
     tags: Tags = Field(default_factory=list)
     parent_id: uuid.UUID | None = None
+    # Top-level tasks only: a subtask follows its parent's list.
+    list_id: uuid.UUID | None = None
     # Omitted: the task goes to the end of its list.
     position: Position | None = None
 
@@ -104,9 +106,9 @@ def _document_non_nullable_fields(schema: dict[str, Any]) -> None:
 class TaskUpdate(TaskInput):
     """Partial update: only the fields present in the request are applied.
 
-    ``null`` clears notes, due_date and due_time; for any other field it is an
-    error. Rules that depend on the stored task (due_time needs due_date) are
-    checked by the service.
+    ``null`` clears notes, due_date, due_time and list_id; for any other field
+    it is an error. Rules that depend on the stored task (due_time needs
+    due_date, only top-level tasks have a list) are checked by the service.
     """
 
     model_config = ConfigDict(extra="forbid", json_schema_extra=_document_non_nullable_fields)
@@ -117,6 +119,8 @@ class TaskUpdate(TaskInput):
     due_date: date | None = None
     due_time: LocalTime | None = None
     tags: Tags | None = None
+    # null takes the task out of its list.
+    list_id: uuid.UUID | None = None
     position: Position | None = None
     completed: bool | None = None
 
@@ -137,6 +141,7 @@ class TaskRead(BaseModel):
 
     id: uuid.UUID
     parent_id: uuid.UUID | None
+    list_id: uuid.UUID | None
     title: str
     notes: str | None
     priority: int
