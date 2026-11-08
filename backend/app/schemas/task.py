@@ -14,7 +14,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.models.task import PRIORITY_MAX, PRIORITY_MIN, TITLE_MAX_LENGTH
+from app.models.task import DURATION_MAX_MINUTES, PRIORITY_MAX, PRIORITY_MIN, TITLE_MAX_LENGTH
 
 NOTES_MAX_LENGTH = 10_000
 TAGS_MAX_COUNT = 20
@@ -41,6 +41,7 @@ Title = Annotated[
 ]
 Notes = Annotated[str, StringConstraints(max_length=NOTES_MAX_LENGTH)]
 Priority = Annotated[int, Field(ge=PRIORITY_MIN, le=PRIORITY_MAX)]
+Duration = Annotated[int, Field(ge=1, le=DURATION_MAX_MINUTES)]
 Tags = Annotated[list[str], AfterValidator(normalize_tags)]
 # Finite only: NaN or infinity would break ordering.
 Position = Annotated[float, Field(allow_inf_nan=False)]
@@ -70,6 +71,7 @@ class TaskCreate(TaskInput):
     priority: Priority = PRIORITY_MIN
     due_date: date | None = None
     due_time: LocalTime | None = None
+    duration_minutes: Duration | None = None
     tags: Tags = Field(default_factory=list)
     parent_id: uuid.UUID | None = None
     # Top-level tasks only: a subtask follows its parent's list.
@@ -106,7 +108,7 @@ def _document_non_nullable_fields(schema: dict[str, Any]) -> None:
 class TaskUpdate(TaskInput):
     """Partial update: only the fields present in the request are applied.
 
-    ``null`` clears notes, due_date, due_time and list_id; for any other field
+    ``null`` clears notes, due_date, due_time, duration_minutes and list_id; for any other field
     it is an error. Rules that depend on the stored task (due_time needs
     due_date, only top-level tasks have a list) are checked by the service.
     """
@@ -118,6 +120,8 @@ class TaskUpdate(TaskInput):
     priority: Priority | None = None
     due_date: date | None = None
     due_time: LocalTime | None = None
+    # null clears the duration.
+    duration_minutes: Duration | None = None
     tags: Tags | None = None
     # null takes the task out of its list.
     list_id: uuid.UUID | None = None
@@ -147,6 +151,7 @@ class TaskRead(BaseModel):
     priority: int
     due_date: date | None
     due_time: time | None
+    duration_minutes: int | None
     tags: list[str]
     position: float
     completed_at: datetime | None

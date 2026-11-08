@@ -24,6 +24,7 @@ READ_FIELDS = {
     "priority",
     "due_date",
     "due_time",
+    "duration_minutes",
     "tags",
     "position",
     "completed_at",
@@ -149,6 +150,8 @@ async def test_list_is_flat_with_subtasks(alice: AsyncClient) -> None:
         pytest.param({"title": "t", "due_date": "2026-02-31"}, id="impossible-date"),
         pytest.param({"title": "t", "workspace_id": str(uuid.uuid4())}, id="unknown-field"),
         pytest.param({"title": "t", "tags": "дом"}, id="tags-not-a-list"),
+        pytest.param({"title": "t", "duration_minutes": 0}, id="zero-duration"),
+        pytest.param({"title": "t", "duration_minutes": 1441}, id="duration-over-a-day"),
         pytest.param(
             {"title": "t", "due_date": "2026-11-09", "due_time": "18:00:00+03:00"},
             id="time-with-offset",
@@ -225,11 +228,23 @@ async def test_patch_clears_nullable_fields(alice: AsyncClient) -> None:
     assert (updated["notes"], updated["due_date"], updated["due_time"]) == (None, None, None)
 
 
+async def test_duration_is_set_changed_and_cleared(alice: AsyncClient) -> None:
+    task = await create(alice, duration_minutes=90)
+    assert task["duration_minutes"] == 90
+    assert (await create(alice))["duration_minutes"] is None
+
+    changed = await alice.patch(f"{TASKS}/{task['id']}", json={"duration_minutes": 30})
+    assert changed.json()["duration_minutes"] == 30
+    cleared = await alice.patch(f"{TASKS}/{task['id']}", json={"duration_minutes": None})
+    assert cleared.json()["duration_minutes"] is None
+
+
 @pytest.mark.parametrize(
     "payload",
     [
         pytest.param({"title": None}, id="null-title"),
         pytest.param({"priority": 7}, id="bad-priority"),
+        pytest.param({"duration_minutes": -5}, id="negative-duration"),
         pytest.param({"due_time": "10:00"}, id="time-without-date"),
         pytest.param({"due_time": "10:00+03:00"}, id="time-with-offset"),
         pytest.param({"parent_id": None}, id="parent-not-updatable"),

@@ -76,7 +76,11 @@ def test_inputs_reject_unknown_fields(schema: dict[str, Any]) -> None:
 @pytest.mark.parametrize(
     ("name", "model", "expected_nullable"),
     [
-        ("TaskUpdate", TaskUpdate, {"notes", "due_date", "due_time", "list_id"}),
+        (
+            "TaskUpdate",
+            TaskUpdate,
+            {"notes", "due_date", "due_time", "duration_minutes", "list_id"},
+        ),
         ("TaskListUpdate", TaskListUpdate, set()),
     ],
 )

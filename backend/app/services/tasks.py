@@ -125,6 +125,7 @@ async def create_task(
         priority=data.priority,
         due_date=data.due_date,
         due_time=data.due_time,
+        duration_minutes=data.duration_minutes,
         tags=data.tags,
         position=position,
         created_at=now,

@@ -11,6 +11,7 @@ from app.models.base import Base, UTCDateTime
 TITLE_MAX_LENGTH = 500
 PRIORITY_MIN = 0
 PRIORITY_MAX = 3
+DURATION_MAX_MINUTES = 24 * 60
 
 
 class Task(Base):
@@ -21,6 +22,10 @@ class Task(Base):
         ),
         CheckConstraint(f"length(title) BETWEEN 1 AND {TITLE_MAX_LENGTH}", name="title_length"),
         CheckConstraint("due_time IS NULL OR due_date IS NOT NULL", name="due_time_needs_date"),
+        CheckConstraint(
+            f"duration_minutes IS NULL OR duration_minutes BETWEEN 1 AND {DURATION_MAX_MINUTES}",
+            name="duration_range",
+        ),
         CheckConstraint("parent_id IS NULL OR parent_id != id", name="not_own_parent"),
         # The main read path: all live tasks of one workspace.
         Index("ix_tasks_workspace_id_deleted_at", "workspace_id", "deleted_at"),
@@ -42,6 +47,8 @@ class Task(Base):
     priority: Mapped[int] = mapped_column(default=PRIORITY_MIN)
     due_date: Mapped[date | None]
     due_time: Mapped[time | None]
+    # How long the task takes, for the day timeline; None = not planned.
+    duration_minutes: Mapped[int | None]
     # A JSON list instead of a many-to-many table: see README, section on trade-offs.
     # MutableList makes in-place edits (append, remove) mark the row dirty;
     # plain JSON only notices when the whole list is reassigned.
