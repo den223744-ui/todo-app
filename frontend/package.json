@@ -15,6 +15,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "gen:api": "npm run gen:api:spec && openapi-typescript openapi.json --root-types --root-types-no-schema-prefix --default-non-nullable false -o src/api/schema.ts",

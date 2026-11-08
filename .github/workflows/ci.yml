@@ -68,7 +68,8 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm run typecheck
-      - run: npm test
+      # Unit tests with the 100% coverage gate for src/domain.
+      - run: npm run test:coverage
       - run: npm run build
 
   api-contract:
