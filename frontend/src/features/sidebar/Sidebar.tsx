@@ -1,88 +1,141 @@
-import type { TaskRead } from '../../api/schema';
+import type { ReactNode } from 'react';
+
+import type { TaskListRead, TaskRead } from '../../api/schema';
 import { LIST_TITLES, TEXTS } from '../../constants/texts';
-import { SMART_LISTS, countLists, countTags } from '../../domain/smartLists';
+import { countLists, countTags, type SmartList } from '../../domain/smartLists';
+import { compareLists, countByList } from '../../domain/taskLists';
 import { sameView, serializeLocation, type AppLocation, type View } from '../../domain/view';
+import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+import { ListFolderIcon } from './ListFolderIcon';
+import { NewListForm } from './NewListForm';
 import { SidebarLink } from './SidebarLink';
+import { SidebarMountains } from './SidebarMountains';
 import { SmartListIcon } from './SmartListIcon';
+
+/** Today first, as in the mockup. */
+const NAV_ORDER: readonly SmartList[] = ['today', 'inbox', 'upcoming', 'overdue', 'completed'];
 
 interface SidebarProps {
   /** Undefined while the list is loading or failed: counts are hidden then. */
   tasks: readonly TaskRead[] | undefined;
+  lists?: readonly TaskListRead[] | undefined;
   now: Date;
   location: AppLocation;
   onNavigate: (view: View) => void;
+  onCreateList?: (name: string) => void;
 }
 
-export function Sidebar({ tasks, now, location, onNavigate }: SidebarProps) {
+export function Sidebar({
+  tasks,
+  lists = [],
+  now,
+  location,
+  onNavigate,
+  onCreateList,
+}: SidebarProps) {
   const listCounts = tasks ? countLists(tasks, now) : undefined;
   const tagCounts = tasks ? countTags(tasks) : [];
+  const perList = tasks ? countByList(tasks) : undefined;
   // Links keep the search; switching the view closes the open task.
   const hrefFor = (view: View) =>
     serializeLocation({ view, query: location.query, taskId: null }) || '/';
+  const link = (view: View, icon: ReactNode, label: string, count?: number) => (
+    <SidebarLink
+      href={hrefFor(view)}
+      active={sameView(view, location.view)}
+      onNavigate={() => {
+        onNavigate(view);
+      }}
+      icon={icon}
+      label={label}
+      count={count}
+      urgent={view.kind === 'list' && view.list === 'overdue'}
+    />
+  );
 
   return (
-    <div className="flex flex-col gap-6 px-3 py-4">
-      <span className="px-2.5 text-sm font-semibold">{TEXTS.appTitle}</span>
+    <div className="flex min-h-full flex-col">
+      <div className="flex flex-col gap-7 px-4 pt-6 pb-4">
+        <span className="px-2.5 font-serif text-[15px] font-semibold tracking-[0.28em] text-ink uppercase">
+          {TEXTS.brand}
+        </span>
 
-      <nav aria-label={TEXTS.smartLists}>
-        <ul className="flex flex-col gap-0.5">
-          {SMART_LISTS.map((list) => {
-            const view: View = { kind: 'list', list };
-            return (
+        <nav aria-label={TEXTS.smartLists}>
+          <ul className="flex flex-col gap-1">
+            {NAV_ORDER.map((list) => (
               <li key={list}>
-                <SidebarLink
-                  href={hrefFor(view)}
-                  active={sameView(view, location.view)}
-                  onNavigate={() => {
-                    onNavigate(view);
-                  }}
-                  icon={<SmartListIcon list={list} />}
-                  label={LIST_TITLES[list]}
+                {link(
+                  { kind: 'list', list },
+                  <SmartListIcon list={list} />,
+                  LIST_TITLES[list],
                   // Completed grows forever; a count there is noise.
-                  count={list === 'completed' ? undefined : listCounts?.[list]}
-                  urgent={list === 'overdue'}
-                />
+                  list === 'completed' ? undefined : listCounts?.[list],
+                )}
               </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      <nav aria-labelledby="sidebar-tags-heading">
-        <h2
-          id="sidebar-tags-heading"
-          className="px-2.5 pb-1 text-xs font-medium tracking-wide text-ink-faint uppercase"
-        >
-          {TEXTS.tags}
-        </h2>
-        {tasks && tagCounts.length === 0 ? (
-          <p className="px-2.5 text-xs text-ink-faint">{TEXTS.tagsEmpty}</p>
-        ) : (
-          <ul className="flex flex-col gap-0.5">
-            {tagCounts.map(({ tag, count }) => {
-              const view: View = { kind: 'tag', tag };
-              return (
-                <li key={tag}>
-                  <SidebarLink
-                    href={hrefFor(view)}
-                    active={sameView(view, location.view)}
-                    onNavigate={() => {
-                      onNavigate(view);
-                    }}
-                    icon={
-                      <span aria-hidden="true" className="w-4 text-center text-ink-faint">
-                        #
-                      </span>
-                    }
-                    label={tag}
-                    count={count}
-                  />
-                </li>
-              );
-            })}
+            ))}
           </ul>
-        )}
-      </nav>
+        </nav>
+
+        <nav aria-labelledby="sidebar-lists-heading">
+          <h2 id="sidebar-lists-heading" className="px-2.5 pb-2 text-xs text-ink-faint">
+            {TEXTS.favorites}
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {[...lists].sort(compareLists).map((list) =>
+              // Not saved yet: there is no server id to open.
+              list.id.startsWith(OPTIMISTIC_ID_PREFIX) ? (
+                <li
+                  key={list.id}
+                  aria-busy="true"
+                  className="flex items-center gap-3 px-2.5 py-2 text-[13px] text-ink-faint"
+                >
+                  <ListFolderIcon color={list.color} />
+                  <span className="min-w-0 flex-1 truncate">{list.name}</span>
+                </li>
+              ) : (
+                <li key={list.id}>
+                  {link(
+                    { kind: 'taskList', listId: list.id },
+                    <ListFolderIcon color={list.color} />,
+                    list.name,
+                    perList?.get(list.id),
+                  )}
+                </li>
+              ),
+            )}
+            {onCreateList && (
+              <li>
+                <NewListForm onCreate={onCreateList} />
+              </li>
+            )}
+          </ul>
+        </nav>
+
+        <nav aria-labelledby="sidebar-tags-heading">
+          <h2 id="sidebar-tags-heading" className="px-2.5 pb-2 text-xs text-ink-faint">
+            {TEXTS.tags}
+          </h2>
+          {tasks && tagCounts.length === 0 ? (
+            <p className="px-2.5 text-xs text-ink-faint">{TEXTS.tagsEmpty}</p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {tagCounts.map(({ tag, count }) => (
+                <li key={tag}>
+                  {link(
+                    { kind: 'tag', tag },
+                    <span aria-hidden="true" className="w-4 text-center text-ink-faint">
+                      #
+                    </span>,
+                    tag,
+                    count,
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </nav>
+      </div>
+      <SidebarMountains />
     </div>
   );
 }

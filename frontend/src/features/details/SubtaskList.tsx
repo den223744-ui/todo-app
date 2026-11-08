@@ -74,7 +74,7 @@ export function SubtaskList({
                 onChange={() => {
                   if (!locked) onUpdate(subtask, { completed: subtask.completed_at === null });
                 }}
-                className="size-4 shrink-0 cursor-pointer accent-accent aria-disabled:cursor-default"
+                className="size-4 shrink-0 cursor-pointer accent-check aria-disabled:cursor-default"
               />
               {unsaved ? (
                 <span className="min-w-0 flex-1 truncate px-1.5 py-1 text-sm text-ink-muted">

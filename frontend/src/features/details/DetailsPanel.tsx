@@ -48,9 +48,9 @@ export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) 
           onClose();
         }
       }}
-      className="fixed inset-0 z-30 flex flex-col bg-surface lg:static lg:z-auto lg:w-96 lg:shrink-0 lg:border-l lg:border-line"
+      className="fixed inset-0 z-30 flex flex-col bg-surface lg:static lg:z-auto lg:my-4 lg:mr-4 lg:w-[380px] lg:shrink-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-line lg:shadow-soft"
     >
-      <div className="flex items-center justify-between border-b border-line px-4 py-2">
+      <div className="flex items-center justify-between border-b border-line px-5 py-3">
         <h2
           id="task-details-heading"
           ref={headingRef}
@@ -63,7 +63,7 @@ export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) 
           <CloseIcon />
         </IconButton>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
     </aside>
   );
 }

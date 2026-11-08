@@ -26,18 +26,20 @@ export function AppShell({ sidebar, details, children }: AppShellProps) {
     <div className="flex h-dvh overflow-hidden">
       <aside
         aria-label={TEXTS.navigation}
-        className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-surface md:flex"
+        className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-sidebar [scrollbar-width:thin] md:flex"
       >
         {sidebar}
       </aside>
       {drawerOpen && <MobileDrawer onClose={closeDrawer}>{sidebar}</MobileDrawer>}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 border-b border-line bg-surface px-2 py-2 md:hidden">
+        <header className="flex items-center gap-2 border-b border-line bg-sidebar px-2 py-2 md:hidden">
           <IconButton label={TEXTS.openMenu} aria-expanded={drawerOpen} onClick={openDrawer}>
             <MenuIcon />
           </IconButton>
-          <span className="text-sm font-semibold">{TEXTS.appTitle}</span>
+          <span className="font-serif text-sm font-semibold tracking-[0.28em] uppercase">
+            {TEXTS.brand}
+          </span>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>

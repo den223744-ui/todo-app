@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 
-import type { TaskRead, TaskUpdate } from '../../api/schema';
+import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { EDIT_ISSUES, EDIT_TEXTS, TEXTS } from '../../constants/texts';
 import {
   editDueDate,
@@ -11,6 +11,7 @@ import {
   type EditIssue,
   type EditResult,
 } from '../../domain/taskEdit';
+import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
 import { PriorityPicker } from './PriorityPicker';
 import { SubtaskList } from './SubtaskList';
 import { TagEditor } from './TagEditor';
@@ -24,6 +25,8 @@ interface TaskDetailsProps {
   onUpdate: (task: TaskRead, patch: TaskUpdate) => void;
   onCreateSubtask: (title: string) => Promise<unknown>;
   onDelete: (task: TaskRead) => void;
+  /** The workspace's lists, for the list picker (top-level tasks only). */
+  lists?: readonly TaskListRead[] | undefined;
 }
 
 /**
@@ -32,6 +35,7 @@ interface TaskDetailsProps {
  * Mount with key={task.id}: local drafts belong to one task.
  */
 export function TaskDetails({
+  lists = [],
   task,
   subtasks,
   busyIds,
@@ -71,7 +75,7 @@ export function TaskDetails({
           onChange={() => {
             if (!busyIds.has(task.id)) onUpdate(task, { completed: !completed });
           }}
-          className="mt-2.5 size-4 shrink-0 cursor-pointer accent-accent"
+          className="mt-2.5 size-4 shrink-0 cursor-pointer accent-check"
         />
         <div className="min-w-0 flex-1">
           <label htmlFor={`${ids}-title`} className="sr-only">
@@ -100,7 +104,7 @@ export function TaskDetails({
                 setIssue(null);
               }
             }}
-            className={`w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-base font-medium hover:border-line focus:border-accent-ink ${
+            className={`w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-serif text-xl font-semibold hover:border-line focus:border-check ${
               completed ? 'text-ink-faint line-through' : ''
             }`}
           />
@@ -136,7 +140,7 @@ export function TaskDetails({
               setIssue(null);
             }
           }}
-          className="w-full resize-y rounded-lg border border-line bg-surface px-2.5 py-2 text-sm placeholder:text-ink-faint"
+          className="w-full resize-y rounded-xl border border-line bg-subtle px-3 py-2.5 text-sm placeholder:text-ink-faint"
         />
         {issueFor('notes') && (
           <p id={`${ids}-notes-issue`} className="mt-1 text-xs text-danger">
@@ -162,7 +166,7 @@ export function TaskDetails({
             onChange={(event) => {
               apply('date', editDueDate(task, event.currentTarget.value));
             }}
-            className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm"
+            className="rounded-xl border border-line bg-surface px-3 py-2 text-sm"
           />
         </div>
         <div>
@@ -183,7 +187,7 @@ export function TaskDetails({
             onBlur={(event) => {
               apply('time', editDueTime(task, event.currentTarget.value));
             }}
-            className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm"
+            className="rounded-xl border border-line bg-surface px-3 py-2 text-sm"
           />
         </div>
         {task.due_date && (
@@ -192,7 +196,7 @@ export function TaskDetails({
             onClick={() => {
               apply('date', editDueDate(task, ''));
             }}
-            className="min-h-9 rounded-lg px-2.5 text-sm text-ink-muted hover:bg-subtle hover:text-ink"
+            className="min-h-9 rounded-xl px-3 text-sm text-ink-muted hover:bg-subtle hover:text-ink"
           >
             {EDIT_TEXTS.clearDate}
           </button>
@@ -202,6 +206,37 @@ export function TaskDetails({
         <p id={`${ids}-time-issue`} className="-mt-3 text-xs text-danger">
           {issueFor('time')}
         </p>
+      )}
+
+      {task.parent_id === null && (
+        <div>
+          <label
+            htmlFor={`${ids}-list`}
+            className="mb-1.5 block text-xs font-medium text-ink-muted"
+          >
+            {EDIT_TEXTS.list}
+          </label>
+          <select
+            id={`${ids}-list`}
+            value={task.list_id ?? ''}
+            onChange={(event) => {
+              const listId = event.currentTarget.value || null;
+              if (listId !== task.list_id) onUpdate(task, { list_id: listId });
+            }}
+            className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm"
+          >
+            <option value="">{EDIT_TEXTS.noList}</option>
+            {lists.map((list) => (
+              <option
+                key={list.id}
+                value={list.id}
+                disabled={list.id.startsWith(OPTIMISTIC_ID_PREFIX)}
+              >
+                {list.name}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
 
       <PriorityPicker
@@ -235,7 +270,7 @@ export function TaskDetails({
           onClick={() => {
             onDelete(task);
           }}
-          className="min-h-9 rounded-lg px-2.5 text-sm text-danger hover:bg-subtle"
+          className="min-h-9 rounded-xl px-3 text-sm text-danger hover:bg-subtle"
         >
           {EDIT_TEXTS.deleteTask}
         </button>

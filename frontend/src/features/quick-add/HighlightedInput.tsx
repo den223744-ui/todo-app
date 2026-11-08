@@ -46,7 +46,7 @@ export function HighlightedInput({
   }, [syncScroll]);
 
   return (
-    <div className="quick-add-field relative min-w-0 flex-1 rounded-lg border border-line bg-surface focus-within:border-accent-ink">
+    <div className="quick-add-field relative min-w-0 flex-1 rounded-xl border border-line bg-surface shadow-soft focus-within:border-check">
       <div
         ref={mirrorRef}
         aria-hidden="true"

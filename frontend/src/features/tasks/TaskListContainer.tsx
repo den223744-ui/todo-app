@@ -71,6 +71,7 @@ export function TaskListContainer() {
               update.mutate({ id: task.id, patch });
             }}
             onStopEdit={stopEditing}
+            lists={lists}
           />
         ))
       )}

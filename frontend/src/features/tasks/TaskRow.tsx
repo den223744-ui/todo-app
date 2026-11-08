@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import type { TaskRead, TaskUpdate } from '../../api/schema';
+import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { PRIORITY_LABELS, TEXTS } from '../../constants/texts';
 import { toLocalDateString } from '../../domain/dates';
 import { isOverdue } from '../../domain/smartLists';
@@ -21,13 +21,29 @@ interface TaskRowProps {
   onStartEdit: (id: string) => void;
   onRename: (task: TaskRead, patch: TaskUpdate) => void;
   onStopEdit: () => void;
+  /** The task's list, for the coloured chip. */
+  list?: TaskListRead | undefined;
 }
 
-const dateFormat = new Intl.DateTimeFormat('ru-RU', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
+const dateFormat = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
+
+const PRIORITY_TONE: Readonly<Record<number, string>> = {
+  1: 'text-ink-faint',
+  2: 'text-warning',
+  3: 'text-accent',
+};
+
+/** A small flame, coloured by priority; the label is for screen readers. */
+function PriorityMark({ priority }: { priority: number }) {
+  return (
+    <span className={`inline-flex shrink-0 ${PRIORITY_TONE[priority] ?? ''}`}>
+      <svg className="size-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8.6 1.5c.3 2-1 3-2 4.2C5.6 6.9 4.5 8.2 4.5 10a3.5 3.5 0 0 0 7 0c0-1.3-.6-2.3-1.2-3 0 1-.5 1.8-1.3 2 .8-2.6.2-5.6-.4-7.5Z" />
+      </svg>
+      <span className="sr-only">{PRIORITY_LABELS[priority]}</span>
+    </span>
+  );
+}
 
 export function TaskRow({
   task,
@@ -40,6 +56,7 @@ export function TaskRow({
   onStartEdit,
   onRename,
   onStopEdit,
+  list,
 }: TaskRowProps) {
   const completed = task.completed_at !== null;
   const overdue = isOverdue(task, toLocalDateString(now));
@@ -57,52 +74,58 @@ export function TaskRow({
   // task cannot be opened, renamed or completed until the server answers.
   const unsaved = task.id.startsWith(OPTIMISTIC_ID_PREFIX);
   const locked = busy || unsaved;
+  const today = toLocalDateString(now);
   const content = (
-    <>
-      <span
-        className={`block text-sm leading-5 wrap-anywhere ${completed ? 'text-ink-faint line-through' : 'text-ink'}`}
-      >
-        {task.title}
+    <span className="flex min-w-0 items-center gap-3">
+      <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span
+          className={`min-w-0 text-[13.5px] leading-5 wrap-anywhere ${completed ? 'text-ink-faint line-through' : 'text-ink'}`}
+        >
+          {task.title}
+        </span>
+        {task.priority > 0 && <PriorityMark priority={task.priority} />}
       </span>
-      {(task.due_date || task.priority > 0 || task.tags.length > 0) && (
-        <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-          {task.due_date && (
-            <time
-              dateTime={task.due_time ? `${task.due_date}T${task.due_time}` : task.due_date}
-              className={overdue ? 'text-danger' : undefined}
-            >
-              {dateFormat.format(new Date(`${task.due_date}T00:00:00`))}
-              {task.due_time && `, ${task.due_time.slice(0, 5)}`}
-            </time>
-          )}
-          {task.priority > 0 && (
+      {(list || task.tags.length > 0) && (
+        <span className="hidden max-w-[45%] flex-wrap justify-end gap-1.5 sm:flex">
+          {list && (
             <span
-              className={
-                task.priority === 3
-                  ? 'text-danger'
-                  : task.priority === 2
-                    ? 'text-warning'
-                    : 'text-ink-muted'
-              }
+              className="rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+              style={{
+                backgroundColor: `var(--list-${list.color}-soft)`,
+                color: `var(--list-${list.color}-ink)`,
+              }}
             >
-              {PRIORITY_LABELS[task.priority]}
+              {list.name}
             </span>
           )}
           {task.tags.map((tag) => (
-            <span key={tag} className="max-w-full rounded bg-subtle px-1.5 py-0.5 wrap-anywhere">
+            <span
+              key={tag}
+              className="max-w-full rounded-full bg-subtle px-2.5 py-0.5 text-[11px] text-ink-muted wrap-anywhere"
+            >
               #{tag}
             </span>
           ))}
         </span>
       )}
-    </>
+      {task.due_date && (
+        <time
+          dateTime={task.due_time ? `${task.due_date}T${task.due_time}` : task.due_date}
+          className={`w-24 shrink-0 text-right text-xs tabular-nums ${overdue ? 'text-danger' : 'text-ink-muted'}`}
+        >
+          {task.due_date === today
+            ? (task.due_time?.slice(0, 5) ?? '')
+            : `${dateFormat.format(new Date(`${task.due_date}T00:00:00`))}${
+                task.due_time ? `, ${task.due_time.slice(0, 5)}` : ''
+              }`}
+        </time>
+      )}
+    </span>
   );
 
   return (
-    <li
-      className={`flex items-start rounded-lg border ${selected ? 'border-accent-ink bg-accent-soft' : 'border-line bg-surface hover:bg-subtle'}`}
-    >
-      <label className="flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center pt-1">
+    <li className={`flex items-center ${selected ? 'bg-accent-soft' : 'hover:bg-subtle'}`}>
+      <label className="flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center pl-1">
         <input
           type="checkbox"
           checked={completed}
@@ -112,15 +135,15 @@ export function TaskRow({
           onChange={() => {
             if (!locked) onToggle(task);
           }}
-          className="size-4 cursor-pointer accent-accent aria-disabled:cursor-wait"
+          className="size-4 cursor-pointer accent-check aria-disabled:cursor-wait"
         />
       </label>
       {unsaved ? (
-        <div aria-busy="true" className="min-w-0 flex-1 py-3 pr-4 opacity-70">
+        <div aria-busy="true" className="min-w-0 flex-1 py-2.5 pr-4 opacity-70">
           {content}
         </div>
       ) : editing ? (
-        <div className="min-w-0 flex-1 py-2 pr-4">
+        <div className="min-w-0 flex-1 py-1.5 pr-4">
           <InlineTitleEditor
             task={task}
             onSave={(patch) => {
@@ -151,7 +174,7 @@ export function TaskRow({
             event.preventDefault();
             onOpen(task.id);
           }}
-          className="min-w-0 flex-1 rounded-lg py-3 pr-4"
+          className="min-w-0 flex-1 rounded-lg py-2.5 pr-4"
         >
           {content}
         </a>

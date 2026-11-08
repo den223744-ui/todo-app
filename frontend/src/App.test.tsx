@@ -6,10 +6,11 @@ import { App } from './App';
 import { renderWithClient } from './test/renderWithClient';
 
 describe('App', () => {
-  it('shows today by default', () => {
+  it('shows today by default: the date as the heading, named Today for screen readers', () => {
     renderWithClient(<App />);
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Сегодня' })).toBeInTheDocument();
+    const heading = screen.getByRole('heading', { level: 1, name: /^Сегодня, / });
+    expect(heading).toHaveTextContent(/\d/); // the day of the month
   });
 
   it.each([

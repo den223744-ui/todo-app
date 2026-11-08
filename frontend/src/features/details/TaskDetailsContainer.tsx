@@ -7,6 +7,7 @@ import { OPTIMISTIC_ID_PREFIX, mutationTaskId } from '../tasks/taskMutations';
 import { taskKeys } from '../tasks/taskQueries';
 import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../tasks/useTasks';
 import { DetailsPanel } from './DetailsPanel';
+import { useLists } from '../lists/useLists';
 import { TaskDetails } from './TaskDetails';
 
 const rowLink = (taskId: string) =>
@@ -42,6 +43,7 @@ export function TaskDetailsContainer() {
   const update = useUpdateTask();
   const create = useCreateTask();
   const remove = useDeleteTask();
+  const { data: lists } = useLists();
   const busyIds = new Set(
     useMutationState({
       filters: { mutationKey: taskKeys.mutation(), status: 'pending' },
@@ -67,6 +69,7 @@ export function TaskDetailsContainer() {
           subtasks={subtasksOf(data, task.id)}
           busyIds={busyIds}
           canAddSubtasks={!task.id.startsWith(OPTIMISTIC_ID_PREFIX)}
+          lists={lists}
           onUpdate={(target, patch) => {
             update.mutate({ id: target.id, patch });
           }}

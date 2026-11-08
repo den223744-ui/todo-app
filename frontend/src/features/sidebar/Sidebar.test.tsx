@@ -39,8 +39,8 @@ describe('Sidebar', () => {
     const links = within(listsNav()).getAllByRole('link');
 
     expect(links.map((link) => link.textContent)).toEqual([
-      'Входящие2',
       'Сегодня2', // today + overdue
+      'Входящие2',
       'Предстоящие1',
       'Просроченные1',
       'Выполненные',
@@ -144,7 +144,7 @@ describe('Sidebar', () => {
       within(listsNav())
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Входящие', 'Сегодня', 'Предстоящие', 'Просроченные', 'Выполненные']);
+    ).toEqual(['Сегодня', 'Входящие', 'Предстоящие', 'Просроченные', 'Выполненные']);
     expect(screen.queryByText(/Добавьте к задаче/)).not.toBeInTheDocument();
   });
 });

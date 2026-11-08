@@ -5,7 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../api';
 import type { TaskRead } from '../../api/schema';
+import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
+import { listKeys } from '../lists/listQueries';
 import { renderWithClient } from '../../test/renderWithClient';
 import { TaskDetailsContainer } from './TaskDetailsContainer';
 
@@ -361,6 +363,32 @@ describe('TaskDetailsContainer', () => {
       ['s', { completed: true }],
       ['s', { title: 'Купить прокладку 1/2' }],
     ]);
+    queryClient.clear();
+  });
+
+  it('moves the task into a list and out again', async () => {
+    const { panel, update, queryClient } = open('p');
+    queryClient.setQueryData(listKeys.list(), [
+      makeList({ id: 'work', name: 'Работа' }),
+      makeList({ id: 'optimistic-2', name: 'Сохраняется' }),
+    ]);
+    const picker = await within(panel).findByRole('combobox', { name: 'Список' });
+    expect(within(picker).getByRole('option', { name: 'Сохраняется' })).toBeDisabled();
+
+    await userEvent.selectOptions(picker, 'work');
+    await userEvent.selectOptions(picker, '');
+
+    expect(update.mock.calls).toEqual([
+      ['p', { list_id: 'work' }],
+      ['p', { list_id: null }],
+    ]);
+    queryClient.clear();
+  });
+
+  it('offers no list picker for a subtask (it follows its parent)', () => {
+    const { panel, queryClient } = open('s');
+
+    expect(within(panel).queryByRole('combobox', { name: 'Список' })).toBeNull();
     queryClient.clear();
   });
 

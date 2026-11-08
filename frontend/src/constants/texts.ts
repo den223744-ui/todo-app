@@ -5,6 +5,10 @@ import type { EditIssue } from '../domain/taskEdit';
 /** All UI texts (AGENTS.md: Russian UI texts live in constants). */
 export const TEXTS = {
   appTitle: 'Задачи',
+  brand: 'Дела',
+  favorites: 'Избранное',
+  newList: 'Новый список',
+  newListName: 'Название списка',
   navigation: 'Навигация',
   openMenu: 'Открыть меню',
   closeMenu: 'Закрыть меню',
@@ -30,9 +34,19 @@ export const TEXTS = {
   listEmptyHint: 'Добавьте задачу — она попадёт в этот список.',
   listFallbackTitle: 'Список',
   noList: 'Без списка',
+  taskCount: (count: number) => {
+    const ten = count % 10;
+    const hundred = count % 100;
+    const word =
+      ten === 1 && hundred !== 11
+        ? 'задача'
+        : ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14)
+          ? 'задачи'
+          : 'задач';
+    return `${String(count)} ${word}`;
+  },
   completeTask: (title: string) => `Выполнить: ${title}`,
   reopenTask: (title: string) => `Вернуть в работу: ${title}`,
-  taskCount: (count: number) => `${String(count)} ${plural(count, 'задача', 'задачи', 'задач')}`,
 } as const;
 
 export const QUICK_ADD_ISSUES: Record<QuickAddIssue, string> = {
@@ -94,6 +108,8 @@ export const EDIT_ISSUES: Record<EditIssue, string> = {
 
 /** Task editing: inline title and the detail panel. */
 export const EDIT_TEXTS = {
+  list: 'Список',
+  noList: 'Без списка',
   editTitle: (title: string) => `Изменить название: ${title}`,
   details: 'Детали задачи',
   closeDetails: 'Закрыть детали',
@@ -139,3 +155,20 @@ export const TOAST_TEXTS = {
   listNameTaken: 'Список с таким названием уже есть.',
   offline: 'Нет связи с сервером. Проверьте подключение.',
 } as const;
+
+export const STATS_TEXTS = {
+  region: 'Итоги дня',
+  done: (done: number, total: number) => `${String(done)} из ${String(total)}`,
+  doneHint: 'выполнено',
+  dueToday: 'на сегодня',
+  overdue: 'просрочено',
+  highPriority: 'высокий приоритет',
+} as const;
+
+/** Greeting above the date, by the local hour. */
+export function greeting(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'Доброе утро';
+  if (hour >= 12 && hour < 18) return 'Добрый день';
+  if (hour >= 18 && hour < 23) return 'Добрый вечер';
+  return 'Доброй ночи';
+}

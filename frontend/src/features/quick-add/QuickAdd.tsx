@@ -56,7 +56,7 @@ export function QuickAdd() {
         );
       }}
     >
-      <label htmlFor={id} className="block text-sm font-medium">
+      <label htmlFor={id} className="sr-only">
         {TEXTS.quickAdd}
       </label>
       <div className="flex items-start gap-2">
@@ -78,7 +78,7 @@ export function QuickAdd() {
         <button
           type="submit"
           disabled={!prepared.task || data === undefined}
-          className="min-h-12 shrink-0 rounded-lg bg-accent px-3 text-sm font-medium text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-12 shrink-0 rounded-xl bg-ink px-4 text-sm font-medium text-surface hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {TEXTS.quickAddSubmit}
         </button>

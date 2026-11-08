@@ -19,7 +19,7 @@ export function PriorityPicker({ value, onChange }: PriorityPickerProps) {
         {OPTIONS.map((priority) => (
           <label
             key={priority}
-            className="cursor-pointer rounded-lg border border-line px-2.5 py-1.5 text-xs has-checked:border-accent-ink has-checked:bg-accent-soft has-checked:text-accent-ink has-focus-visible:outline-2 has-focus-visible:outline-accent-ink"
+            className="cursor-pointer rounded-full border border-line px-3 py-1.5 text-xs has-checked:border-accent-ink has-checked:bg-accent-soft has-checked:text-accent-ink has-focus-visible:outline-2 has-focus-visible:outline-accent-ink"
           >
             <input
               type="radio"

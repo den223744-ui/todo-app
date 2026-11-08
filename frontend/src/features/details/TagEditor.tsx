@@ -34,7 +34,7 @@ export function TagEditor({ task, onUpdate }: TagEditorProps) {
           {task.tags.map((tag) => (
             <li
               key={tag}
-              className="flex max-w-full min-w-0 items-center rounded bg-subtle pl-2 text-xs"
+              className="flex max-w-full min-w-0 items-center rounded-full bg-subtle pl-2.5 text-xs"
             >
               {/* A 50-character tag must wrap, not push the panel wider than a phone. */}
               <span className="min-w-0 wrap-anywhere">#{tag}</span>
@@ -74,7 +74,7 @@ export function TagEditor({ task, onUpdate }: TagEditorProps) {
             setIssue(null);
           }
         }}
-        className="w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm placeholder:text-ink-faint"
+        className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm placeholder:text-ink-faint"
       />
       {issue && (
         <p id={`${inputId}-issue`} className="mt-1 text-xs text-danger">

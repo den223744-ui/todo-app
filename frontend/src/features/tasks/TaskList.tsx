@@ -1,4 +1,4 @@
-import type { TaskRead, TaskUpdate } from '../../api/schema';
+import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { TEXTS } from '../../constants/texts';
 import type { TaskGroup } from '../../domain/taskGroups';
 import type { AppLocation } from '../../domain/view';
@@ -16,6 +16,7 @@ interface TaskListProps {
   onStartEdit: (id: string) => void;
   onRename: (task: TaskRead, patch: TaskUpdate) => void;
   onStopEdit: () => void;
+  lists?: readonly TaskListRead[] | undefined;
 }
 
 const dayFormat = new Intl.DateTimeFormat('ru-RU', {
@@ -24,6 +25,40 @@ const dayFormat = new Intl.DateTimeFormat('ru-RU', {
   month: 'long',
   year: 'numeric',
 });
+
+/** The rounded square before a group title: the list's folder, or a calendar. */
+function GroupBadge({ list }: { list: TaskListRead | null | undefined }) {
+  const color = list?.color;
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-7 items-center justify-center rounded-lg bg-subtle text-ink-muted"
+      style={
+        color
+          ? { backgroundColor: `var(--list-${color}-soft)`, color: `var(--list-${color})` }
+          : undefined
+      }
+    >
+      <svg
+        className="size-4"
+        viewBox="0 0 20 20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      >
+        {list === undefined ? (
+          <path d="M4 5.5h12v10.5H4zM4 8.5h12M7 3.5v3M13 3.5v3" strokeLinecap="round" />
+        ) : (
+          <path
+            d="M2.5 5.5A1.5 1.5 0 0 1 4 4h3.6a1.5 1.5 0 0 1 1.1.48L9.9 5.8H16a1.5 1.5 0 0 1 1.5 1.5v7.2A1.5 1.5 0 0 1 16 16H4a1.5 1.5 0 0 1-1.5-1.5Z"
+            fill="currentColor"
+            stroke="none"
+          />
+        )}
+      </svg>
+    </span>
+  );
+}
 
 export function TaskList({
   groups,
@@ -36,10 +71,12 @@ export function TaskList({
   onStartEdit,
   onRename,
   onStopEdit,
+  lists = [],
 }: TaskListProps) {
+  const byId = new Map(lists.map((list) => [list.id, list]));
   return (
     // Each group is a labelled section; a plain div may not carry aria-label.
-    <div className="space-y-6">
+    <div className="space-y-7">
       {groups.map((group) => {
         const title =
           group.list !== undefined
@@ -49,8 +86,18 @@ export function TaskList({
               : dayFormat.format(new Date(`${group.key}T00:00:00`));
         return (
           <section key={group.key} aria-label={title ?? TEXTS.taskList}>
-            {title && <h2 className="mb-2 text-xs font-medium text-ink-muted">{title}</h2>}
-            <ul className="space-y-2">
+            {title && (
+              <div className="mb-3 flex items-center gap-3">
+                <GroupBadge list={group.list} />
+                <h2 className="font-serif text-xl font-semibold tracking-tight text-ink first-letter:uppercase">
+                  {title}
+                </h2>
+                <span className="text-xs text-ink-faint">
+                  {TEXTS.taskCount(group.tasks.length)}
+                </span>
+              </div>
+            )}
+            <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface shadow-soft">
               {group.tasks.map((task) => (
                 <TaskRow
                   key={task.id}
@@ -64,6 +111,7 @@ export function TaskList({
                   onStartEdit={onStartEdit}
                   onRename={onRename}
                   onStopEdit={onStopEdit}
+                  list={task.list_id ? byId.get(task.list_id) : undefined}
                 />
               ))}
             </ul>
