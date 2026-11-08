@@ -188,7 +188,7 @@ test('a 50-character tag wraps inside the panel on a phone', async ({ page }) =>
   const textRight = await chip.evaluate((element) => {
     const range = document.createRange();
     range.selectNodeContents(element);
-    return Math.max(...[...range.getClientRects()].map((rect) => rect.right));
+    return Math.max(...Array.from(range.getClientRects(), (rect) => rect.right));
   });
   const chipBox = await chip.boundingBox();
   expect(textRight).toBeLessThanOrEqual((chipBox?.x ?? 0) + (chipBox?.width ?? 0) + 0.5);

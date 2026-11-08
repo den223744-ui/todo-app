@@ -117,7 +117,7 @@ describe('detail panel on a narrow screen', () => {
     queryClient.clear();
   });
 
-  it('pulls focus in when the window narrows and the panel becomes a modal', async () => {
+  it('pulls focus in when the window narrows and the panel becomes a modal', () => {
     const setNarrow = stubScreen(false);
     const { queryClient } = openInApp('a', [A, B]);
     screen.getByRole('link', { name: /Вторая/ }).focus(); // working in the list
