@@ -66,9 +66,7 @@ test('highlights literal tokens and creates the parsed task, fetched again after
   );
 });
 
-test('today supplies the date, shows the optimistic task and blocks repeated Enter', async ({
-  page,
-}) => {
+test('today supplies the date, shows the task at once and frees the field', async ({ page }) => {
   let release!: () => void;
   const gate = new Promise<void>((resolve) => {
     release = resolve;
@@ -79,12 +77,12 @@ test('today supplies the date, shows the optimistic task and blocks repeated Ent
   await input.fill('Проверить отчёт');
   await input.press('Enter');
   await expect(page.getByRole('main').getByRole('link', { name: /Проверить отчёт/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Сохраняем…' })).toBeDisabled();
-  await input.press('Enter');
+  // Optimistic: the field is empty while the server still has not answered.
+  await expect(input).toHaveValue('');
+  await input.press('Enter'); // nothing to send: no second request
   expect(requests).toHaveLength(1);
   expect(requests[0]?.due_date).toBe('2026-11-08');
   release();
-  await expect(input).toHaveValue('');
   await expect(
     page.getByRole('main').getByRole('link', { name: /Проверить отчёт/ }),
   ).toHaveAttribute('href', '?task=task-1');
@@ -125,7 +123,7 @@ test('failed create retains the draft and retry creates one task', async ({ page
   const input = page.getByRole('textbox', { name: 'Новая задача' });
   await input.fill('Купить хлеб #дом');
   await input.press('Enter');
-  await expect(page.getByRole('alert')).toContainText('Текст сохранён');
+  await expect(page.getByRole('alert')).toContainText('Не удалось создать задачу «Купить хлеб»');
   await expect(input).toHaveValue('Купить хлеб #дом');
   await expect(page.getByRole('main').getByRole('link', { name: /Купить хлеб/ })).toHaveCount(0);
   await input.press('Enter');
@@ -160,6 +158,13 @@ test('mobile dark input keeps caret and highlights aligned when scrolling and ed
     .toBeLessThanOrEqual(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
   await page.clock.runFor(100);
+  // How far Chrome scrolls to keep the caret visible depends on timing (under
+  // load it can stop short of the end). Scroll to the very end explicitly: the
+  // check is that the highlight layer follows the native text, not Chrome.
+  await input.evaluate((element) => {
+    element.scrollLeft = element.scrollWidth;
+    element.dispatchEvent(new Event('scroll'));
+  });
   await expect
     .poll(async () => {
       const field = await input.boundingBox();
