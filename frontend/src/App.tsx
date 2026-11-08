@@ -1,4 +1,5 @@
 import { AppShell } from './components/AppShell';
+import { TaskDetailsContainer } from './features/details/TaskDetailsContainer';
 import { useAppLocation } from './features/navigation/useAppLocation';
 import { viewTitle } from './features/navigation/viewTitle';
 import { QuickAdd } from './features/quick-add/QuickAdd';
@@ -9,7 +10,7 @@ export function App() {
   const [location] = useAppLocation();
 
   return (
-    <AppShell sidebar={<SidebarContainer />}>
+    <AppShell sidebar={<SidebarContainer />} details={<TaskDetailsContainer />}>
       <div className="mx-auto w-full max-w-3xl px-4 py-6 md:px-8 md:py-10">
         <h1 className="text-2xl font-semibold tracking-tight">{viewTitle(location.view)}</h1>
         <QuickAdd />
