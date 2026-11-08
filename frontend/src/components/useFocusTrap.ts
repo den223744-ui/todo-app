@@ -3,6 +3,9 @@ import { useEffect, type RefObject } from 'react';
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const isBefore = (a: Node, b: Node): boolean =>
+  (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+
 /**
  * Keeps Tab / Shift+Tab inside a modal container (WAI-ARIA dialog pattern):
  * from the last element focus wraps to the first and back, so it never
@@ -22,13 +25,21 @@ export function useFocusTrap(ref: RefObject<HTMLElement>, active: boolean): void
         return;
       }
       const current = document.activeElement;
-      const outside = !container.contains(current);
-      if (event.shiftKey && (current === first || current === container || outside)) {
+      if (!(current instanceof HTMLElement) || !container.contains(current)) {
+        // Focus is outside (or on the page body): bring it in.
         event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (current === last || outside)) {
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+      // Where would the browser go next? Focus may sit on something that is
+      // not in the Tab order itself (the container, a heading with
+      // tabIndex=-1), so look for the neighbour by document position.
+      const next = event.shiftKey
+        ? focusable.filter((element) => isBefore(element, current)).at(-1)
+        : focusable.find((element) => isBefore(current, element));
+      if (!next) {
         event.preventDefault();
-        first.focus();
+        (event.shiftKey ? last : first).focus();
       }
     };
     document.addEventListener('keydown', onKeyDown);

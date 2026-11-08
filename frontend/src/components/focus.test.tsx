@@ -9,13 +9,26 @@ import { AppShell } from './AppShell';
 import { useFocusTrap } from './useFocusTrap';
 import { useMediaQuery } from './useMediaQuery';
 
-function Trap({ active, empty = false }: { active: boolean; empty?: boolean }) {
+function Trap({
+  active,
+  empty = false,
+  heading = false,
+}: {
+  active: boolean;
+  empty?: boolean;
+  heading?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref, active);
   return (
     <>
       <button type="button">outside</button>
       <div ref={ref} tabIndex={-1} data-testid="trap">
+        {heading && (
+          <h2 tabIndex={-1} data-testid="heading">
+            Заголовок
+          </h2>
+        )}
         {!empty && (
           <>
             <button type="button">first</button>
@@ -63,6 +76,18 @@ describe('useFocusTrap', () => {
     expect(button('last')).toHaveFocus();
   });
 
+  it('wraps Shift+Tab from an untabbable element at the top (a focused heading)', async () => {
+    render(<Trap active heading />);
+    screen.getByTestId('heading').focus();
+
+    await userEvent.tab({ shift: true });
+    expect(button('last')).toHaveFocus();
+
+    screen.getByTestId('heading').focus();
+    await userEvent.tab();
+    expect(button('first')).toHaveFocus();
+  });
+
   it('does nothing while inactive', async () => {
     render(<Trap active={false} />);
 
@@ -101,6 +126,34 @@ describe('mobile navigation drawer', () => {
     await userEvent.tab(); // past the last element of the drawer
 
     expect(dialog).toContainElement(document.activeElement as HTMLElement);
+  });
+
+  it('closes when the window widens and the sidebar is back', async () => {
+    const listeners = new Set<() => void>();
+    let wide = false;
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      media: query,
+      get matches() {
+        return wide;
+      },
+      addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+      removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+    }));
+    render(
+      <AppShell sidebar={<a href="#inbox">Входящие</a>}>
+        <a href="#main">В основном списке</a>
+      </AppShell>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Открыть меню' }));
+    expect(screen.getByRole('dialog', { name: 'Навигация' })).toBeInTheDocument();
+
+    act(() => {
+      wide = true;
+      for (const listener of listeners) listener();
+    });
+
+    expect(screen.queryByRole('dialog', { name: 'Навигация' })).not.toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 });
 

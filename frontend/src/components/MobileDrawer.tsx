@@ -3,6 +3,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { TEXTS } from '../constants/texts';
 import { IconButton } from './IconButton';
 import { useFocusTrap } from './useFocusTrap';
+import { useMediaQuery } from './useMediaQuery';
 import { CloseIcon } from './icons/CloseIcon';
 
 interface MobileDrawerProps {
@@ -18,6 +19,12 @@ export function MobileDrawer({ onClose, children }: MobileDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   // aria-modal promises that the page behind is out of reach: keep Tab inside.
   useFocusTrap(panelRef, true);
+  // From md up the drawer is hidden by CSS and the sidebar is back in place:
+  // close it, or its focus trap would hold Tab on elements nobody can see.
+  const wide = useMediaQuery('(min-width: 768px)');
+  useEffect(() => {
+    if (wide) onClose();
+  }, [wide, onClose]);
 
   useEffect(() => {
     const previouslyFocused = document.activeElement;

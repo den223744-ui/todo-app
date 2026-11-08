@@ -28,6 +28,14 @@ export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) 
     headingRef.current?.focus();
   }, [taskKey]);
 
+  // The window narrowed and the panel became a modal over the page: focus
+  // left behind on the page moves into it.
+  useEffect(() => {
+    if (modal && !panelRef.current?.contains(document.activeElement)) {
+      headingRef.current?.focus();
+    }
+  }, [modal]);
+
   return (
     <aside
       ref={panelRef}

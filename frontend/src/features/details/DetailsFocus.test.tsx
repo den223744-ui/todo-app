@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -63,6 +63,24 @@ describe('focus after deleting the open task', () => {
   });
 });
 
+/** A matchMedia whose answer the test can change, telling listeners. */
+function stubScreen(initiallyNarrow: boolean) {
+  let narrow = initiallyNarrow;
+  const listeners = new Set<() => void>();
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    media: query,
+    get matches() {
+      return query.includes('max-width') ? narrow : !narrow;
+    },
+    addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+    removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+  }));
+  return (value: boolean) => {
+    narrow = value;
+    for (const listener of listeners) listener();
+  };
+}
+
 describe('detail panel on a narrow screen', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -84,6 +102,31 @@ describe('detail panel on a narrow screen', () => {
     await userEvent.tab();
 
     expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    queryClient.clear();
+  });
+
+  it('keeps Shift+Tab inside from the heading it opens on', async () => {
+    stubScreen(true);
+    const { queryClient } = openInApp('a', [A, B]);
+    const dialog = screen.getByRole('dialog', { name: 'Детали задачи' });
+    expect(screen.getByRole('heading', { name: 'Детали задачи' })).toHaveFocus();
+
+    await userEvent.tab({ shift: true });
+
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    queryClient.clear();
+  });
+
+  it('pulls focus in when the window narrows and the panel becomes a modal', async () => {
+    const setNarrow = stubScreen(false);
+    const { queryClient } = openInApp('a', [A, B]);
+    screen.getByRole('link', { name: /Вторая/ }).focus(); // working in the list
+
+    act(() => {
+      setNarrow(true);
+    });
+
+    expect(screen.getByRole('heading', { name: 'Детали задачи' })).toHaveFocus();
     queryClient.clear();
   });
 });
