@@ -3,13 +3,18 @@ name: todo-app
 services:
   backend:
     build: ./backend
+    # Bring the schema up to date before serving (idempotent).
+    command: sh -c "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     ports:
       - "8000:8000"
     environment:
       # Bind mounts from Windows/macOS hosts do not deliver fs events into the VM.
       WATCHFILES_FORCE_POLLING: "true"
+      # SQLite in a named volume: survives restarts, stays out of the source tree.
+      DATABASE_URL: sqlite+aiosqlite:////data/todo.db
     volumes:
       - ./backend:/app
+      - backend-data:/data
     healthcheck:
       test:
         - CMD
@@ -41,3 +46,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  backend-data:

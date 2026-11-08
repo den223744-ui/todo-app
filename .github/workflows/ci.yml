@@ -91,6 +91,17 @@ jobs:
         run: curl --fail --silent http://localhost:5173/api/health
       - name: Frontend serves index.html
         run: curl --fail --silent http://localhost:5173/ | grep -q '<div id="root">'
+      - name: Task survives a backend restart (session cookie, migrations, volume)
+        run: |
+          set -euo pipefail
+          jar=$(mktemp)
+          api=http://localhost:5173/api/tasks
+          curl --fail --silent -c "$jar" -b "$jar" "$api" | grep -qx '\[\]'
+          curl --fail --silent -c "$jar" -b "$jar" -H 'content-type: application/json' \
+            -d '{"title":"smoke","tags":["#CI"]}' "$api" | grep -q '"tags":\["ci"\]'
+          docker compose restart backend
+          docker compose up --wait --wait-timeout 120
+          curl --fail --silent -b "$jar" "$api" | grep -q '"title":"smoke"'
       - if: failure()
         run: docker compose logs
       - if: always()
