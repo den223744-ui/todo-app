@@ -20,5 +20,16 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
     environment: 'node',
+    coverage: {
+      provider: 'v8',
+      // Pure domain logic must be fully covered (PLAN, stage 2). The rest of
+      // the app is measured too, but only domain/ has a hard gate.
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/api/schema.ts', 'src/main.tsx'],
+      reporter: ['text', 'html'],
+      thresholds: {
+        'src/domain/**': { statements: 100, branches: 100, functions: 100, lines: 100 },
+      },
+    },
   },
 });
