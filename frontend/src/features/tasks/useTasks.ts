@@ -14,7 +14,8 @@ import {
 import { tasksQueryOptions } from './taskQueries';
 
 export function useTasks() {
-  return useQuery(tasksQueryOptions(api));
+  const queryClient = useQueryClient();
+  return useQuery(tasksQueryOptions(api, queryClient));
 }
 
 export function useCreateTask() {

@@ -4,8 +4,9 @@
  * Every mutation changes the cached list immediately (onMutate), puts the
  * server's answer in place on success, and on error undoes exactly its own
  * change — not by restoring a whole-list snapshot, which would also wipe the
- * optimistic changes of other mutations still in flight. When the last task
- * mutation settles, the list is refetched once to converge with the server.
+ * optimistic changes of other mutations still in flight. While any task
+ * mutation is pending, background refetches are held off; when the last one
+ * settles, the list is refetched once to converge with the server.
  */
 import type { MutationOptions, QueryClient } from '@tanstack/react-query';
 
@@ -19,6 +20,7 @@ import {
   replaceTask,
   updateTask,
 } from '../../domain/taskCache';
+import { beginTaskMutation, endTaskMutation } from './pendingMutations';
 import { taskKeys } from './taskQueries';
 
 export interface MutationDeps {
@@ -38,15 +40,23 @@ type ListUpdater = (tasks: TaskRead[]) => TaskRead[];
 function helpers({ queryClient }: MutationDeps) {
   const listKey = taskKeys.list();
   return {
-    /** Stop in-flight refetches so they cannot overwrite the optimistic state. */
-    cancel: () => queryClient.cancelQueries({ queryKey: listKey }),
+    /**
+     * Start of every onMutate: count the mutation in (synchronously, before any
+     * await) and stop a list fetch already running, so its older answer cannot
+     * overwrite the optimistic state. New fetches are held off while mutations
+     * are pending (see tasksQueryOptions).
+     */
+    begin: async () => {
+      beginTaskMutation(queryClient);
+      await queryClient.cancelQueries({ queryKey: listKey });
+    },
     read: () => queryClient.getQueryData<TaskRead[]>(listKey) ?? [],
     write: (update: ListUpdater) => {
       queryClient.setQueryData<TaskRead[]>(listKey, (tasks) => update(tasks ?? []));
     },
+    /** The last mutation to settle refetches the list once. */
     settle: async () => {
-      // isMutating still counts the mutation that is settling right now.
-      if (queryClient.isMutating({ mutationKey: taskKeys.mutation() }) === 1) {
+      if (endTaskMutation(queryClient)) {
         await queryClient.invalidateQueries({ queryKey: listKey });
       }
     },
@@ -56,14 +66,14 @@ function helpers({ queryClient }: MutationDeps) {
 export function createTaskMutation(
   deps: MutationDeps,
 ): MutationOptions<TaskRead, Error, TaskCreate, { optimisticId: string }> {
-  const { cancel, read, write, settle } = helpers(deps);
+  const { begin, read, write, settle } = helpers(deps);
   const now = deps.now ?? defaultNow;
   const newId = deps.newId ?? defaultNewId;
   return {
     mutationKey: taskKeys.mutation(),
     mutationFn: (input) => deps.api.createTask(input),
     onMutate: async (input) => {
-      await cancel();
+      await begin();
       const optimisticId = newId();
       write((tasks) =>
         insertTasks(tasks, [buildOptimisticTask(input, optimisticId, read(), now())]),
@@ -88,13 +98,13 @@ export interface UpdateTaskVariables {
 export function updateTaskMutation(
   deps: MutationDeps,
 ): MutationOptions<TaskRead, Error, UpdateTaskVariables, { previous: TaskRead | undefined }> {
-  const { cancel, read, write, settle } = helpers(deps);
+  const { begin, read, write, settle } = helpers(deps);
   const now = deps.now ?? defaultNow;
   return {
     mutationKey: taskKeys.mutation(),
     mutationFn: ({ id, patch }) => deps.api.updateTask(id, patch),
     onMutate: async ({ id, patch }) => {
-      await cancel();
+      await begin();
       const previous = read().find((task) => task.id === id);
       write((tasks) => updateTask(tasks, id, patch, now()));
       return { previous };
@@ -118,13 +128,13 @@ export interface DeleteTaskContext {
 export function deleteTaskMutation(
   deps: MutationDeps,
 ): MutationOptions<void, Error, string, DeleteTaskContext> {
-  const { cancel, write, settle } = helpers(deps);
+  const { begin, write, settle } = helpers(deps);
   const { queryClient } = deps;
   return {
     mutationKey: taskKeys.mutation(),
     mutationFn: (id) => deps.api.deleteTask(id),
     onMutate: async (id) => {
-      await cancel();
+      await begin();
       const current = queryClient.getQueryData<TaskRead[]>(taskKeys.list()) ?? [];
       const { removed } = removeTaskWithSubtasks(current, id);
       write((tasks) => removeTaskWithSubtasks(tasks, id).tasks);
@@ -146,12 +156,12 @@ export interface RestoreTaskVariables {
 export function restoreTaskMutation(
   deps: MutationDeps,
 ): MutationOptions<TaskRead, Error, RestoreTaskVariables, { inserted: Set<string> }> {
-  const { cancel, read, write, settle } = helpers(deps);
+  const { begin, read, write, settle } = helpers(deps);
   return {
     mutationKey: taskKeys.mutation(),
     mutationFn: ({ id }) => deps.api.restoreTask(id),
     onMutate: async ({ tasks = [] }) => {
-      await cancel();
+      await begin();
       const present = new Set(read().map((task) => task.id));
       const inserted = new Set(tasks.map((task) => task.id).filter((id) => !present.has(id)));
       write((current) => insertTasks(current, tasks));

@@ -2,7 +2,12 @@
  * Optimistic mutations, driven through TanStack Query's own MutationObserver
  * (the same machinery useMutation uses), without rendering React.
  */
-import { MutationObserver, QueryObserver } from '@tanstack/react-query';
+import {
+  MutationObserver,
+  QueryObserver,
+  focusManager,
+  onlineManager,
+} from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError, type ApiClient } from '../../api/client';
@@ -48,6 +53,8 @@ let queryClient = createQueryClient();
 
 function setup(api: ApiClient, tasks: TaskRead[]): MutationDeps {
   queryClient = createQueryClient();
+  // What QueryClientProvider does: wires focus and online events to the client.
+  queryClient.mount();
   queryClient.setQueryData(taskKeys.list(), tasks);
   let counter = 0;
   return {
@@ -59,12 +66,24 @@ function setup(api: ApiClient, tasks: TaskRead[]): MutationDeps {
 }
 
 afterEach(() => {
+  queryClient.unmount();
   queryClient.clear();
 });
 
 const cached = () => queryClient.getQueryData<TaskRead[]>(taskKeys.list()) ?? [];
 const cachedIds = () => cached().map((task) => task.id);
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** Keep the list query active, as a mounted useTasks() would; returns unsubscribe. */
+function watchList(deps: MutationDeps): () => void {
+  const observer = new QueryObserver(queryClient, tasksQueryOptions(deps.api, queryClient));
+  return observer.subscribe(() => undefined);
+}
+
+/** Make the cached list stale without refetching it (as time passing would). */
+async function markStale(): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: taskKeys.list(), refetchType: 'none' });
+}
 
 const A = makeTask({ id: 'a', position: 1 });
 const B = makeTask({ id: 'b', position: 2 });
@@ -73,7 +92,7 @@ describe('tasksQueryOptions', () => {
   it('loads the list with the query signal', async () => {
     const listTasks = vi.fn(() => Promise.resolve([A]));
     const client = createQueryClient();
-    const observer = new QueryObserver(client, tasksQueryOptions(fakeApi({ listTasks })));
+    const observer = new QueryObserver(client, tasksQueryOptions(fakeApi({ listTasks }), client));
 
     const result = await observer.refetch();
 
@@ -247,11 +266,12 @@ describe('concurrent mutations', () => {
     const first = deferred<TaskRead>();
     const second = deferred<TaskRead>();
     const calls = [first, second];
+    const listTasks = vi.fn(() => Promise.resolve([A, B]));
     const deps = setup(
-      fakeApi({ updateTask: () => calls.shift()?.promise ?? Promise.reject(FAIL) }),
+      fakeApi({ listTasks, updateTask: () => calls.shift()?.promise ?? Promise.reject(FAIL) }),
       [A, B],
     );
-    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+    const list = watchList(deps);
     const one = new MutationObserver(queryClient, updateTaskMutation(deps));
     const two = new MutationObserver(queryClient, updateTaskMutation(deps));
 
@@ -261,12 +281,97 @@ describe('concurrent mutations', () => {
 
     first.resolve({ ...A, title: '1' });
     await p1;
-    expect(invalidate).not.toHaveBeenCalled();
+    await flush();
+    expect(listTasks).not.toHaveBeenCalled();
 
     second.resolve({ ...B, title: '2' });
     await p2;
-    expect(invalidate).toHaveBeenCalledTimes(1);
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: taskKeys.list() });
+    await flush();
+    expect(listTasks).toHaveBeenCalledTimes(1);
+    list();
+  });
+
+  it('refetches even when the last two mutations settle in the same tick', async () => {
+    const first = deferred<TaskRead>();
+    const second = deferred<TaskRead>();
+    const calls = [first, second];
+    const listTasks = vi.fn(() => Promise.resolve([A, B]));
+    const deps = setup(
+      fakeApi({ listTasks, updateTask: () => calls.shift()?.promise ?? Promise.reject(FAIL) }),
+      [A, B],
+    );
+    const list = watchList(deps);
+    const one = new MutationObserver(queryClient, updateTaskMutation(deps));
+    const two = new MutationObserver(queryClient, updateTaskMutation(deps));
+
+    const both = Promise.all([
+      one.mutate({ id: 'a', patch: { title: '1' } }),
+      two.mutate({ id: 'b', patch: { title: '2' } }),
+    ]);
+    await flush();
+    first.resolve({ ...A, title: '1' });
+    second.resolve({ ...B, title: '2' });
+    await both;
+    await flush();
+
+    expect(listTasks).toHaveBeenCalledTimes(1);
+    list();
+  });
+
+  it.each([
+    [
+      'window focus',
+      () => {
+        focusManager.setFocused(false);
+        focusManager.setFocused(true);
+      },
+    ],
+    [
+      'reconnect',
+      () => {
+        onlineManager.setOnline(false);
+        onlineManager.setOnline(true);
+      },
+    ],
+  ])('a %s refetch waits while a mutation is pending', async (_name, trigger) => {
+    const update = deferred<TaskRead>();
+    const listTasks = vi.fn(() => Promise.resolve([A]));
+    const deps = setup(fakeApi({ listTasks, updateTask: () => update.promise }), [A]);
+    const list = watchList(deps);
+    const observer = new MutationObserver(queryClient, updateTaskMutation(deps));
+
+    const done = observer.mutate({ id: 'a', patch: { title: 'new' } });
+    await flush();
+    // The request hangs longer than staleTime: the optimistic data turns stale.
+    await markStale();
+    trigger();
+    await flush();
+
+    expect(listTasks).not.toHaveBeenCalled();
+    expect(cached()[0]?.title).toBe('new');
+
+    update.resolve({ ...A, title: 'new' });
+    await done;
+    await flush();
+    expect(listTasks).toHaveBeenCalledTimes(1);
+    list();
+    focusManager.setFocused(undefined);
+    onlineManager.setOnline(true);
+  });
+
+  it('background refetches run normally when nothing is pending', async () => {
+    const listTasks = vi.fn(() => Promise.resolve([A]));
+    const deps = setup(fakeApi({ listTasks }), [A]);
+    const list = watchList(deps);
+    await markStale();
+
+    focusManager.setFocused(false);
+    focusManager.setFocused(true);
+    await flush();
+
+    expect(listTasks).toHaveBeenCalledTimes(1);
+    list();
+    focusManager.setFocused(undefined);
   });
 
   it('cancels a running list fetch so it cannot overwrite the optimistic state', async () => {
@@ -276,7 +381,10 @@ describe('concurrent mutations', () => {
       fakeApi({ listTasks: () => list.promise, updateTask: () => update.promise }),
       [A],
     );
-    const fetching = queryClient.query({ ...tasksQueryOptions(deps.api), staleTime: 0 });
+    const fetching = queryClient.query({
+      ...tasksQueryOptions(deps.api, queryClient),
+      staleTime: 0,
+    });
     const observer = new MutationObserver(queryClient, updateTaskMutation(deps));
 
     const done = observer.mutate({ id: 'a', patch: { title: 'new' } });
