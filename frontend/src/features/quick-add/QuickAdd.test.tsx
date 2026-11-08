@@ -171,21 +171,23 @@ describe('QuickAdd', () => {
       response.reject(new Error('offline'));
     });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTS.quickAddError('Задача'));
-    expect(input).toHaveValue('Задача #дом');
+    // The text comes back; the toast (see Toaster tests) says what failed.
+    await waitFor(() => {
+      expect(input).toHaveValue('Задача #дом');
+    });
     expect(queryClient.getQueryData(taskKeys.list())).toEqual([]);
     listRequest.mockResolvedValue([created]);
     await userEvent.click(input);
     await userEvent.keyboard('{Enter}');
     await waitFor(() => {
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())).toEqual([created]);
     });
     expect(input).toHaveValue('');
     expect(request).toHaveBeenCalledTimes(2);
     queryClient.clear();
   });
 
-  it('keeps new typing when an earlier create fails, and names the failed task', async () => {
+  it('keeps new typing when an earlier create fails', async () => {
     const response = deferred<TaskRead>();
     vi.spyOn(api, 'createTask').mockReturnValue(response.promise);
     vi.spyOn(api, 'listTasks').mockResolvedValue([]);
@@ -198,12 +200,14 @@ describe('QuickAdd', () => {
       response.reject(new Error('offline'));
     });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTS.quickAddError('Первая'));
+    await waitFor(() => {
+      expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())).toEqual([]);
+    });
     expect(input).toHaveValue('Вторая в работе');
     queryClient.clear();
   });
 
-  it('reports a failure of an earlier create even after a later one was sent', async () => {
+  it('brings back an earlier failed create even after a later one was sent', async () => {
     const first = deferred<TaskRead>();
     const second = makeTask({ id: 't2', title: 'Вторая' });
     vi.spyOn(api, 'createTask').mockReturnValueOnce(first.promise).mockResolvedValueOnce(second);
@@ -217,21 +221,9 @@ describe('QuickAdd', () => {
       first.reject(new Error('offline'));
     });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTS.quickAddError('Первая'));
-    expect(input).toHaveValue('Первая');
-    queryClient.clear();
-  });
-
-  it('can dismiss the error', async () => {
-    vi.spyOn(api, 'createTask').mockRejectedValue(new Error('offline'));
-    vi.spyOn(api, 'listTasks').mockResolvedValue([]);
-    const { queryClient } = renderWithClient(<QuickAdd />);
-    await userEvent.type(screen.getByRole('textbox'), 'Задача{Enter}');
-    await screen.findByRole('alert');
-
-    await userEvent.click(screen.getByRole('button', { name: TEXTS.dismissError }));
-
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(input).toHaveValue('Первая');
+    });
     queryClient.clear();
   });
 

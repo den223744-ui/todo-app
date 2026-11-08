@@ -16,7 +16,6 @@ export const TEXTS = {
   quickAddHint: 'Enter — добавить. Даты, #теги и !приоритет распознаются автоматически.',
   quickAddSubmit: 'Добавить',
   quickAddSuccess: 'Задача добавлена.',
-  quickAddError: (title: string) => `Не удалось создать задачу «${title}». Попробуйте ещё раз.`,
   taskList: 'Список задач',
   loadingTasks: 'Загружаем задачи…',
   loadTasksError: 'Не удалось загрузить задачи.',

@@ -124,7 +124,9 @@ test('failed create retains the draft and retry creates one task', async ({ page
   const input = page.getByRole('textbox', { name: 'Новая задача' });
   await input.fill('Купить хлеб #дом');
   await input.press('Enter');
-  await expect(page.getByRole('alert')).toContainText('Не удалось создать задачу «Купить хлеб»');
+  await expect(page.getByRole('region', { name: 'Уведомления' })).toContainText(
+    'Нет связи с сервером',
+  );
   await expect(input).toHaveValue('Купить хлеб #дом');
   await expect(page.getByRole('main').getByRole('link', { name: /Купить хлеб/ })).toHaveCount(0);
   await input.press('Enter');

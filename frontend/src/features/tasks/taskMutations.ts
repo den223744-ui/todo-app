@@ -29,8 +29,6 @@ export interface MutationDeps {
   queryClient: QueryClient;
   now?: () => Date;
   newId?: () => string;
-  /** The caller reports failures itself: no toast (quick add). */
-  silent?: boolean;
 }
 
 export const OPTIMISTIC_ID_PREFIX = 'optimistic-';
@@ -74,7 +72,7 @@ export function createTaskMutation(
   const newId = deps.newId ?? defaultNewId;
   return {
     mutationKey: taskKeys.mutation(),
-    meta: { kind: 'create', silent: deps.silent ?? false },
+    meta: { kind: 'create' },
     mutationFn: (input) => deps.api.createTask(input),
     onMutate: async (input) => {
       await begin();

@@ -13,20 +13,19 @@ import { HighlightedInput } from './HighlightedInput';
  * Optimistic like the rest of the UI: on Enter the task shows up in the list at
  * once and the field clears, so the next task can be typed right away. If the
  * server refuses, the text comes back into the field (unless the user has
- * started typing something else) and an error names the task.
+ * started typing something else); the app-wide toast names the failed task
+ * (SPEC: a failed write is rolled back and reported with a toast).
  */
 export function QuickAdd() {
   const [value, setValue] = useState('');
   const [added, setAdded] = useState(false);
-  const [failed, setFailed] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const composingRef = useRef(false);
   const id = useId();
   const [location] = useAppLocation();
   const now = useNow();
   const { data } = useTasks();
-  // Errors are shown next to the field (with the text restored), not as a toast.
-  const create = useCreateTask({ silent: true });
+  const create = useCreateTask();
   const prepared = prepareQuickAdd(value, location.view, now);
   const issue = value.trim() && prepared.issue ? QUICK_ADD_ISSUES[prepared.issue] : null;
 
@@ -43,7 +42,6 @@ export function QuickAdd() {
         if (!task) return;
         setValue('');
         setAdded(false);
-        setFailed(null);
         // Submitted with the button: put the caret back for the next task.
         if (event.currentTarget.contains(document.activeElement)) inputRef.current?.focus();
         // mutateAsync, not mutate: mutate's per-call callbacks only fire for the
@@ -54,7 +52,6 @@ export function QuickAdd() {
           },
           () => {
             setValue((current) => (current === '' ? draft : current));
-            setFailed(task.title);
           },
         );
       }}
@@ -69,7 +66,7 @@ export function QuickAdd() {
           tokens={prepared.parsed.tokens}
           inputRef={inputRef}
           invalid={issue !== null}
-          describedBy={`${id}-hint${issue ? ` ${id}-issue` : ''}${failed ? ` ${id}-error` : ''}`}
+          describedBy={`${id}-hint${issue ? ` ${id}-issue` : ''}`}
           onChange={(next) => {
             setValue(next);
             setAdded(false);
@@ -93,20 +90,6 @@ export function QuickAdd() {
         <p id={`${id}-issue`} className="text-xs text-danger">
           {issue}
         </p>
-      )}
-      {failed && (
-        <div id={`${id}-error`} role="alert" className="flex items-start gap-3 text-sm">
-          <p className="flex-1 text-danger">{TEXTS.quickAddError(failed)}</p>
-          <button
-            type="button"
-            onClick={() => {
-              setFailed(null);
-            }}
-            className="min-h-11 rounded-lg px-3 text-ink-muted hover:bg-subtle"
-          >
-            {TEXTS.dismissError}
-          </button>
-        </div>
       )}
       {added && (
         <p role="status" className="text-xs text-accent-ink">

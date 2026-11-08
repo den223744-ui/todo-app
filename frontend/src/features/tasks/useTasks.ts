@@ -18,9 +18,9 @@ export function useTasks() {
   return useQuery(tasksQueryOptions(api, queryClient));
 }
 
-export function useCreateTask({ silent = false }: { silent?: boolean } = {}) {
+export function useCreateTask() {
   const queryClient = useQueryClient();
-  return useMutation(createTaskMutation({ api, queryClient, silent }));
+  return useMutation(createTaskMutation({ api, queryClient }));
 }
 
 export function useUpdateTask() {

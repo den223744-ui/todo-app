@@ -44,7 +44,7 @@ describe('failed writes show a toast', () => {
     expect(within(region).queryByText(TOAST_TEXTS.updateFailed)).not.toBeInTheDocument();
   });
 
-  it('not for quick add, which reports next to its field', async () => {
+  it('also for quick add, naming the task, with its text brought back', async () => {
     window.history.replaceState(null, '', '/?list=inbox');
     vi.spyOn(api, 'listTasks').mockResolvedValue([]);
     vi.spyOn(api, 'createTask').mockRejectedValue(new ApiError(500, 'internal_error', 'boom'));
@@ -53,8 +53,10 @@ describe('failed writes show a toast', () => {
     const input = await screen.findByRole('textbox', { name: 'Новая задача' });
     await userEvent.type(input, 'Задача{Enter}');
 
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(useToastStore.getState().toasts).toEqual([]);
+    const region = screen.getByRole('region', { name: TOAST_TEXTS.region });
+    expect(await within(region).findByText(TOAST_TEXTS.createFailed('Задача'))).toBeInTheDocument();
+    expect(input).toHaveValue('Задача');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument(); // one message, not two
   });
 });
 

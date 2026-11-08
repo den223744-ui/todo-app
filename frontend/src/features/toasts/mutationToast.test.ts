@@ -29,8 +29,7 @@ describe('mutationErrorToast', () => {
     expect(mutationErrorToast({ kind: 'update' }, {}, offline)).toBe(TOAST_TEXTS.offline);
   });
 
-  it('stays quiet for silent and unknown mutations', () => {
-    expect(mutationErrorToast({ kind: 'create', silent: true }, {}, SERVER)).toBeNull();
+  it('stays quiet for mutations that are not task writes', () => {
     expect(mutationErrorToast(undefined, {}, SERVER)).toBeNull();
     expect(mutationErrorToast({}, {}, SERVER)).toBeNull();
   });
