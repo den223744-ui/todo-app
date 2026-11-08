@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from app.api.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.db import create_engine, create_session_factory
+from app.core.errors import register_error_handlers
 from app.core.session import WorkspaceSessionMiddleware
 
 
@@ -42,6 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             f"{settings.api_prefix}/openapi.json",
         },
     )
+    register_error_handlers(app)
     app.include_router(api_router, prefix=settings.api_prefix)
     return app
 

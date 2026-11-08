@@ -9,6 +9,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp
 
 from app.core.config import Settings
+from app.core.errors import SessionRequiredError, error_response
 from app.services.workspaces import create_workspace, delete_workspace, find_workspace
 
 # Only these methods may start a new session. See WorkspaceSessionMiddleware.
@@ -88,12 +89,7 @@ class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
 
 
 def session_required_response() -> JSONResponse:
-    return JSONResponse(
-        status_code=401,
-        content={
-            "error": {
-                "code": "session_required",
-                "message": "No valid session. Load the task list (GET) to start one.",
-            }
-        },
-    )
+    # Built here rather than raised: exceptions from BaseHTTPMiddleware bypass
+    # the app's exception handlers and would turn into a 500.
+    error = SessionRequiredError("No valid session. Load the task list (GET) to start one.")
+    return error_response(error.status_code, error.code, error.message)
