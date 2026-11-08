@@ -1,4 +1,4 @@
-import type { TaskRead } from '../../api/schema';
+import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { LIST_TITLES, TEXTS } from '../../constants/texts';
 import type { TaskGroup } from '../../domain/taskGroups';
 import type { AppLocation } from '../../domain/view';
@@ -12,6 +12,10 @@ interface TaskListProps {
   busyIds: ReadonlySet<string>;
   onToggle: (task: TaskRead) => void;
   onOpen: (id: string) => void;
+  editingId: string | null;
+  onStartEdit: (id: string) => void;
+  onRename: (task: TaskRead, patch: TaskUpdate) => void;
+  onStopEdit: () => void;
 }
 
 const dayFormat = new Intl.DateTimeFormat('ru-RU', {
@@ -21,7 +25,18 @@ const dayFormat = new Intl.DateTimeFormat('ru-RU', {
   year: 'numeric',
 });
 
-export function TaskList({ groups, location, now, busyIds, onToggle, onOpen }: TaskListProps) {
+export function TaskList({
+  groups,
+  location,
+  now,
+  busyIds,
+  onToggle,
+  onOpen,
+  editingId,
+  onStartEdit,
+  onRename,
+  onStopEdit,
+}: TaskListProps) {
   return (
     // Each group is a labelled section; a plain div may not carry aria-label.
     <div className="space-y-6">
@@ -51,6 +66,10 @@ export function TaskList({ groups, location, now, busyIds, onToggle, onOpen }: T
                   busy={busyIds.has(task.id)}
                   onToggle={onToggle}
                   onOpen={onOpen}
+                  editing={editingId === task.id}
+                  onStartEdit={onStartEdit}
+                  onRename={onRename}
+                  onStopEdit={onStopEdit}
                 />
               ))}
             </ul>

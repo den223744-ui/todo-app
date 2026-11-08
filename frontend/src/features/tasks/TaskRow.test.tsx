@@ -7,6 +7,13 @@ import { DEFAULT_LOCATION } from '../../domain/view';
 import { makeTask } from '../../test/makeTask';
 import { TaskRow } from './TaskRow';
 
+const editProps = {
+  editing: false,
+  onStartEdit: vi.fn(),
+  onRename: vi.fn(),
+  onStopEdit: vi.fn(),
+};
+
 const now = new Date(2026, 10, 8, 12);
 
 describe('TaskRow', () => {
@@ -25,6 +32,7 @@ describe('TaskRow', () => {
           now={now}
           location={DEFAULT_LOCATION}
           busy={false}
+          {...editProps}
           onToggle={vi.fn()}
           onOpen={onOpen}
         />
@@ -53,6 +61,7 @@ describe('TaskRow', () => {
           now={now}
           location={DEFAULT_LOCATION}
           busy={false}
+          {...editProps}
           onToggle={onToggle}
           onOpen={onOpen}
         />
@@ -73,6 +82,7 @@ describe('TaskRow', () => {
           now={now}
           location={DEFAULT_LOCATION}
           busy
+          {...editProps}
           onToggle={onToggle}
           onOpen={vi.fn()}
         />
@@ -106,6 +116,7 @@ describe('TaskRow', () => {
             now={now}
             location={DEFAULT_LOCATION}
             busy={false}
+            {...editProps}
             onToggle={vi.fn()}
             onOpen={vi.fn()}
           />

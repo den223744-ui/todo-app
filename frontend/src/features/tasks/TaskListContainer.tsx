@@ -1,6 +1,7 @@
 import { useMutationState } from '@tanstack/react-query';
 
 import { TEXTS } from '../../constants/texts';
+import { useUiStore } from '../../store/uiStore';
 import { selectTaskGroups } from '../../domain/taskGroups';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useNow } from '../time/useNow';
@@ -23,6 +24,9 @@ export function TaskListContainer() {
   );
   const now = useNow();
   const [location, navigate] = useAppLocation();
+  const editingId = useUiStore((state) => state.editingTaskId);
+  const startEditing = useUiStore((state) => state.startEditing);
+  const stopEditing = useUiStore((state) => state.stopEditing);
   const groups = selectTaskGroups(data ?? [], location, now);
 
   return (
@@ -76,6 +80,12 @@ export function TaskListContainer() {
             onOpen={(taskId) => {
               navigate({ taskId });
             }}
+            editingId={editingId}
+            onStartEdit={startEditing}
+            onRename={(task, patch) => {
+              update.mutate({ id: task.id, patch });
+            }}
+            onStopEdit={stopEditing}
           />
         ))
       )}
