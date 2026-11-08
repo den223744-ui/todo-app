@@ -32,11 +32,9 @@ function GroupBadge({ list }: { list: TaskListRead | null | undefined }) {
   return (
     <span
       aria-hidden="true"
-      className="flex size-7 items-center justify-center rounded-lg bg-subtle text-ink-muted"
+      className="flex size-7 items-center justify-center rounded-lg border border-line text-ink-muted"
       style={
-        color
-          ? { backgroundColor: `var(--list-${color}-soft)`, color: `var(--list-${color})` }
-          : undefined
+        color ? { borderColor: `var(--list-${color})`, color: `var(--list-${color})` } : undefined
       }
     >
       <svg
@@ -99,7 +97,7 @@ export function TaskList({
                 </span>
               </div>
             )}
-            <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface shadow-soft">
+            <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-transparent">
               {group.tasks.map((task) => (
                 <TaskRow
                   key={task.id}

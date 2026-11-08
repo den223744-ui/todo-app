@@ -17,7 +17,7 @@ export function TodayStats({ tasks, now }: { tasks: readonly TaskRead[]; now: Da
   return (
     <section
       aria-label={STATS_TEXTS.region}
-      className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-line bg-surface px-5 py-4 shadow-soft sm:flex sm:items-center sm:gap-0 sm:divide-x sm:divide-line"
+      className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-line bg-transparent px-5 py-4 sm:flex sm:items-center sm:gap-0 sm:divide-x sm:divide-line"
     >
       <div className="col-span-2 flex items-center gap-3 sm:flex-1 sm:pr-5">
         <svg className="size-11 shrink-0 -rotate-90" viewBox="0 0 44 44" aria-hidden="true">

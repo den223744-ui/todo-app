@@ -107,9 +107,9 @@ export function TaskRow({
         <span className="hidden max-w-[45%] flex-wrap justify-end gap-1.5 sm:flex">
           {list && (
             <span
-              className="rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+              className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
               style={{
-                backgroundColor: `var(--list-${list.color}-soft)`,
+                borderColor: `var(--list-${list.color})`,
                 color: `var(--list-${list.color}-ink)`,
               }}
             >
@@ -119,7 +119,7 @@ export function TaskRow({
           {task.tags.map((tag) => (
             <span
               key={tag}
-              className="max-w-full rounded-full bg-subtle px-2.5 py-0.5 text-[11px] text-ink-muted wrap-anywhere"
+              className="max-w-full rounded-full border border-line px-2.5 py-0.5 text-[11px] text-ink-muted wrap-anywhere"
             >
               #{tag}
             </span>
