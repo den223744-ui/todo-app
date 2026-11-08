@@ -90,7 +90,7 @@ export function QuickAdd() {
         <button
           type="submit"
           disabled={!prepared.task || data === undefined}
-          className="min-h-12 shrink-0 rounded-xl border border-line bg-transparent px-4 text-sm font-semibold text-ink hover:border-ink-faint disabled:cursor-not-allowed disabled:text-ink-faint disabled:hover:border-line"
+          className="min-h-12 shrink-0 rounded-xl border border-transparent bg-transparent px-4 text-sm font-semibold text-ink hover:text-accent-ink disabled:cursor-not-allowed disabled:text-ink-faint disabled:hover:text-ink-faint"
         >
           {TEXTS.quickAddSubmit}
         </button>

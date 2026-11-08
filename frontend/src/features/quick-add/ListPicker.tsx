@@ -18,7 +18,7 @@ export function ListPicker({ lists, value, onChange }: ListPickerProps) {
   const chosen = lists.find((list) => list.id === value);
   return (
     <label
-      className="relative flex min-h-12 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-transparent px-3 text-sm text-ink-muted focus-within:border-check focus-within:ring-2 focus-within:ring-check/25 hover:text-ink"
+      className="relative flex min-h-12 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-transparent bg-transparent px-3 text-sm text-ink-muted focus-within:border-check focus-within:ring-2 focus-within:ring-check/25 hover:text-ink"
       style={chosen ? { color: `var(--list-${chosen.color}-ink)` } : undefined}
     >
       <svg

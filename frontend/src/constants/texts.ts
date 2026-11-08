@@ -18,7 +18,7 @@ export const TEXTS = {
   tags: 'Теги',
   tagsEmpty: 'Добавьте к задаче #тег — он появится здесь.',
   quickAdd: 'Новая задача',
-  quickAddPlaceholder: 'Купить молоко завтра в 18:00 #дом !!',
+  quickAddPlaceholder: 'Запланировать дело',
   quickAddHint: 'Enter — добавить. Даты, #теги и !приоритет распознаются автоматически.',
   quickAddSubmit: 'Добавить',
   quickAddSuccess: 'Задача добавлена.',
