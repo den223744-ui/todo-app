@@ -78,6 +78,12 @@ test('edit a task in the detail panel, add a subtask, and it survives a reload',
   await expect
     .poll(() => server.all().find((task) => task.id === 'p'))
     .toMatchObject({ notes: 'Кухня, прокладка 1/2"', priority: 3, tags: ['дом', 'ремонт'] });
+  // The visible subtask row is optimistic: wait until the server has saved it.
+  await expect
+    .poll(() =>
+      server.all().some((task) => task.parent_id === 'p' && task.title === 'Купить прокладку'),
+    )
+    .toBe(true);
 
   await page.reload();
   const reloaded = page.getByRole('complementary', { name: 'Детали задачи' });

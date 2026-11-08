@@ -168,14 +168,27 @@ test('mobile dark input keeps caret and highlights aligned when scrolling and ed
     element.scrollLeft = element.scrollWidth;
     element.dispatchEvent(new Event('scroll'));
   });
+  // Scrolled to the end, the text ends at the field's right padding (12px).
+  // The last highlight must end there too: a mirror shifted by font, padding
+  // or scroll would land elsewhere (left of the field included).
+  const RIGHT_PADDING = 12;
   await expect
     .poll(async () => {
       const field = await input.boundingBox();
       const lastToken = await page.locator('mark').last().boundingBox();
       if (!field || !lastToken) throw new Error('Quick add field is missing');
-      return lastToken.x + lastToken.width - (field.x + field.width);
+      const offset = field.x + field.width - RIGHT_PADDING - (lastToken.x + lastToken.width);
+      return Math.abs(offset);
     })
-    .toBeLessThan(0);
+    .toBeLessThanOrEqual(2);
+  // And every highlight that is visible lies inside the field.
+  const field = await input.boundingBox();
+  for (const mark of await page.locator('mark').all()) {
+    const box = await mark.boundingBox();
+    if (!field || !box || box.x + box.width < field.x) continue; // scrolled out to the left
+    expect(box.x).toBeGreaterThanOrEqual(field.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(field.x + field.width);
+  }
   await page.screenshot({ path: testInfo.outputPath('quick-add-mobile-dark.png'), fullPage: true });
   await input.press('Home');
   await input.press('Delete');
