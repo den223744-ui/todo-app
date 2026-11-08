@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./todo.db"
     database_echo: bool = False
 
+    # Anonymous session cookie that carries the workspace id.
+    session_cookie_name: str = "todo_workspace"
+    session_cookie_max_age: int = 60 * 60 * 24 * 365  # one year, in seconds
+    # Must be true in production (HTTPS); false lets the cookie work on http://localhost.
+    session_cookie_secure: bool = False
+
     @field_validator("database_url")
     @classmethod
     def _normalize_database_url(cls, value: str) -> str:

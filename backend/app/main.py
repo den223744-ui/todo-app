@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from app.api.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.db import create_engine, create_session_factory
+from app.core.session import WorkspaceSessionMiddleware
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,8 +27,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
         lifespan=lifespan,
     )
+    session_factory = create_session_factory(engine)
     app.state.engine = engine
-    app.state.session_factory = create_session_factory(engine)
+    app.state.session_factory = session_factory
+    app.add_middleware(
+        WorkspaceSessionMiddleware,
+        settings=settings,
+        session_factory=session_factory,
+        # Infrastructure endpoints must not create workspaces (health checks run often).
+        exempt_paths={
+            f"{settings.api_prefix}/health",
+            f"{settings.api_prefix}/docs",
+            f"{settings.api_prefix}/docs/oauth2-redirect",
+            f"{settings.api_prefix}/openapi.json",
+        },
+    )
     app.include_router(api_router, prefix=settings.api_prefix)
     return app
 
