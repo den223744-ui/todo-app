@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime, time
 
 from sqlalchemy import JSON, CheckConstraint, ForeignKey, Index, String, Text
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.time import utcnow
@@ -37,7 +38,9 @@ class Task(Base):
     due_date: Mapped[date | None]
     due_time: Mapped[time | None]
     # A JSON list instead of a many-to-many table: see README, section on trade-offs.
-    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # MutableList makes in-place edits (append, remove) mark the row dirty;
+    # plain JSON only notices when the whole list is reassigned.
+    tags: Mapped[list[str]] = mapped_column(MutableList.as_mutable(JSON), default=list)
     # Fractional ordering: a moved task gets the midpoint between its new neighbours.
     position: Mapped[float]
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())

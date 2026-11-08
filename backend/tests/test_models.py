@@ -92,6 +92,23 @@ async def test_update_bumps_updated_at_and_keeps_created_at(session: AsyncSessio
     assert loaded.updated_at > long_ago
 
 
+async def test_in_place_tag_changes_are_persisted(session: AsyncSession) -> None:
+    workspace = await make_workspace(session)
+    long_ago = datetime(2020, 1, 1, tzinfo=UTC)
+    task = make_task(workspace, tags=["работа"], created_at=long_ago, updated_at=long_ago)
+    session.add(task)
+    await session.commit()
+
+    task.tags.append("дом")
+    task.tags.remove("работа")
+    await session.commit()
+    loaded = await session.get(Task, task.id, populate_existing=True)
+
+    assert loaded is not None
+    assert loaded.tags == ["дом"]
+    assert loaded.updated_at > long_ago
+
+
 async def test_title_of_max_length_is_allowed(session: AsyncSession) -> None:
     workspace = await make_workspace(session)
     session.add(make_task(workspace, title="x" * 500))
