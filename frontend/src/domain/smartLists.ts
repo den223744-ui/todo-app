@@ -77,28 +77,40 @@ export function selectList(tasks: readonly TaskRead[], list: SmartList, now: Dat
 
 /**
  * "Today" as shown: tasks due today or overdue, plus those already ticked off
- * today, so the day's progress stays visible. In the manual order.
+ * today, so the day's progress stays visible. Completed tasks follow open ones.
  */
 export function selectToday(tasks: readonly TaskRead[], now: Date): TaskRead[] {
   const today = toLocalDateString(now);
-  return tasks
-    .filter(
-      (task) =>
-        isTopLevel(task) &&
-        task.due_date !== null &&
-        task.due_date <= today &&
-        (isOpen(task) || completedOn(task, today)),
-    )
-    .sort(compareByPosition);
+  return completedLast(
+    tasks
+      .filter(
+        (task) =>
+          isTopLevel(task) &&
+          task.due_date !== null &&
+          task.due_date <= today &&
+          (isOpen(task) || completedOn(task, today)),
+      )
+      .sort(compareByPosition),
+  );
+}
+
+/** Stable partition: keep the existing order on both sides, without mutating input. */
+export function completedLast(tasks: readonly TaskRead[]): TaskRead[] {
+  const open: TaskRead[] = [];
+  const done: TaskRead[] = [];
+  for (const task of tasks) (isOpen(task) ? open : done).push(task);
+  return [...open, ...done];
 }
 
 /**
  * The Today screen for any day: today itself as selectToday; another day
- * shows the tasks due on it, done or not, in the manual order.
+ * shows the tasks due on it, open first, in the manual order within each part.
  */
 export function selectDay(tasks: readonly TaskRead[], day: string, now: Date): TaskRead[] {
   if (day === toLocalDateString(now)) return selectToday(tasks, now);
-  return tasks.filter((task) => isTopLevel(task) && task.due_date === day).sort(compareByPosition);
+  return completedLast(
+    tasks.filter((task) => isTopLevel(task) && task.due_date === day).sort(compareByPosition),
+  );
 }
 
 /** Incomplete top-level tasks due tomorrow: the tail of the Today screen. By time, then order. */

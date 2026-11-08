@@ -1,6 +1,6 @@
 import type { TaskListRead, TaskRead } from '../api/schema';
 import { toLocalDateString } from './dates';
-import { searchTasks } from './search';
+import { searchTopLevelTasks } from './search';
 import { groupByDueDate, selectDay, selectList, selectTag, selectTomorrow } from './smartLists';
 import { groupByList, selectInList } from './taskLists';
 import type { AppLocation } from './view';
@@ -12,34 +12,40 @@ export interface TaskGroup {
   list?: TaskListRead | null;
 }
 
-/** Apply search within the selected view; only nonempty groups reach the UI. */
+/** Search spans every view; only nonempty groups reach the UI. */
 export function selectTaskGroups(
   tasks: readonly TaskRead[],
   lists: readonly TaskListRead[],
   { view, query, day }: AppLocation,
   now: Date,
 ): TaskGroup[] {
-  const matching = searchTasks(tasks, query);
+  if (query.trim()) {
+    const matching = searchTopLevelTasks(tasks, query);
+    return [
+      { key: 'search:open', tasks: matching.filter((task) => task.completed_at === null) },
+      { key: 'search:completed', tasks: matching.filter((task) => task.completed_at !== null) },
+    ].filter((group) => group.tasks.length > 0);
+  }
   if (view.kind === 'list' && view.list === 'today') {
     // The chosen day's tasks by list; for today itself, tomorrow's follow as one group.
     const today = toLocalDateString(now);
     const shown = day ?? today;
-    const byList: TaskGroup[] = groupByList(selectDay(matching, shown, now), lists).map(
+    const byList: TaskGroup[] = groupByList(selectDay(tasks, shown, now), lists).map(
       ({ list, tasks: grouped }) => ({
         key: list ? `list:${list.id}` : 'list:none',
         tasks: grouped,
         list,
       }),
     );
-    const tomorrow = shown === today ? selectTomorrow(matching, now) : [];
+    const tomorrow = shown === today ? selectTomorrow(tasks, now) : [];
     return tomorrow.length > 0 ? [...byList, { key: 'tomorrow', tasks: tomorrow }] : byList;
   }
   const selected =
     view.kind === 'tag'
-      ? selectTag(matching, view.tag)
+      ? selectTag(tasks, view.tag)
       : view.kind === 'taskList'
-        ? selectInList(matching, view.listId)
-        : selectList(matching, view.list, now);
+        ? selectInList(tasks, view.listId)
+        : selectList(tasks, view.list, now);
   if (view.kind === 'list' && view.list === 'upcoming') {
     return groupByDueDate(selected).map(({ date, tasks: grouped }) => ({
       key: date,

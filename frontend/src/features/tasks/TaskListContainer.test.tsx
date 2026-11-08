@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../../api';
 import { createQueryClient } from '../../api/queryClient';
 import type { TaskRead } from '../../api/schema';
-import { EMPTY_LIST_TEXTS, TEXTS } from '../../constants/texts';
+import { EMPTY_LIST_TEXTS, SEARCH_TEXTS, TEXTS } from '../../constants/texts';
 import { SMART_LISTS } from '../../domain/smartLists';
 import { navigateTo } from '../navigation/useAppLocation';
 import { makeList } from '../../test/makeList';
@@ -87,6 +87,29 @@ describe('TaskListContainer', () => {
     ]);
   });
 
+  it('renders global search headings and parents from child matches, including completed tasks', () => {
+    window.history.replaceState(null, '', '/?list=upcoming&q=отчёт');
+    renderWithClient(<TaskListContainer />, [
+      makeTask({ id: 'late', title: 'Просроченный отчёт', due_date: '2026-11-07' }),
+      makeTask({ id: 'parent', title: 'Проект' }),
+      makeTask({ id: 'child', title: 'Дописать отчёт', parent_id: 'parent' }),
+      makeTask({ id: 'done', title: 'Готовый отчёт', completed_at: '2026-11-08T10:00:00Z' }),
+    ]);
+    expect(screen.getAllByRole('heading', { level: 2 }).map((node) => node.textContent)).toEqual([
+      SEARCH_TEXTS.found,
+      SEARCH_TEXTS.completed,
+    ]);
+    expect(
+      within(screen.getByRole('region', { name: SEARCH_TEXTS.found }))
+        .getAllByRole('link')
+        .map((node) => node.textContent),
+    ).toEqual([expect.stringContaining('Просроченный отчёт'), 'Проект']);
+    expect(screen.queryByRole('link', { name: /Дописать отчёт/ })).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: SEARCH_TEXTS.completed })).getByRole('checkbox'),
+    ).toBeChecked();
+  });
+
   it.each(SMART_LISTS)('has a dedicated empty state for %s', (list) => {
     window.history.replaceState(null, '', `/?list=${list}`);
     renderWithClient(<TaskListContainer />);
@@ -103,7 +126,7 @@ describe('TaskListContainer', () => {
     expect(screen.getByRole('status')).toHaveTextContent(TEXTS.searchEmpty);
   });
 
-  it('combines the tag and search from the URL and reacts to history navigation', async () => {
+  it('searches globally from a tag, then restores that tag on history navigation', async () => {
     window.history.replaceState(null, '', '/?tag=дом&q=молоко');
     renderWithClient(<TaskListContainer />, [
       makeTask({ id: 'milk', title: 'Купить молоко', tags: ['дом'] }),
@@ -111,12 +134,14 @@ describe('TaskListContainer', () => {
       makeTask({ id: 'other', title: 'Молоко для офиса', tags: ['работа'] }),
     ]);
     expect(screen.getByRole('link', { name: /Купить молоко/ })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /хлеб|офиса/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /офиса/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /хлеб/ })).not.toBeInTheDocument();
     act(() => {
       window.history.replaceState(null, '', '/?tag=дом');
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
     expect(await screen.findByRole('link', { name: /Купить хлеб/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /офиса/ })).not.toBeInTheDocument();
   });
 
   it('opens a task in the URL while preserving view and search', async () => {
@@ -222,4 +247,65 @@ describe('TaskListContainer', () => {
     });
     queryClient.clear();
   });
+
+  it.each(['2026-11-08', '2026-11-10'])(
+    'moves an optimistic completion to the end of its group on %s, retaining focus and rolling back order on error',
+    async (day) => {
+      window.history.replaceState(null, '', `/?day=${day}`);
+      const tasks = [
+        makeTask({
+          id: 'done-a',
+          position: 0,
+          list_id: 'work',
+          due_date: day,
+          completed_at: new Date().toISOString(),
+        }),
+        makeTask({ id: 'open-a', position: 1, list_id: 'work', due_date: day }),
+        makeTask({
+          id: 'done-b',
+          position: 2,
+          list_id: 'work',
+          due_date: day,
+          completed_at: new Date().toISOString(),
+        }),
+        makeTask({ id: 'open-b', position: 3, list_id: 'work', due_date: day }),
+        makeTask({
+          id: 'loose-done',
+          position: 0,
+          due_date: day,
+          completed_at: new Date().toISOString(),
+        }),
+        makeTask({ id: 'loose-open', position: 1, due_date: day }),
+      ];
+      const response = deferred<TaskRead>();
+      vi.spyOn(api, 'updateTask').mockReturnValue(response.promise);
+      vi.spyOn(api, 'listTasks').mockResolvedValue(tasks);
+      const { queryClient } = renderWithClient(<TaskListContainer />, tasks, [
+        makeList({ id: 'work', name: 'Работа' }),
+      ]);
+      const group = within(screen.getByRole('region', { name: 'Работа' }));
+      const titles = () =>
+        group.getAllByRole('link').map((link) => link.getAttribute('data-task-link'));
+      expect(titles()).toEqual(['open-a', 'open-b', 'done-a', 'done-b']);
+      expect(
+        within(screen.getByRole('region', { name: 'Без списка' }))
+          .getAllByRole('link')
+          .map((link) => link.getAttribute('data-task-link')),
+      ).toEqual(['loose-open', 'loose-done']);
+      const checkbox = group.getByRole('checkbox', { name: TEXTS.completeTask('open-a') });
+      const row = checkbox.closest('li');
+      await userEvent.click(checkbox);
+      await waitFor(() => expect(checkbox).toBeChecked());
+      expect(titles()).toEqual(['open-b', 'done-a', 'open-a', 'done-b']);
+      expect(checkbox).toHaveFocus();
+      expect(checkbox.closest('li')).toBe(row);
+      act(() => {
+        response.reject(new Error('offline'));
+      });
+      await waitFor(() => expect(checkbox).not.toBeChecked());
+      expect(titles()).toEqual(['open-a', 'open-b', 'done-a', 'done-b']);
+      expect(checkbox).toHaveFocus();
+      queryClient.clear();
+    },
+  );
 });

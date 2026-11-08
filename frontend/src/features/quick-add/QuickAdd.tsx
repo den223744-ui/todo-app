@@ -1,8 +1,10 @@
 import { useId, useRef, useState } from 'react';
 
-import { QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
+import { LIST_TITLES, QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
+import { quickAddFeedback } from '../../domain/quickAddFeedback';
 import { prepareQuickAdd } from '../../domain/quickAddInput';
 import { compareLists } from '../../domain/taskLists';
+import { useToastStore } from '../../store/toastStore';
 import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useCreateTask, useTasks } from '../tasks/useTasks';
@@ -21,15 +23,18 @@ import { ListPicker } from './ListPicker';
  */
 export function QuickAdd() {
   const [value, setValue] = useState('');
-  const [added, setAdded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const composingRef = useRef(false);
   const id = useId();
-  const [location] = useAppLocation();
+  const [location, navigate] = useAppLocation();
+  const showToast = useToastStore((state) => state.showToast);
   const now = useNow();
   const { data } = useTasks();
   const create = useCreateTask();
   const { data: lists } = useLists();
+  // Saving may finish after navigation: feedback describes the screen open then.
+  const contextRef = useRef({ location, lists });
+  contextRef.current = { location, lists };
   // The list picked with the folder button; it wins over the open list.
   const [listId, setListId] = useState('');
   const prepared = prepareQuickAdd(value, location.view, now, location.day ?? null);
@@ -48,14 +53,37 @@ export function QuickAdd() {
         if (!task) return;
         const target = listId ? { ...task, list_id: listId } : task;
         setValue('');
-        setAdded(false);
         // Submitted with the button: put the caret back for the next task.
         if (event.currentTarget.contains(document.activeElement)) inputRef.current?.focus();
         // mutateAsync, not mutate: mutate's per-call callbacks only fire for the
         // latest call, so a failure of an earlier, still running create would be lost.
         create.mutateAsync(target).then(
-          () => {
-            setAdded(true);
+          (created) => {
+            const context = contextRef.current;
+            const feedback = quickAddFeedback(
+              created,
+              context.lists ?? [],
+              context.location,
+              new Date(),
+            );
+            showToast(
+              TEXTS.quickAddAdded(
+                feedback.listName ?? LIST_TITLES[feedback.section],
+                feedback.dateLabel,
+              ),
+              {
+                duration: 4_000,
+                deduplicate: false,
+                ...(!feedback.visible && {
+                  action: {
+                    label: TEXTS.quickAddShow,
+                    run: () => {
+                      navigate(feedback.destination);
+                    },
+                  },
+                }),
+              },
+            );
           },
           () => {
             setValue((current) => (current === '' ? draft : current));
@@ -74,10 +102,7 @@ export function QuickAdd() {
           inputRef={inputRef}
           invalid={issue !== null}
           describedBy={`${id}-hint${issue ? ` ${id}-issue` : ''}`}
-          onChange={(next) => {
-            setValue(next);
-            setAdded(false);
-          }}
+          onChange={setValue}
           onCompositionChange={(composing) => {
             composingRef.current = composing;
           }}
@@ -101,11 +126,6 @@ export function QuickAdd() {
       {issue && (
         <p id={`${id}-issue`} className="text-xs text-danger">
           {issue}
-        </p>
-      )}
-      {added && (
-        <p role="status" className="text-xs text-accent-ink">
-          {TEXTS.quickAddSuccess}
         </p>
       )}
     </form>

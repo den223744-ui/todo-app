@@ -6,6 +6,7 @@ import {
   belongsTo,
   compareByDue,
   compareCompleted,
+  completedLast,
   countLists,
   countTags,
   groupByDueDate,
@@ -169,10 +170,34 @@ describe('selectDay', () => {
     });
 
     expect(ids(selectDay([...ALL, doneThen], '2026-11-10', NOW))).toEqual([
-      'done-then',
       'tomorrow-9',
       'tomorrow',
+      'done-then',
     ]);
+  });
+});
+
+describe('completedLast', () => {
+  it('stably partitions without changing either relative order or the input', () => {
+    const tasks = [done, inbox, doneLater, inboxFirst];
+    expect(ids(completedLast(tasks))).toEqual(['inbox', 'inbox-first', 'done', 'done-later']);
+    expect(tasks).toEqual([done, inbox, doneLater, inboxFirst]);
+    expect(completedLast([])).toEqual([]);
+  });
+
+  it('keeps both parts in manual order on today, including overdue completions', () => {
+    const tasks = [
+      makeTask({ id: 'done-b', due_date: TODAY, position: 3, completed_at: NOW.toISOString() }),
+      makeTask({ id: 'open-b', due_date: TODAY, position: 4 }),
+      makeTask({
+        id: 'done-a',
+        due_date: '2026-11-08',
+        position: 0,
+        completed_at: NOW.toISOString(),
+      }),
+      makeTask({ id: 'open-a', due_date: TODAY, position: 2 }),
+    ];
+    expect(ids(selectToday(tasks, NOW))).toEqual(['open-a', 'open-b', 'done-a', 'done-b']);
   });
 });
 

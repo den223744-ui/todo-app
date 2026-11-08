@@ -7,10 +7,14 @@ import { useToastStore } from '../../store/toastStore';
  * empty field has nothing to undo: after a delete focus often lands in the
  * empty quick add field, and Ctrl+Z there should still bring the task back.
  */
+const TEXT_INPUTS = new Set(['text', 'search', 'email', 'url', 'tel', 'password', 'number']);
+
 function isEditing(target: EventTarget | null): boolean {
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-    return target.value !== '';
+  // A checkbox or a button keeps focus after a click; Ctrl+Z there is ours.
+  if (target instanceof HTMLInputElement) {
+    return TEXT_INPUTS.has(target.type) && target.value !== '';
   }
+  if (target instanceof HTMLTextAreaElement) return target.value !== '';
   return target instanceof HTMLElement && (target.isContentEditable || target.tagName === 'SELECT');
 }
 

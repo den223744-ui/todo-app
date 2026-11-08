@@ -4,7 +4,7 @@ import { SEARCH_TEXTS } from '../../constants/texts';
 import { useAppLocation } from '../navigation/useAppLocation';
 
 /**
- * Search within the current view; the query lives in the URL (?q=…).
+ * Global task search; the query lives in the URL (?q=…).
  *
  * The field keeps its own draft: the URL holds the trimmed query, and binding
  * the field to it directly would eat a trailing space while typing

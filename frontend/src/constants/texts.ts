@@ -21,7 +21,9 @@ export const TEXTS = {
   quickAddPlaceholder: 'Запланировать дело',
   quickAddHint: 'Enter — добавить. Даты, #теги и !приоритет распознаются автоматически.',
   quickAddSubmit: 'Добавить',
-  quickAddSuccess: 'Задача добавлена.',
+  quickAddAdded: (section: string, date: string | null) =>
+    `Добавлено в «${section}»${date ? `, ${date}` : ''}`,
+  quickAddShow: 'Показать',
   taskList: 'Список задач',
   loadingTasks: 'Загружаем задачи…',
   loadTasksError: 'Не удалось загрузить задачи.',
@@ -29,7 +31,7 @@ export const TEXTS = {
   retry: 'Повторить',
   dismissError: 'Закрыть сообщение',
   searchEmpty: 'Ничего не найдено',
-  searchEmptyHint: 'Попробуйте другой запрос или выберите другой список.',
+  searchEmptyHint: 'Попробуйте другой запрос.',
   tagEmpty: 'В этом теге пока нет задач',
   tagEmptyHint: 'Здесь появятся невыполненные задачи с этим тегом.',
   listEmpty: 'В этом списке пока нет задач',
@@ -145,7 +147,9 @@ export const EDIT_TEXTS = {
 
 export const SEARCH_TEXTS = {
   label: 'Поиск по задачам',
-  placeholder: 'Поиск в этом списке',
+  placeholder: 'Поиск по всем задачам',
+  found: 'Найдено',
+  completed: 'Выполненные',
   results: (query: string) => `Результаты поиска «${query}»`,
 } as const;
 

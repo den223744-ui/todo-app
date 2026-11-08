@@ -33,4 +33,13 @@ describe('toastStore', () => {
 
     expect(messages()).toEqual(['same', 'other', 'same']);
   });
+
+  it('can show separate confirmations for distinct operations with the same message', () => {
+    const store = useToastStore.getState();
+    const first = store.showToast('same', { duration: 4_000, deduplicate: false });
+    const second = store.showToast('same', { duration: 4_000, deduplicate: false });
+    expect(messages()).toEqual(['same', 'same']);
+    expect(second).not.toBe(first);
+    expect(useToastStore.getState().toasts.map((toast) => toast.duration)).toEqual([4_000, 4_000]);
+  });
 });

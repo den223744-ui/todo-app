@@ -7,6 +7,7 @@ import { api } from '../../api';
 import { ApiError } from '../../api/client';
 import type { TaskRead } from '../../api/schema';
 import { App } from '../../App';
+import { toLocalDateString } from '../../domain/dates';
 import { useToastStore } from '../../store/toastStore';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
@@ -15,9 +16,9 @@ const TASK = makeTask({ id: 't1', title: 'Полить цветы' });
 const SUB = makeTask({ id: 's1', title: 'Кактус', parent_id: 't1' });
 
 /** The app over an in-memory server that applies writes, so refetches agree. */
-function openApp(search = '/?list=inbox') {
+function openApp(search = '/?list=inbox', initial: TaskRead[] = [TASK, SUB]) {
   window.history.replaceState(null, '', search);
-  let store: TaskRead[] = [TASK, SUB];
+  let store: TaskRead[] = initial;
   vi.spyOn(api, 'listTasks').mockImplementation(() => Promise.resolve(store));
   const update = vi.spyOn(api, 'updateTask').mockImplementation((id, patch) => {
     store = store.map((task) =>
@@ -35,7 +36,7 @@ function openApp(search = '/?list=inbox') {
     store = [TASK, SUB];
     return Promise.resolve(store.find((task) => task.id === id) as TaskRead);
   });
-  const result = renderWithClient(<App />, [TASK, SUB]);
+  const result = renderWithClient(<App />, initial);
   const toasts = screen.getByRole('region', { name: 'Уведомления' });
   return { ...result, update, remove, restore, toasts };
 }
@@ -62,6 +63,22 @@ describe('undo', () => {
       ]);
     });
     expect(within(toasts).queryByText('Выполнено: «Полить цветы»')).toBeNull();
+    queryClient.clear();
+  });
+
+  it('Ctrl+Z right after ticking the checkbox (focus stays on it) undoes the completion', async () => {
+    // On Today a completed task stays in the list (it moves to the group end).
+    const dueToday = { ...TASK, due_date: toLocalDateString(new Date()) };
+    const { update, queryClient } = openApp('/', [dueToday, SUB]);
+    const checkbox = screen.getByRole('checkbox', { name: 'Выполнить: Полить цветы' });
+
+    await userEvent.click(checkbox);
+    expect(checkbox).toHaveFocus();
+    await userEvent.keyboard('{Control>}z{/Control}');
+
+    await waitFor(() => {
+      expect(update).toHaveBeenLastCalledWith('t1', { completed: false });
+    });
     queryClient.clear();
   });
 

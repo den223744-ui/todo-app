@@ -19,6 +19,8 @@ export interface Toast {
 export interface ToastOptions {
   action?: ToastAction;
   duration?: number;
+  /** Distinct successful operations may have identical messages. Defaults to true. */
+  deduplicate?: boolean;
 }
 
 /** Older toasts give way: more than this many at once is noise. */
@@ -40,7 +42,13 @@ export const useToastStore = create<ToastState>()((set, get) => ({
   showToast: (message, options = {}) => {
     // The same plain message twice in a row (e.g. two failed saves) shows once.
     const last = get().toasts.at(-1);
-    if (!options.action && last?.message === message && !last.action) return null;
+    if (
+      options.deduplicate !== false &&
+      !options.action &&
+      last?.message === message &&
+      !last.action
+    )
+      return null;
     const toast: Toast = {
       id: nextId++,
       message,

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { App } from '../../App';
+import { SEARCH_TEXTS } from '../../constants/texts';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
 
@@ -20,17 +21,18 @@ const titles = () =>
     .map((link) => link.textContent);
 
 describe('SearchField', () => {
-  it('filters the current view as you type, spaces included', async () => {
-    window.history.replaceState(null, '', '/?list=inbox');
+  it('searches all tasks as you type, spaces included, from any view', async () => {
+    window.history.replaceState(null, '', '/?list=upcoming');
     const { queryClient } = renderWithClient(<App />, TASKS);
     const search = screen.getByRole('searchbox', { name: 'Поиск по задачам' });
+    expect(search).toHaveAttribute('placeholder', SEARCH_TEXTS.placeholder);
 
     await userEvent.type(search, 'купить х');
 
     expect(search).toHaveValue('купить х'); // the space was not eaten
     expect(titles()).toEqual(['Купить хлеб']);
     expect(window.location.search).toBe(
-      '?list=inbox&q=%D0%BA%D1%83%D0%BF%D0%B8%D1%82%D1%8C+%D1%85',
+      '?list=upcoming&q=%D0%BA%D1%83%D0%BF%D0%B8%D1%82%D1%8C+%D1%85',
     );
     queryClient.clear();
   });
