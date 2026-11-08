@@ -30,52 +30,55 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
   return (
     <section
       aria-label={STATS_TEXTS.region}
-      className="mt-6 grid grid-cols-2 gap-4 rounded-2xl border border-line bg-transparent px-5 py-4 sm:flex sm:items-center sm:gap-0 sm:divide-x sm:divide-line"
+      className="@container mt-6 rounded-2xl border border-line bg-transparent"
     >
-      <div className="col-span-2 flex items-center gap-3 sm:flex-1 sm:pr-5">
-        <svg className="size-11 shrink-0 -rotate-90" viewBox="0 0 44 44" aria-hidden="true">
-          <circle
-            cx="22"
-            cy="22"
-            r={radius}
-            fill="none"
-            stroke="var(--accent-soft)"
-            strokeWidth="5"
-          />
-          <circle
-            cx="22"
-            cy="22"
-            r={radius}
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - share)}
-          />
-        </svg>
-        <div>
-          <p className="text-[15px] font-semibold text-ink">{STATS_TEXTS.done(done, total)}</p>
-          <p className="text-xs text-ink-muted">{STATS_TEXTS.doneHint}</p>
+      {/* Laid out by the card's own width: a grid when narrow, one row with dividers when wide. */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 @xl:grid-cols-3 @3xl:flex @3xl:items-center @3xl:gap-0 @3xl:divide-x @3xl:divide-line">
+        <div className="col-span-2 flex items-center gap-3 @xl:col-span-1 @3xl:flex-1 @3xl:pr-4">
+          <svg className="size-11 shrink-0 -rotate-90" viewBox="0 0 44 44" aria-hidden="true">
+            <circle
+              cx="22"
+              cy="22"
+              r={radius}
+              fill="none"
+              stroke="var(--accent-soft)"
+              strokeWidth="5"
+            />
+            <circle
+              cx="22"
+              cy="22"
+              r={radius}
+              fill="none"
+              stroke="var(--accent)"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - share)}
+            />
+          </svg>
+          <div>
+            <p className="text-[15px] font-semibold text-ink">{STATS_TEXTS.done(done, total)}</p>
+            <p className="text-xs whitespace-nowrap text-ink-muted">{STATS_TEXTS.doneHint}</p>
+          </div>
         </div>
+        <Stat
+          icon={CALENDAR}
+          value={dueThatDay}
+          label={isToday ? STATS_TEXTS.dueToday : STATS_TEXTS.dueThatDay}
+        />
+        <Stat
+          icon={ARROW}
+          value={nextDay}
+          label={isToday ? STATS_TEXTS.dueTomorrow : STATS_TEXTS.dueNextDay}
+        />
+        <Stat
+          icon={ALERT}
+          value={counts.overdue}
+          label={STATS_TEXTS.overdue}
+          tone="text-accent-ink"
+        />
+        <Stat icon={BANG} value={urgent} label={STATS_TEXTS.highPriority} />
       </div>
-      <Stat
-        icon={CALENDAR}
-        value={dueThatDay}
-        label={isToday ? STATS_TEXTS.dueToday : STATS_TEXTS.dueThatDay}
-      />
-      <Stat
-        icon={ARROW}
-        value={nextDay}
-        label={isToday ? STATS_TEXTS.dueTomorrow : STATS_TEXTS.dueNextDay}
-      />
-      <Stat
-        icon={ALERT}
-        value={counts.overdue}
-        label={STATS_TEXTS.overdue}
-        tone="text-accent-ink"
-      />
-      <Stat icon={BANG} value={urgent} label={STATS_TEXTS.highPriority} />
     </section>
   );
 }
@@ -97,7 +100,7 @@ function Stat({
   tone?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 sm:flex-1 sm:px-5">
+    <div className="flex min-w-0 items-center gap-3 @3xl:flex-1 @3xl:px-4">
       <svg
         className={`size-7 shrink-0 ${tone}`}
         viewBox="0 0 20 20"
@@ -111,7 +114,7 @@ function Stat({
       </svg>
       <div>
         <p className="text-[15px] font-semibold text-ink tabular-nums">{value}</p>
-        <p className="text-xs text-ink-muted">{label}</p>
+        <p className="text-xs whitespace-nowrap text-ink-muted">{label}</p>
       </div>
     </div>
   );
