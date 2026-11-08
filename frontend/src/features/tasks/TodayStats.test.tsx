@@ -32,7 +32,7 @@ describe('TodayStats', () => {
     expect(within(region).getByText('на сегодня').previousSibling).toHaveTextContent('2');
     expect(within(region).getByText('просрочено').previousSibling).toHaveTextContent('1');
     expect(within(region).getByText('высокий приоритет').previousSibling).toHaveTextContent('1');
-    expect(within(region).getByText('на завтра').previousSibling).toHaveTextContent('1');
+    expect(within(region).queryByText('на завтра')).toBeNull();
   });
 
   it('shows an empty ring for an empty day', () => {

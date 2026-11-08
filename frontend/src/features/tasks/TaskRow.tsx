@@ -23,6 +23,8 @@ interface TaskRowProps {
   onStopEdit: () => void;
   /** The task's list, for the coloured chip. */
   list?: TaskListRead | undefined;
+  /** Shown as a bin button on the selected row. */
+  onDelete?: ((task: TaskRead) => void) | undefined;
 }
 
 const dateFormat = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
@@ -75,6 +77,7 @@ export function TaskRow({
   onRename,
   onStopEdit,
   list,
+  onDelete,
 }: TaskRowProps) {
   const completed = task.completed_at !== null;
   const overdue = isOverdue(task, toLocalDateString(now));
@@ -196,6 +199,38 @@ export function TaskRow({
         >
           {content}
         </a>
+      )}
+      {selected && onDelete && !unsaved && !editing && (
+        <button
+          type="button"
+          aria-label={TEXTS.deleteTaskNamed(task.title)}
+          onClick={(event) => {
+            // Focus moves to the neighbouring task (or quick add) once this row is gone.
+            const row = event.currentTarget.closest('li');
+            const neighbour = (element: Element | null | undefined) =>
+              element?.querySelector<HTMLElement>('[data-task-link]') ?? null;
+            const next =
+              neighbour(row?.nextElementSibling) ??
+              neighbour(row?.previousElementSibling) ??
+              document.querySelector<HTMLElement>('[data-quick-add-input]');
+            onDelete(task);
+            requestAnimationFrame(() => next?.focus());
+          }}
+          className="mr-2 flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-subtle hover:text-danger"
+        >
+          <svg
+            className="size-[18px]"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 6h12M8.2 6V4.4h3.6V6M5.6 6l.8 10h7.2l.8-10M8.6 9v4.4M11.4 9v4.4" />
+          </svg>
+        </button>
       )}
     </li>
   );

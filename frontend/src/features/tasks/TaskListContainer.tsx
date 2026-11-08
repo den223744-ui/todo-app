@@ -11,11 +11,12 @@ import { TaskListSkeleton } from './TaskListSkeleton';
 import { mutationTaskId } from './taskMutations';
 import { taskKeys } from './taskQueries';
 import { useLists } from '../lists/useLists';
-import { useTasks, useUpdateTask } from './useTasks';
+import { useDeleteTask, useTasks, useUpdateTask } from './useTasks';
 
 export function TaskListContainer() {
   const { data, isPending, isError, refetch } = useTasks();
   const update = useUpdateTask();
+  const remove = useDeleteTask();
   // Only the tasks being written are locked; the rest stay usable (optimistic UI).
   const busyIds = new Set(
     useMutationState({
@@ -72,6 +73,10 @@ export function TaskListContainer() {
             }}
             onStopEdit={stopEditing}
             lists={lists}
+            onDelete={(task) => {
+              remove.mutate(task.id);
+              navigate({ taskId: null });
+            }}
           />
         ))
       )}

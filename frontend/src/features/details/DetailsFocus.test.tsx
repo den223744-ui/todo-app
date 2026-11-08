@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,11 +16,11 @@ function openInApp(taskId: string, tasks: TaskRead[]) {
   window.history.replaceState(null, '', `/?list=inbox&task=${taskId}`);
   let store = [...tasks];
   vi.spyOn(api, 'listTasks').mockImplementation(() => Promise.resolve(store));
-  vi.spyOn(api, 'deleteTask').mockImplementation((id) => {
+  const remove = vi.spyOn(api, 'deleteTask').mockImplementation((id) => {
     store = store.filter((task) => task.id !== id);
     return Promise.resolve();
   });
-  return renderWithClient(<App />, tasks);
+  return { ...renderWithClient(<App />, tasks), remove };
 }
 
 describe('focus after deleting the open task', () => {
@@ -34,6 +34,21 @@ describe('focus after deleting the open task', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Удалить задачу' }));
 
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: /Вторая/ })).toHaveFocus();
+    });
+    queryClient.clear();
+  });
+
+  it('can also be deleted from its own row, with the bin shown only on the open task', async () => {
+    const { queryClient, remove } = openInApp('a', [A, B]);
+    const main = screen.getByRole('main');
+    expect(within(main).queryByRole('button', { name: 'Удалить задачу: Вторая' })).toBeNull();
+
+    await userEvent.click(within(main).getByRole('button', { name: 'Удалить задачу: Первая' }));
+
+    expect(remove).toHaveBeenCalledWith('a');
+    expect(window.location.search).toBe('?list=inbox');
     await waitFor(() => {
       expect(screen.getByRole('link', { name: /Вторая/ })).toHaveFocus();
     });

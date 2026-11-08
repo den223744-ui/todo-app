@@ -1,6 +1,6 @@
 import type { TaskRead } from '../../api/schema';
 import { STATS_TEXTS } from '../../constants/texts';
-import { shiftDate, toLocalDateString } from '../../domain/dates';
+import { toLocalDateString } from '../../domain/dates';
 import { countLists, selectDay, selectOpenOn } from '../../domain/smartLists';
 import { progressOf } from '../../domain/taskLists';
 
@@ -11,7 +11,7 @@ interface TodayStatsProps {
   day?: string;
 }
 
-/** The day at a glance: progress ring, due that day, the next day, overdue, high priority. */
+/** The day at a glance, in one row: progress ring, due that day, overdue, high priority. */
 export function TodayStats({ tasks, now, day }: TodayStatsProps) {
   const today = toLocalDateString(now);
   const shownDay = day ?? today;
@@ -22,7 +22,6 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
   // Today counts overdue tasks too (they are on the Today list); another day only its own.
   const dueThatDay = isToday ? counts.today : selectOpenOn(tasks, shownDay).length;
   const urgent = shown.filter((task) => task.completed_at === null && task.priority === 3).length;
-  const nextDay = selectOpenOn(tasks, shiftDate(shownDay, 1)).length;
   const share = total === 0 ? 0 : done / total;
   const radius = 17;
   const circumference = 2 * Math.PI * radius;
@@ -33,8 +32,8 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
       className="@container mt-6 rounded-2xl border border-line bg-transparent"
     >
       {/* Laid out by the card's own width: a grid when narrow, one row with dividers when wide. */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 @xl:grid-cols-3 @3xl:flex @3xl:items-center @3xl:gap-0 @3xl:divide-x @3xl:divide-line">
-        <div className="col-span-2 flex items-center gap-3 @xl:col-span-1 @3xl:flex-1 @3xl:pr-4">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 @xl:flex @xl:items-center @xl:gap-0 @xl:divide-x @xl:divide-line">
+        <div className="col-span-2 flex items-center gap-3 @xl:flex-1 @xl:pr-4">
           <svg className="size-11 shrink-0 -rotate-90" viewBox="0 0 44 44" aria-hidden="true">
             <circle
               cx="22"
@@ -67,11 +66,6 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
           label={isToday ? STATS_TEXTS.dueToday : STATS_TEXTS.dueThatDay}
         />
         <Stat
-          icon={ARROW}
-          value={nextDay}
-          label={isToday ? STATS_TEXTS.dueTomorrow : STATS_TEXTS.dueNextDay}
-        />
-        <Stat
           icon={ALERT}
           value={counts.overdue}
           label={STATS_TEXTS.overdue}
@@ -84,7 +78,6 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
 }
 
 const CALENDAR = 'M4 5.5h12v10.5H4zM4 8.5h12M7 3.5v3M13 3.5v3';
-const ARROW = 'M4 5.5h12v10.5H4zM4 8.5h12M7 3.5v3M13 3.5v3M8 12.3h4M10.6 10.7l1.6 1.6-1.6 1.6';
 const ALERT = 'M10 3.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM10 6.8v3.6M10 13.2v.1';
 const BANG = 'M10 3.2v9M10 16v.4';
 
@@ -100,7 +93,7 @@ function Stat({
   tone?: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 @3xl:flex-1 @3xl:px-4">
+    <div className="flex min-w-0 items-center gap-3 @xl:flex-1 @xl:px-4">
       <svg
         className={`size-7 shrink-0 ${tone}`}
         viewBox="0 0 20 20"

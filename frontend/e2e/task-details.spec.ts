@@ -114,7 +114,7 @@ test('double click renames a task in place; deleting closes the panel', async ({
     .getByRole('main')
     .getByRole('link', { name: /Позвонить маме/ })
     .click();
-  await page.getByRole('button', { name: 'Удалить задачу' }).click();
+  await page.getByRole('button', { name: 'Удалить задачу', exact: true }).click();
   await expect(page.getByRole('complementary', { name: 'Детали задачи' })).toBeHidden();
   await expect(page.getByRole('main').getByRole('link')).toHaveCount(0);
   await expect.poll(() => server.all()).toEqual([]);
@@ -161,7 +161,7 @@ test('a failed delete puts the task back and shows a toast', async ({ page }) =>
   );
   await page.goto('/?list=inbox&task=p');
 
-  await page.getByRole('button', { name: 'Удалить задачу' }).click();
+  await page.getByRole('button', { name: 'Удалить задачу', exact: true }).click();
 
   const toasts = page.getByRole('region', { name: 'Уведомления' });
   await expect(toasts).toContainText('Нет связи с сервером');

@@ -17,6 +17,7 @@ interface TaskListProps {
   onRename: (task: TaskRead, patch: TaskUpdate) => void;
   onStopEdit: () => void;
   lists?: readonly TaskListRead[] | undefined;
+  onDelete?: ((task: TaskRead) => void) | undefined;
 }
 
 const dayFormat = new Intl.DateTimeFormat('ru-RU', {
@@ -70,6 +71,7 @@ export function TaskList({
   onRename,
   onStopEdit,
   lists = [],
+  onDelete,
 }: TaskListProps) {
   const byId = new Map(lists.map((list) => [list.id, list]));
   return (
@@ -112,6 +114,7 @@ export function TaskList({
                   onRename={onRename}
                   onStopEdit={onStopEdit}
                   list={task.list_id ? byId.get(task.list_id) : undefined}
+                  onDelete={onDelete}
                 />
               ))}
             </ul>

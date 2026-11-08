@@ -51,6 +51,7 @@ export const TEXTS = {
     return `${String(count)} ${word}`;
   },
   completeTask: (title: string) => `Выполнить: ${title}`,
+  deleteTaskNamed: (title: string) => `Удалить задачу: ${title}`,
   reopenTask: (title: string) => `Вернуть в работу: ${title}`,
 } as const;
 
@@ -199,9 +200,7 @@ export const STATS_TEXTS = {
   done: (done: number, total: number) => `${String(done)} из ${String(total)}`,
   doneHint: 'выполнено',
   dueToday: 'на сегодня',
-  dueTomorrow: 'на завтра',
   dueThatDay: 'на этот день',
-  dueNextDay: 'на следующий день',
   overdue: 'просрочено',
   highPriority: 'высокий приоритет',
 } as const;
