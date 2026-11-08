@@ -1,7 +1,7 @@
 """Database-level guarantees: defaults, CHECK constraints, foreign keys, UTC timestamps."""
 
 import uuid
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from typing import Any
 
 import pytest
@@ -60,6 +60,45 @@ async def test_datetimes_round_trip_as_utc(session: AsyncSession) -> None:
     assert loaded.completed_at.tzinfo is UTC
 
 
+async def test_datetime_with_other_offset_is_converted_to_utc(session: AsyncSession) -> None:
+    workspace = await make_workspace(session)
+    # 01:30 on Jan 1 in Moscow (UTC+3) is still Dec 31 in UTC.
+    moscow_time = datetime(2026, 1, 1, 1, 30, tzinfo=timezone(timedelta(hours=3)))
+    task = make_task(workspace, completed_at=moscow_time)
+    session.add(task)
+    await session.commit()
+
+    loaded = await session.get(Task, task.id, populate_existing=True)
+
+    assert loaded is not None
+    assert loaded.completed_at == datetime(2025, 12, 31, 22, 30, tzinfo=UTC)
+    assert loaded.completed_at is not None
+    assert loaded.completed_at.tzinfo is UTC
+
+
+async def test_update_bumps_updated_at_and_keeps_created_at(session: AsyncSession) -> None:
+    workspace = await make_workspace(session)
+    long_ago = datetime(2020, 1, 1, tzinfo=UTC)
+    task = make_task(workspace, created_at=long_ago, updated_at=long_ago)
+    session.add(task)
+    await session.commit()
+
+    task.title = "Renamed"
+    await session.commit()
+    loaded = await session.get(Task, task.id, populate_existing=True)
+
+    assert loaded is not None
+    assert loaded.created_at == long_ago
+    assert loaded.updated_at > long_ago
+
+
+async def test_title_of_max_length_is_allowed(session: AsyncSession) -> None:
+    workspace = await make_workspace(session)
+    session.add(make_task(workspace, title="x" * 500))
+
+    await session.flush()
+
+
 async def test_naive_datetime_is_rejected(session: AsyncSession) -> None:
     workspace = await make_workspace(session)
     session.add(make_task(workspace, completed_at=datetime(2026, 1, 2, 3, 4, 5)))
@@ -74,6 +113,7 @@ async def test_naive_datetime_is_rejected(session: AsyncSession) -> None:
         pytest.param({"priority": 4}, id="priority-above-max"),
         pytest.param({"priority": -1}, id="priority-below-min"),
         pytest.param({"title": ""}, id="empty-title"),
+        pytest.param({"title": "x" * 501}, id="title-too-long"),
         pytest.param({"due_time": time(18, 0)}, id="time-without-date"),
     ],
 )
@@ -101,6 +141,23 @@ async def test_unknown_workspace_is_rejected(session: AsyncSession) -> None:
 
     with pytest.raises(IntegrityError):
         await session.flush()
+
+
+async def test_deleting_parent_cascades_to_subtasks(session: AsyncSession) -> None:
+    # The workspace stays, so only the parent_id foreign key can remove the subtask.
+    workspace = await make_workspace(session)
+    parent = make_task(workspace)
+    sibling = make_task(workspace, title="Unrelated")
+    session.add_all([parent, sibling])
+    await session.flush()
+    session.add(make_task(workspace, parent_id=parent.id))
+    await session.commit()
+
+    await session.delete(parent)
+    await session.commit()
+
+    remaining = (await session.scalars(select(Task.id))).all()
+    assert remaining == [sibling.id]
 
 
 async def test_deleting_workspace_cascades_to_tasks(session: AsyncSession) -> None:
