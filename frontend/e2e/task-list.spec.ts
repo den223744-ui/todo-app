@@ -92,7 +92,10 @@ test('mobile drawer, dark theme and long content fit 375px', async ({ page }, te
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   await expect(page.getByRole('main').getByRole('checkbox')).toHaveCount(3);
-  for (const item of await page.getByRole('main').locator('li:visible, a:visible, time:visible, span:visible').all()) {
+  for (const item of await page
+    .getByRole('main')
+    .locator('li:visible, a:visible, time:visible, span:visible')
+    .all()) {
     const bounds = await item.boundingBox();
     expect(bounds).not.toBeNull();
     if (bounds) {
