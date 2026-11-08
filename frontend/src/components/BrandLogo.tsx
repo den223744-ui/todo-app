@@ -23,7 +23,7 @@ export function BrandLogo({ className = '' }: { className?: string }) {
       onClick={() => {
         if (!reduceMotion) void controls.start('play');
       }}
-      className={`inline-flex cursor-pointer rounded-md font-display font-extrabold tracking-[0.3em] text-ink uppercase ${className}`}
+      className={`inline-flex cursor-pointer rounded-md font-display font-extrabold text-ink uppercase ${className}`}
     >
       {Array.from(TEXTS.brand).map((letter, index) => (
         <motion.span

@@ -27,7 +27,7 @@ export function AppShell({ sidebar, details, children }: AppShellProps) {
     <div className="flex h-dvh overflow-hidden">
       <aside
         aria-label={TEXTS.navigation}
-        className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-sidebar [scrollbar-width:thin] md:flex"
+        className="hidden w-64 shrink-0 flex-col overflow-x-hidden overflow-y-auto border-r border-line bg-sidebar [scrollbar-width:thin] md:flex"
       >
         {sidebar}
       </aside>
@@ -38,7 +38,7 @@ export function AppShell({ sidebar, details, children }: AppShellProps) {
           <IconButton label={TEXTS.openMenu} aria-expanded={drawerOpen} onClick={openDrawer}>
             <MenuIcon />
           </IconButton>
-          <BrandLogo className="text-base" />
+          <BrandLogo className="text-base tracking-[0.3em]" />
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>

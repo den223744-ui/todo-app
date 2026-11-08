@@ -55,7 +55,7 @@ export function MobileDrawer({ onClose, children }: MobileDrawerProps) {
             <CloseIcon />
           </IconButton>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
       </div>
     </div>
   );
