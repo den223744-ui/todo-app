@@ -195,6 +195,12 @@ export const TIMELINE_TEXTS = {
   planned: (total: string) => `запланировано ${total}`,
 } as const;
 
+export const UNDO_TEXTS = {
+  undo: 'Отменить',
+  completed: (title: string) => `Выполнено: «${title}»`,
+  deleted: (title: string) => `Удалено: «${title}»`,
+} as const;
+
 export const STATS_TEXTS = {
   region: 'Итоги дня',
   done: (done: number, total: number) => `${String(done)} из ${String(total)}`,

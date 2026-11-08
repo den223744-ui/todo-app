@@ -5,9 +5,10 @@ import { subtasksOf } from '../../domain/taskEdit';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { OPTIMISTIC_ID_PREFIX, mutationTaskId } from '../tasks/taskMutations';
 import { taskKeys } from '../tasks/taskQueries';
-import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../tasks/useTasks';
+import { useCreateTask, useTasks, useUpdateTask } from '../tasks/useTasks';
 import { DetailsPanel } from './DetailsPanel';
 import { useLists } from '../lists/useLists';
+import { useTaskActions } from '../tasks/useTaskActions';
 import { TaskDetails } from './TaskDetails';
 
 const rowLink = (taskId: string) =>
@@ -42,7 +43,7 @@ export function TaskDetailsContainer() {
   const { data } = useTasks();
   const update = useUpdateTask();
   const create = useCreateTask();
-  const remove = useDeleteTask();
+  const actions = useTaskActions();
   const { data: lists } = useLists();
   const busyIds = new Set(
     useMutationState({
@@ -71,16 +72,21 @@ export function TaskDetailsContainer() {
           canAddSubtasks={!task.id.startsWith(OPTIMISTIC_ID_PREFIX)}
           lists={lists}
           onUpdate={(target, patch) => {
+            // Completing goes through the undoable action (toast with «Отменить»).
+            if (patch.completed === true && Object.keys(patch).length === 1) {
+              actions.toggle(target);
+              return;
+            }
             update.mutate({ id: target.id, patch });
           }}
           onCreateSubtask={(title) => create.mutateAsync({ title, parent_id: task.id })}
           onDelete={(target) => {
             if (target.id !== task.id) {
-              remove.mutate(target.id); // a subtask: the panel stays
+              actions.destroy(target); // a subtask: the panel stays
               return;
             }
             const next = focusTargetAfterDelete(task.id);
-            remove.mutate(task.id);
+            actions.destroy(task);
             navigate({ taskId: null });
             requestAnimationFrame(() => next?.focus());
           }}
