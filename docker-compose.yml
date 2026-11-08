@@ -28,6 +28,10 @@ services:
 
   frontend:
     build: ./frontend
+    # node_modules lives in an anonymous volume, which compose keeps across
+    # container re-creation: sync it with package-lock.json on every start so
+    # newly added packages appear (a no-op of a few seconds when nothing changed).
+    command: sh -c "npm install --no-audit --no-fund && exec npm run dev -- --host 0.0.0.0"
     ports:
       - "5173:5173"
     environment:
