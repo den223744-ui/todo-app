@@ -1,4 +1,5 @@
 import type { SmartList } from '../domain/smartLists';
+import type { QuickAddIssue } from '../domain/quickAddInput';
 
 /** All UI texts (AGENTS.md: Russian UI texts live in constants). */
 export const TEXTS = {
@@ -9,6 +10,13 @@ export const TEXTS = {
   smartLists: 'Списки',
   tags: 'Теги',
   tagsEmpty: 'Добавьте к задаче #тег — он появится здесь.',
+  quickAdd: 'Новая задача',
+  quickAddPlaceholder: 'Купить молоко завтра в 18:00 #дом !!',
+  quickAddHint: 'Enter — добавить. Даты, #теги и !приоритет распознаются автоматически.',
+  quickAddSubmit: 'Добавить',
+  quickAddSaving: 'Сохраняем…',
+  quickAddSuccess: 'Задача добавлена.',
+  quickAddError: 'Не удалось создать задачу. Текст сохранён — попробуйте ещё раз.',
   taskList: 'Список задач',
   loadingTasks: 'Загружаем задачи…',
   loadTasksError: 'Не удалось загрузить задачи.',
@@ -25,6 +33,11 @@ export const TEXTS = {
   taskTag: (tag: string) => `Тег: ${tag}`,
   taskCount: (count: number) => `${String(count)} ${plural(count, 'задача', 'задачи', 'задач')}`,
 } as const;
+
+export const QUICK_ADD_ISSUES: Record<QuickAddIssue, string> = {
+  'title-required': 'Добавьте название задачи, кроме даты, тегов и приоритета.',
+  'title-too-long': 'Название задачи должно быть не длиннее 500 символов.',
+};
 
 export const PRIORITY_LABELS: Readonly<Record<number, string>> = {
   1: 'Низкий приоритет',

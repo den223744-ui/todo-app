@@ -1,6 +1,7 @@
 import { AppShell } from './components/AppShell';
 import { useAppLocation } from './features/navigation/useAppLocation';
 import { viewTitle } from './features/navigation/viewTitle';
+import { QuickAdd } from './features/quick-add/QuickAdd';
 import { SidebarContainer } from './features/sidebar/SidebarContainer';
 import { TaskListContainer } from './features/tasks/TaskListContainer';
 
@@ -11,6 +12,7 @@ export function App() {
     <AppShell sidebar={<SidebarContainer />}>
       <div className="mx-auto w-full max-w-3xl px-4 py-6 md:px-8 md:py-10">
         <h1 className="text-2xl font-semibold tracking-tight">{viewTitle(location.view)}</h1>
+        <QuickAdd />
         <TaskListContainer />
       </div>
     </AppShell>

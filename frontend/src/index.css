@@ -28,6 +28,16 @@
   --shadow-soft: 0 1px 2px rgb(28 25 23 / 0.06), 0 4px 16px rgb(28 25 23 / 0.06);
 }
 
+/* In high-contrast mode keep the native input readable without the mirror. */
+@media (forced-colors: active) {
+  .quick-add-mirror {
+    display: none;
+  }
+  .quick-add-native {
+    color: CanvasText;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
