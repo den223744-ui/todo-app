@@ -5,19 +5,32 @@ from collections.abc import Collection
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp
 
 from app.core.config import Settings
-from app.services.workspaces import get_or_create_workspace
+from app.services.workspaces import create_workspace, delete_workspace, find_workspace
+
+# Only these methods may start a new session. See WorkspaceSessionMiddleware.
+SESSION_STARTING_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
     """Resolve the workspace from the session cookie, creating one on first visit.
 
-    The workspace id is put on ``request.state.workspace_id``. The cookie is set
-    on the response (error responses included) whenever a new workspace was
-    created, so the browser keeps the same list from then on.
+    The workspace id is put on ``request.state.workspace_id``.
+
+    Rules:
+    - Only safe methods (GET, HEAD, OPTIONS) create a workspace. A write without
+      a valid cookie gets 401 ``session_required``. Why:
+      * a cross-site form POST arrives without the SameSite=Lax cookie; creating
+        a session there would let a foreign site overwrite the visitor's cookie
+        and cut them off from their list;
+      * a write can never land in a workspace whose cookie the browser then
+        replaces with a parallel response, so no data is lost.
+    - The cookie is set whenever a workspace was created, error responses
+      included. If the handler raises, the new workspace is deleted again:
+      a workspace never exists without a cookie pointing at it.
     """
 
     def __init__(
@@ -32,25 +45,38 @@ class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
         self._settings = settings
         self._session_factory = session_factory
         self._scoped_prefix = f"{settings.api_prefix}/"
-        self._exempt_paths = frozenset(exempt_paths)
+        self._exempt_paths = frozenset(path.rstrip("/") for path in exempt_paths)
 
     def _needs_workspace(self, path: str) -> bool:
-        return path.startswith(self._scoped_prefix) and path not in self._exempt_paths
+        # "/api/health/" must be exempt too: it only redirects to "/api/health".
+        return path.startswith(self._scoped_prefix) and path.rstrip("/") not in self._exempt_paths
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if not self._needs_workspace(request.url.path):
             return await call_next(request)
 
-        cookie_name = self._settings.session_cookie_name
-        raw_id = request.cookies.get(cookie_name)
         async with self._session_factory() as session:
-            workspace = await get_or_create_workspace(session, raw_id)
+            workspace = await find_workspace(
+                session, request.cookies.get(self._settings.session_cookie_name)
+            )
+            created = workspace is None
+            if workspace is None:
+                if request.method not in SESSION_STARTING_METHODS:
+                    return session_required_response()
+                workspace = await create_workspace(session)
         request.state.workspace_id = workspace.id
 
-        response = await call_next(request)
-        if raw_id != str(workspace.id):
+        try:
+            response = await call_next(request)
+        except Exception:
+            if created:
+                async with self._session_factory() as session:
+                    await delete_workspace(session, workspace.id)
+            raise
+
+        if created:
             response.set_cookie(
-                cookie_name,
+                self._settings.session_cookie_name,
                 str(workspace.id),
                 max_age=self._settings.session_cookie_max_age,
                 path="/",
@@ -59,3 +85,15 @@ class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
                 samesite="lax",
             )
         return response
+
+
+def session_required_response() -> JSONResponse:
+    return JSONResponse(
+        status_code=401,
+        content={
+            "error": {
+                "code": "session_required",
+                "message": "No valid session. Load the task list (GET) to start one.",
+            }
+        },
+    )
