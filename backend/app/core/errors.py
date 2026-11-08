@@ -57,6 +57,23 @@ class SessionRequiredError(AppError):
     code = "session_required"
 
 
+class InvalidRequestError(AppError):
+    """A request that is well-formed but breaks a business rule.
+
+    Same code as schema validation errors, so the client handles both alike.
+    """
+
+    status_code = 422
+    code = "validation_error"
+
+
+class ConflictError(AppError):
+    """The request is valid but cannot be applied to the current state."""
+
+    status_code = 409
+    code = "conflict"
+
+
 def error_response(
     status_code: int,
     code: str,
