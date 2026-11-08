@@ -118,3 +118,20 @@ export const EDIT_TEXTS = {
   saveError: 'Не удалось сохранить изменение. Оно отменено.',
   createdAt: (date: string) => `Создана ${date}`,
 } as const;
+
+export const SEARCH_TEXTS = {
+  label: 'Поиск по задачам',
+  placeholder: 'Поиск в этом списке',
+  results: (query: string) => `Результаты поиска «${query}»`,
+} as const;
+
+/** Toasts for writes the server refused; the change has already been rolled back. */
+export const TOAST_TEXTS = {
+  region: 'Уведомления',
+  close: 'Закрыть уведомление',
+  createFailed: (title: string) => `Не удалось создать задачу «${title}».`,
+  updateFailed: 'Не удалось сохранить изменение — оно отменено.',
+  deleteFailed: 'Не удалось удалить задачу — она возвращена в список.',
+  restoreFailed: 'Не удалось восстановить задачу.',
+  offline: 'Нет связи с сервером. Проверьте подключение.',
+} as const;
