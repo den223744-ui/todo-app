@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError, type ApiClient } from '../../api/client';
 import { createQueryClient } from '../../api/queryClient';
-import type { TaskRead } from '../../api/schema';
+import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { makeTask } from '../../test/makeTask';
 import {
   OPTIMISTIC_ID_PREFIX,
@@ -242,6 +242,42 @@ describe('update', () => {
     }
   });
 
+  it('two failed edits of different fields both roll back', async () => {
+    const answers: Array<() => void> = [];
+    const updateTask = vi.fn(
+      () =>
+        new Promise<TaskRead>((_resolve, reject) => {
+          answers.push(() => {
+            reject(FAIL);
+          });
+        }),
+    );
+    const listTasks = vi.fn(() => Promise.reject(FAIL)); // the refetch fails too
+    const deps = setup(fakeApi({ updateTask, listTasks }), [{ ...A, notes: 'old' }]);
+    const edit = async (patch: TaskUpdate) => {
+      const observer = new MutationObserver(queryClient, updateTaskMutation(deps));
+      const done = observer.mutate({ id: 'a', patch }).catch(() => undefined);
+      await flush();
+      return { done };
+    };
+
+    const priority = await edit({ priority: 2 });
+    const notes = await edit({ notes: 'new' });
+    try {
+      answers[0]?.(); // fails while the notes edit is still pending
+      await priority.done;
+      expect(cached()[0]?.priority).toBe(0); // its own field is undone at once
+      expect(cached()[0]?.notes).toBe('new'); // the pending edit stays visible
+    } finally {
+      await flush();
+      answers[1]?.();
+      await notes.done;
+    }
+    await flush();
+
+    expect(cached()[0]).toMatchObject({ priority: 0, notes: 'old' });
+  });
+
   it('does nothing extra for a task missing from the cache', async () => {
     const deps = setup(fakeApi({ updateTask: () => Promise.reject(FAIL) }), [A]);
     const observer = new MutationObserver(queryClient, updateTaskMutation(deps));
@@ -308,6 +344,31 @@ describe('restore', () => {
     await observer.mutate({ id: 'a' });
 
     expect(cachedIds()).toEqual(['a', 'b']);
+  });
+
+  it('its answer does not wipe an edit made while it was pending', async () => {
+    const restoring = deferred<TaskRead>();
+    const updating = deferred<TaskRead>();
+    const deps = setup(
+      fakeApi({ restoreTask: () => restoring.promise, updateTask: () => updating.promise }),
+      [B],
+    );
+    const restore = new MutationObserver(queryClient, restoreTaskMutation(deps));
+    const update = new MutationObserver(queryClient, updateTaskMutation(deps));
+
+    const restored = restore.mutate({ id: 'a', tasks: [A] });
+    await flush();
+    const renamed = update.mutate({ id: 'a', patch: { title: 'renamed' } });
+    await flush();
+    try {
+      restoring.resolve(A); // the server's restore answer, before the rename
+      await restored;
+
+      expect(cached().find((task) => task.id === 'a')?.title).toBe('renamed');
+    } finally {
+      updating.resolve({ ...A, title: 'renamed' });
+      await renamed;
+    }
   });
 
   it('removes only what it inserted on error', async () => {

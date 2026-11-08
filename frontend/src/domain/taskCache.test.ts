@@ -6,9 +6,11 @@ import {
   compareByPosition,
   insertTasks,
   nextPosition,
+  patchedFields,
   removeTaskWithSubtasks,
   removeTasks,
   replaceTask,
+  revertUpdate,
   updateTask,
 } from './taskCache';
 import { makeTask } from '../test/makeTask';
@@ -213,5 +215,66 @@ describe('updateTask', () => {
     const tasks = [makeTask({ id: 'a' })];
 
     expect(updateTask(tasks, 'missing', { title: 'x' }, NOW)).toEqual(tasks);
+  });
+});
+
+describe('patchedFields', () => {
+  it('names the task fields a PATCH writes', () => {
+    expect(patchedFields({})).toEqual(new Set());
+    expect(
+      patchedFields({
+        title: 't',
+        notes: null,
+        priority: 1,
+        tags: [],
+        position: 2,
+        due_date: '2026-11-09',
+        due_time: '10:00',
+        completed: false,
+      }),
+    ).toEqual(
+      new Set([
+        'title',
+        'notes',
+        'priority',
+        'tags',
+        'position',
+        'due_date',
+        'due_time',
+        'completed_at',
+      ]),
+    );
+  });
+
+  it('counts the time as written when the date is cleared', () => {
+    expect(patchedFields({ due_date: null })).toEqual(new Set(['due_date', 'due_time']));
+  });
+});
+
+describe('revertUpdate', () => {
+  const previous = makeTask({ id: 'a', priority: 0, notes: 'old', tags: ['x'] });
+  const current = { ...previous, priority: 2, notes: 'new', tags: ['x', 'y'] };
+
+  it('puts back only the fields the failed PATCH wrote', () => {
+    const reverted = revertUpdate(current, previous, { priority: 2 }, new Set());
+
+    expect(reverted).toEqual({ ...current, priority: 0 }); // notes and tags stay
+  });
+
+  it('keeps fields a later pending PATCH writes again', () => {
+    const reverted = revertUpdate(
+      current,
+      previous,
+      { priority: 2, tags: ['x', 'y'] },
+      new Set(['tags']),
+    );
+
+    expect(reverted).toEqual({ ...current, priority: 0 });
+  });
+
+  it('maps completed to completed_at', () => {
+    const done = { ...previous, completed_at: NOW.toISOString() };
+
+    expect(revertUpdate(done, previous, { completed: true }, new Set()).completed_at).toBeNull();
   });
 });

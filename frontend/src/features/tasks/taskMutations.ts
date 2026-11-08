@@ -16,15 +16,19 @@ import {
   buildOptimisticTask,
   insertTasks,
   removeTaskWithSubtasks,
+  patchedFields,
   removeTasks,
   replaceTask,
+  revertUpdate,
   updateTask,
+  type TaskField,
 } from '../../domain/taskCache';
 import {
   beginTaskMutation,
   beginTaskWrite,
   endTaskMutation,
   endTaskWrite,
+  fieldsWrittenLater,
   pendingTaskWrites,
 } from './pendingMutations';
 import { taskKeys } from './taskQueries';
@@ -53,9 +57,9 @@ function helpers({ queryClient }: MutationDeps) {
      * overwrite the optimistic state. New fetches are held off while mutations
      * are pending (see tasksQueryOptions).
      */
-    begin: async (taskId?: string) => {
+    begin: async (write?: { taskId: string; key: unknown; fields?: ReadonlySet<TaskField> }) => {
       beginTaskMutation(queryClient);
-      if (taskId !== undefined) beginTaskWrite(queryClient, taskId);
+      if (write) beginTaskWrite(queryClient, write.taskId, write.key, write.fields);
       await queryClient.cancelQueries({ queryKey: listKey });
     },
     read: () => queryClient.getQueryData<TaskRead[]>(listKey) ?? [],
@@ -65,8 +69,8 @@ function helpers({ queryClient }: MutationDeps) {
     /** True when no later write to this task is waiting: its answer may replace the task. */
     isLatestWrite: (taskId: string) => pendingTaskWrites(queryClient, taskId) <= 1,
     /** The last mutation to settle refetches the list once. */
-    settle: async (taskId?: string) => {
-      if (taskId !== undefined) endTaskWrite(queryClient, taskId);
+    settle: async (write?: { taskId: string; key: unknown }) => {
+      if (write) endTaskWrite(queryClient, write.taskId, write.key);
       if (endTaskMutation(queryClient)) {
         await queryClient.invalidateQueries({ queryKey: listKey });
       }
@@ -116,8 +120,9 @@ export function updateTaskMutation(
     mutationKey: taskKeys.mutation(),
     meta: { kind: 'update' },
     mutationFn: ({ id, patch }) => enqueueTaskWrite(id, () => deps.api.updateTask(id, patch)),
-    onMutate: async ({ id, patch }) => {
-      await begin(id);
+    onMutate: async (variables) => {
+      const { id, patch } = variables;
+      await begin({ taskId: id, key: variables, fields: patchedFields(patch) });
       const previous = read().find((task) => task.id === id);
       write((tasks) => updateTask(tasks, id, patch, now()));
       return { previous };
@@ -127,14 +132,28 @@ export function updateTaskMutation(
       // its change on top of this one, and its own answer will bring both.
       if (isLatestWrite(updated.id)) write((tasks) => replaceTask(tasks, updated.id, updated));
     },
-    onError: (_error, { id }, context) => {
+    onError: (_error, variables, context) => {
       const previous = context?.previous;
-      // With a later write still pending, the snapshot would also wipe that
-      // write's change, which is already on its way to the server; the list
-      // refetch after the last write brings the server's state instead.
-      if (previous && isLatestWrite(id)) write((tasks) => replaceTask(tasks, id, previous));
+      if (!previous) return;
+      const { id, patch } = variables;
+      // Undo only this write's fields. Its snapshot may already hold an
+      // earlier write's optimistic change (which may itself have failed), and
+      // a later write may set some of the same fields again: those keep their
+      // value, which is on its way to the server.
+      const keep = fieldsWrittenLater(deps.queryClient, id, variables);
+      const last = isLatestWrite(id);
+      write((tasks) => {
+        const current = tasks.find((task) => task.id === id);
+        if (!current) return tasks;
+        const reverted = revertUpdate(current, previous, patch, keep);
+        return replaceTask(
+          tasks,
+          id,
+          last ? { ...reverted, updated_at: previous.updated_at } : reverted,
+        );
+      });
     },
-    onSettled: (_data, _error, { id }) => settle(id),
+    onSettled: (_data, _error, variables) => settle({ taskId: variables.id, key: variables }),
   };
 }
 
@@ -153,7 +172,7 @@ export function deleteTaskMutation(
     meta: { kind: 'delete' },
     mutationFn: (id) => enqueueTaskWrite(id, () => deps.api.deleteTask(id)),
     onMutate: async (id) => {
-      await begin(id);
+      await begin({ taskId: id, key: id });
       const current = queryClient.getQueryData<TaskRead[]>(taskKeys.list()) ?? [];
       const { removed } = removeTaskWithSubtasks(current, id);
       write((tasks) => removeTaskWithSubtasks(tasks, id).tasks);
@@ -162,7 +181,7 @@ export function deleteTaskMutation(
     onError: (_error, _id, context) => {
       if (context) write((tasks) => insertTasks(tasks, context.removed));
     },
-    onSettled: (_data, _error, id) => settle(id),
+    onSettled: (_data, _error, id) => settle({ taskId: id, key: id }),
   };
 }
 
@@ -180,8 +199,9 @@ export function restoreTaskMutation(
     mutationKey: taskKeys.mutation(),
     meta: { kind: 'restore' },
     mutationFn: ({ id }) => enqueueTaskWrite(id, () => deps.api.restoreTask(id)),
-    onMutate: async ({ id, tasks = [] }) => {
-      await begin(id);
+    onMutate: async (variables) => {
+      const { id, tasks = [] } = variables;
+      await begin({ taskId: id, key: variables });
       const present = new Set(read().map((task) => task.id));
       const inserted = new Set(tasks.map((task) => task.id).filter((id) => !present.has(id)));
       write((current) => insertTasks(current, tasks));
@@ -198,7 +218,7 @@ export function restoreTaskMutation(
     onError: (_error, _variables, context) => {
       if (context) write((tasks) => removeTasks(tasks, context.inserted));
     },
-    onSettled: (_data, _error, { id }) => settle(id),
+    onSettled: (_data, _error, variables) => settle({ taskId: variables.id, key: variables }),
   };
 }
 

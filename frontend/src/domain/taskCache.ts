@@ -93,6 +93,53 @@ export function applyUpdate(task: TaskRead, patch: TaskUpdate, now: Date): TaskR
   return next;
 }
 
+/** Task fields that a PATCH body writes, the way applyUpdate applies it. */
+export type TaskField = keyof TaskRead;
+
+export function patchedFields(patch: TaskUpdate): Set<TaskField> {
+  const fields = new Set<TaskField>();
+  const direct = [
+    'title',
+    'notes',
+    'priority',
+    'tags',
+    'position',
+    'due_date',
+    'due_time',
+  ] as const;
+  for (const key of direct) if (patch[key] !== undefined) fields.add(key);
+  if (patch.due_date === null) fields.add('due_time'); // clearing the date clears the time
+  if (patch.completed !== undefined) fields.add('completed_at');
+  return fields;
+}
+
+/**
+ * Undo one failed PATCH on the task as it is now: the fields that PATCH
+ * wrote go back to `previous`, except those in `keep` (written again by a
+ * later PATCH still on its way, whose own value must stay). Fields changed
+ * by other writes are left alone.
+ */
+export function revertUpdate(
+  task: TaskRead,
+  previous: TaskRead,
+  patch: TaskUpdate,
+  keep: ReadonlySet<TaskField>,
+): TaskRead {
+  const next: TaskRead = { ...task };
+  for (const field of patchedFields(patch)) {
+    if (!keep.has(field)) copyField(next, previous, field);
+  }
+  return next;
+}
+
+function copyField<K extends TaskField>(
+  target: Pick<TaskRead, K>,
+  source: Pick<TaskRead, K>,
+  key: K,
+): void {
+  target[key] = source[key];
+}
+
 export function updateTask(
   tasks: readonly TaskRead[],
   id: string,
