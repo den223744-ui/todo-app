@@ -116,13 +116,18 @@ describe('через N дней', () => {
     ['через 2 дня', '2026-11-11'],
     ['через 5 дней', '2026-11-14'],
     ['через 365 дней', '2027-11-09'],
+    ['через 366 дней', '2027-11-10'],
+    ['через 1000 дней', '2029-08-05'],
   ])('%s -> %s', (phrase, expected) => {
     expect(dueDate(`задача ${phrase}`)).toBe(expected);
   });
 
-  it.each(['через 0 дней', 'через 366 дней'])('%s is not recognized', (phrase) => {
-    expect(parse(phrase)).toMatchObject({ title: phrase, dueDate: null, tokens: [] });
-  });
+  it.each(['через 0 дней', 'через 000 дней', `через ${'9'.repeat(30)} дней`])(
+    '%s is not recognized',
+    (phrase) => {
+      expect(parse(phrase)).toMatchObject({ title: phrase, dueDate: null, tokens: [] });
+    },
+  );
 });
 
 describe('дд.мм', () => {
@@ -149,8 +154,20 @@ describe('дд.мм', () => {
     expect(dueDate('29.02', new Date(2027, 5, 1))).toBe('2028-02-29');
   });
 
-  it.each(['10.11.2026', 'версия 1.5.2', '123.45'])('%s is left alone', (text) => {
+  it.each([
+    '10.11.2026',
+    'версия 1.5.2',
+    '123.45',
+    'проверить v1.5',
+    '1.5beta',
+    'x15.11',
+    '15.11б',
+  ])('%s is left alone', (text) => {
     expect(parse(text)).toMatchObject({ title: text, dueDate: null });
+  });
+
+  it('punctuation around a date is fine', () => {
+    expect(parse('оплатить (15.11), срочно')).toMatchObject({ dueDate: '2026-11-15' });
   });
 });
 

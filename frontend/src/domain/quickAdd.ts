@@ -5,7 +5,7 @@
  * Grammar (SPEC.md), case-insensitive, whole words only:
  *   сегодня | завтра | послезавтра
  *   пн…вс | понедельник…воскресенье   (optionally "в"/"во" before: "в пятницу")
- *   через N дней                       (день / дня / дней, N = 1…365)
+ *   через N дней                       (день / дня / дней, N ≥ 1)
  *   дд.мм                              (a past date means next year)
  *   в ЧЧ:ММ | в ЧЧ
  *   #тег
@@ -45,8 +45,6 @@ export interface QuickAddResult {
   tokens: QuickAddToken[];
 }
 
-const MAX_DAYS_AHEAD = 365;
-
 const RELATIVE_DAYS = { сегодня: 0, завтра: 1, послезавтра: 2 } as const;
 type RelativeWord = keyof typeof RELATIVE_DAYS;
 
@@ -81,11 +79,12 @@ const weekdayNames = Object.keys(WEEKDAYS)
 
 const PATTERN = new RegExp(
   [
-    String.raw`${WORD_START}через\s+(?<inDays>\d{1,3})\s+(?:день|дня|дней)${WORD_END}`,
+    String.raw`${WORD_START}через\s+(?<inDays>\d+)\s+(?:день|дня|дней)${WORD_END}`,
     String.raw`${WORD_START}(?<relative>сегодня|послезавтра|завтра)${WORD_END}`,
     String.raw`${WORD_START}(?:во?\s+)?(?<weekday>${weekdayNames})${WORD_END}`,
-    // Not part of a longer number or of dd.mm.yyyy.
-    String.raw`(?<![\p{N}.])(?<day>\d{1,2})\.(?<month>\d{1,2})(?!\d|\.\d)`,
+    // A standalone dd.mm: not inside a word or a longer number (v1.5, 1.5beta,
+    // 1.5.2, 10.11.2026).
+    String.raw`(?<![\p{L}\p{N}_.])(?<day>\d{1,2})\.(?<month>\d{1,2})(?![\p{L}\p{N}_]|\.\d)`,
     String.raw`${WORD_START}в\s+(?<hour>\d{1,2})(?::(?<minute>\d{2}))?(?![\p{L}\p{N}_:])`,
     String.raw`(?<=^|\s)#(?<tag>[\p{L}\p{N}_-]+)`,
     String.raw`(?<=^|\s)(?<priority>!{1,3})(?=\s|$)`,
@@ -173,8 +172,10 @@ function parseDate(groups: Record<string, string | undefined>, today: Date): Dat
     return addDays(today, ahead);
   }
   if (groups.inDays !== undefined) {
+    // "через" means the future: N >= 1. No upper limit beyond what a date can hold.
     const days = Number(groups.inDays);
-    return days >= 1 && days <= MAX_DAYS_AHEAD ? addDays(today, days) : null;
+    const date = addDays(today, days);
+    return days >= 1 && Number.isFinite(date.getTime()) ? date : null;
   }
   return parseDayMonth(Number(groups.day), Number(groups.month), today);
 }
