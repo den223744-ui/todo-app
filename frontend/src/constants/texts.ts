@@ -33,6 +33,8 @@ export const TEXTS = {
   tagEmpty: 'В этом теге пока нет задач',
   tagEmptyHint: 'Здесь появятся невыполненные задачи с этим тегом.',
   listEmpty: 'В этом списке пока нет задач',
+  dayEmpty: 'На этот день задач нет',
+  dayEmptyHint: 'Добавьте задачу — она будет запланирована на этот день.',
   listEmptyHint: 'Добавьте задачу — она попадёт в этот список.',
   listFallbackTitle: 'Список',
   noList: 'Без списка',
@@ -159,12 +161,31 @@ export const TOAST_TEXTS = {
   offline: 'Нет связи с сервером. Проверьте подключение.',
 } as const;
 
+export const DAY_NAV_TEXTS = {
+  group: 'Выбор дня',
+  previous: 'Предыдущий день',
+  next: 'Следующий день',
+  today: 'Сегодня',
+} as const;
+
+export const TIMELINE_TEXTS = {
+  region: 'Таймлайн дня',
+  tab: 'Таймлайн',
+  today: 'Сегодня',
+  now: 'Сейчас',
+  untimed: 'Без времени',
+  empty: 'На этот день нет задач со временем.',
+  count: (count: number) => TEXTS.taskCount(count),
+} as const;
+
 export const STATS_TEXTS = {
   region: 'Итоги дня',
   done: (done: number, total: number) => `${String(done)} из ${String(total)}`,
   doneHint: 'выполнено',
   dueToday: 'на сегодня',
   dueTomorrow: 'на завтра',
+  dueThatDay: 'на этот день',
+  dueNextDay: 'на следующий день',
   overdue: 'просрочено',
   highPriority: 'высокий приоритет',
 } as const;

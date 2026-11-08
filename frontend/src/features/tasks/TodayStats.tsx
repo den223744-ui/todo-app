@@ -1,15 +1,28 @@
 import type { TaskRead } from '../../api/schema';
 import { STATS_TEXTS } from '../../constants/texts';
-import { countLists, selectToday, selectTomorrow } from '../../domain/smartLists';
+import { shiftDate, toLocalDateString } from '../../domain/dates';
+import { countLists, selectDay, selectOpenOn } from '../../domain/smartLists';
 import { progressOf } from '../../domain/taskLists';
 
-/** The day at a glance, as in the mockup: progress ring, due today, overdue, high priority. */
-export function TodayStats({ tasks, now }: { tasks: readonly TaskRead[]; now: Date }) {
-  const shown = selectToday(tasks, now);
+interface TodayStatsProps {
+  tasks: readonly TaskRead[];
+  now: Date;
+  /** The day the Today screen shows ('YYYY-MM-DD'); today when omitted. */
+  day?: string;
+}
+
+/** The day at a glance: progress ring, due that day, the next day, overdue, high priority. */
+export function TodayStats({ tasks, now, day }: TodayStatsProps) {
+  const today = toLocalDateString(now);
+  const shownDay = day ?? today;
+  const isToday = shownDay === today;
+  const shown = selectDay(tasks, shownDay, now);
   const { done, total } = progressOf(shown, tasks);
   const counts = countLists(tasks, now);
+  // Today counts overdue tasks too (they are on the Today list); another day only its own.
+  const dueThatDay = isToday ? counts.today : selectOpenOn(tasks, shownDay).length;
   const urgent = shown.filter((task) => task.completed_at === null && task.priority === 3).length;
-  const tomorrow = selectTomorrow(tasks, now).length;
+  const nextDay = selectOpenOn(tasks, shiftDate(shownDay, 1)).length;
   const share = total === 0 ? 0 : done / total;
   const radius = 17;
   const circumference = 2 * Math.PI * radius;
@@ -46,8 +59,16 @@ export function TodayStats({ tasks, now }: { tasks: readonly TaskRead[]; now: Da
           <p className="text-xs text-ink-muted">{STATS_TEXTS.doneHint}</p>
         </div>
       </div>
-      <Stat icon={CALENDAR} value={counts.today} label={STATS_TEXTS.dueToday} />
-      <Stat icon={ARROW} value={tomorrow} label={STATS_TEXTS.dueTomorrow} />
+      <Stat
+        icon={CALENDAR}
+        value={dueThatDay}
+        label={isToday ? STATS_TEXTS.dueToday : STATS_TEXTS.dueThatDay}
+      />
+      <Stat
+        icon={ARROW}
+        value={nextDay}
+        label={isToday ? STATS_TEXTS.dueTomorrow : STATS_TEXTS.dueNextDay}
+      />
       <Stat
         icon={ALERT}
         value={counts.overdue}

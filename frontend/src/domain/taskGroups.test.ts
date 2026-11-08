@@ -41,6 +41,14 @@ describe('selectTaskGroups', () => {
     ]);
   });
 
+  it('shows another day on the Today screen, without a tomorrow group', () => {
+    expect(
+      selectTaskGroups(tasks, [home, work], { ...DEFAULT_LOCATION, day: '2026-11-09' }, now).map(
+        ({ key, tasks: grouped }) => [key, grouped.map((task) => task.id)],
+      ),
+    ).toEqual([['list:none', ['future-a', 'future-c']]]);
+  });
+
   it('omits empty today groups after search', () => {
     expect(select({ kind: 'list', list: 'today' }, 'молоко').map((group) => group.key)).toEqual([
       'list:home',

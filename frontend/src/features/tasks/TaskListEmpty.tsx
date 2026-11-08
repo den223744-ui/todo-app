@@ -8,7 +8,9 @@ export function TaskListEmpty({ location }: { location: AppLocation }) {
       ? { title: TEXTS.tagEmpty, hint: TEXTS.tagEmptyHint }
       : location.view.kind === 'taskList'
         ? { title: TEXTS.listEmpty, hint: TEXTS.listEmptyHint }
-        : EMPTY_LIST_TEXTS[location.view.list];
+        : location.view.list === 'today' && location.day
+          ? { title: TEXTS.dayEmpty, hint: TEXTS.dayEmptyHint }
+          : EMPTY_LIST_TEXTS[location.view.list];
 
   return (
     <div role="status" className="rounded-2xl px-5 py-12 text-center">

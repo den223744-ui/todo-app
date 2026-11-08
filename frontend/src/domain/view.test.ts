@@ -97,3 +97,22 @@ describe('sameView', () => {
     expect(sameView(a, b)).toBe(expected);
   });
 });
+
+describe('the day shown on Today', () => {
+  it('reads a valid day for Today only', () => {
+    expect(parseLocation('?day=2026-11-10').day).toBe('2026-11-10');
+    expect(parseLocation('?day=2026-02-30').day).toBeNull();
+    expect(parseLocation('?list=inbox&day=2026-11-10').day).toBeNull();
+  });
+
+  it('writes the day for Today only', () => {
+    expect(serializeLocation({ ...DEFAULT_LOCATION, day: '2026-11-10' })).toBe('?day=2026-11-10');
+    expect(
+      serializeLocation({
+        ...DEFAULT_LOCATION,
+        view: { kind: 'list', list: 'inbox' },
+        day: '2026-11-10',
+      }),
+    ).toBe('?list=inbox');
+  });
+});

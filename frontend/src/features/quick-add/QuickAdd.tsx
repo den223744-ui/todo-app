@@ -32,7 +32,7 @@ export function QuickAdd() {
   const { data: lists } = useLists();
   // The list picked with the folder button; it wins over the open list.
   const [listId, setListId] = useState('');
-  const prepared = prepareQuickAdd(value, location.view, now);
+  const prepared = prepareQuickAdd(value, location.view, now, location.day ?? null);
   const issue = value.trim() && prepared.issue ? QUICK_ADD_ISSUES[prepared.issue] : null;
 
   return (
@@ -44,7 +44,7 @@ export function QuickAdd() {
         if (composingRef.current || data === undefined) return;
         const draft = value;
         // Re-evaluate the actual submit time, including a tab left open overnight.
-        const { task } = prepareQuickAdd(draft, location.view, new Date());
+        const { task } = prepareQuickAdd(draft, location.view, new Date(), location.day ?? null);
         if (!task) return;
         const target = listId ? { ...task, list_id: listId } : task;
         setValue('');

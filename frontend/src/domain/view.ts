@@ -7,9 +7,11 @@
  *   ?listId=<id>          one of the user's lists (after tag, before list)
  *   &q=молоко             search text
  *   &task=<id>            the task open in the detail panel
+ *   &day=2026-11-09       the day shown on the Today screen (today when absent)
  *
  * Unknown or malformed values fall back to the defaults, so any URL is valid.
  */
+import { parseLocalDate } from './dates';
 import { isSmartList, type SmartList } from './smartLists';
 import { normalizeTag } from './tags';
 
@@ -22,6 +24,8 @@ export interface AppLocation {
   view: View;
   query: string;
   taskId: string | null;
+  /** The day the Today screen shows; absent or null = today. */
+  day?: string | null;
 }
 
 export const DEFAULT_LIST: SmartList = 'today';
@@ -30,7 +34,12 @@ export const DEFAULT_LOCATION: AppLocation = {
   view: { kind: 'list', list: DEFAULT_LIST },
   query: '',
   taskId: null,
+  day: null,
 };
+
+function validDay(value: string | null): string | null {
+  return value && parseLocalDate(value) ? value : null;
+}
 
 export function parseLocation(search: string): AppLocation {
   const params = new URLSearchParams(search);
@@ -46,6 +55,7 @@ export function parseLocation(search: string): AppLocation {
     view,
     query: params.get('q')?.trim() ?? '',
     taskId: params.get('task') || null,
+    day: view.kind === 'list' && view.list === 'today' ? validDay(params.get('day')) : null,
   };
 }
 
@@ -59,6 +69,8 @@ export function serializeLocation(location: AppLocation): string {
   const query = location.query.trim();
   if (query) params.set('q', query);
   if (location.taskId) params.set('task', location.taskId);
+  if (location.day && view.kind === 'list' && view.list === 'today')
+    params.set('day', location.day);
   const text = params.toString();
   return text ? `?${text}` : '';
 }

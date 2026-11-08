@@ -1,7 +1,9 @@
 import { AppShell } from './components/AppShell';
 import { greeting } from './constants/texts';
+import { parseLocalDate, toLocalDateString } from './domain/dates';
 import { TaskDetailsContainer } from './features/details/TaskDetailsContainer';
 import { useLists } from './features/lists/useLists';
+import { DayNav } from './features/navigation/DayNav';
 import { useAppLocation } from './features/navigation/useAppLocation';
 import { viewTitle } from './features/navigation/viewTitle';
 import { SearchField } from './features/search/SearchField';
@@ -12,6 +14,7 @@ import { TaskListContainer } from './features/tasks/TaskListContainer';
 import { TodayStats } from './features/tasks/TodayStats';
 import { useTasks } from './features/tasks/useTasks';
 import { useNow } from './features/time/useNow';
+import { TimelineContainer } from './features/timeline/TimelineContainer';
 
 const dateFormat = new Intl.DateTimeFormat('ru-RU', {
   weekday: 'long',
@@ -20,15 +23,20 @@ const dateFormat = new Intl.DateTimeFormat('ru-RU', {
 });
 
 export function App() {
-  const [location] = useAppLocation();
+  const [location, navigate] = useAppLocation();
   const { data: lists } = useLists();
   const now = useNow();
   const { data: tasks } = useTasks();
   const title = viewTitle(location.view, lists);
   const isToday = location.view.kind === 'list' && location.view.list === 'today';
+  const today = toLocalDateString(now);
+  const day = location.day ?? today;
+
+  // The right column: an open task's details, else the day's timeline on Today.
+  const side = location.taskId ? <TaskDetailsContainer /> : isToday ? <TimelineContainer /> : null;
 
   return (
-    <AppShell sidebar={<SidebarContainer />} details={<TaskDetailsContainer />}>
+    <AppShell sidebar={<SidebarContainer />} details={side}>
       <div className="mx-auto w-full max-w-4xl px-4 py-6 md:px-10 md:py-8">
         <div>
           <div className="flex flex-col-reverse gap-4 md:flex-row md:items-center md:justify-between">
@@ -48,18 +56,29 @@ export function App() {
             </p>
             <SearchField />
           </div>
-          <h1 className="mt-1 font-display text-[34px] leading-tight font-extrabold tracking-tight text-ink first-letter:uppercase md:text-[42px]">
-            {isToday ? (
-              <>
-                <span className="sr-only">{title}, </span>
-                {dateFormat.format(now)}
-              </>
-            ) : (
-              title
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <h1 className="font-display text-[34px] leading-tight font-extrabold tracking-tight text-ink first-letter:uppercase md:text-[42px]">
+              {isToday ? (
+                <>
+                  {day === today && <span className="sr-only">{title}, </span>}
+                  {dateFormat.format(parseLocalDate(day) ?? now)}
+                </>
+              ) : (
+                title
+              )}
+            </h1>
+            {isToday && (
+              <DayNav
+                day={day}
+                today={today}
+                onChange={(next) => {
+                  navigate({ day: next, taskId: null });
+                }}
+              />
             )}
-          </h1>
+          </div>
         </div>
-        {isToday && tasks && <TodayStats tasks={tasks} now={now} />}
+        {isToday && tasks && <TodayStats tasks={tasks} now={now} day={day} />}
         <QuickAdd />
         <TaskListContainer />
       </div>

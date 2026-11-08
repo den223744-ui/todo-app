@@ -92,11 +92,24 @@ export function selectToday(tasks: readonly TaskRead[], now: Date): TaskRead[] {
     .sort(compareByPosition);
 }
 
+/**
+ * The Today screen for any day: today itself as selectToday; another day
+ * shows the tasks due on it, done or not, in the manual order.
+ */
+export function selectDay(tasks: readonly TaskRead[], day: string, now: Date): TaskRead[] {
+  if (day === toLocalDateString(now)) return selectToday(tasks, now);
+  return tasks.filter((task) => isTopLevel(task) && task.due_date === day).sort(compareByPosition);
+}
+
 /** Incomplete top-level tasks due tomorrow: the tail of the Today screen. By time, then order. */
 export function selectTomorrow(tasks: readonly TaskRead[], now: Date): TaskRead[] {
-  const tomorrow = toLocalDateString(addDays(now, 1));
+  return selectOpenOn(tasks, toLocalDateString(addDays(now, 1)));
+}
+
+/** Incomplete top-level tasks due on a day, by time, then order. */
+export function selectOpenOn(tasks: readonly TaskRead[], day: string): TaskRead[] {
   return tasks
-    .filter((task) => isTopLevel(task) && isOpen(task) && task.due_date === tomorrow)
+    .filter((task) => isTopLevel(task) && isOpen(task) && task.due_date === day)
     .sort(compareByDue);
 }
 

@@ -13,6 +13,7 @@ import {
   isSmartList,
   selectList,
   selectTag,
+  selectDay,
   selectToday,
   selectTomorrow,
 } from './smartLists';
@@ -151,6 +152,27 @@ describe('selectToday', () => {
     });
 
     expect(ids(selectToday([doneToday, undatedDoneToday, done, subtask], NOW))).toEqual(['d']);
+  });
+});
+
+describe('selectDay', () => {
+  it('is selectToday for today', () => {
+    expect(ids(selectDay(ALL, TODAY, NOW))).toEqual(ids(selectToday(ALL, NOW)));
+  });
+
+  it('shows another day’s top-level tasks, done or not, in manual order', () => {
+    const doneThen = makeTask({
+      id: 'done-then',
+      due_date: '2026-11-10',
+      position: 0,
+      completed_at: '2026-11-10T08:00:00Z',
+    });
+
+    expect(ids(selectDay([...ALL, doneThen], '2026-11-10', NOW))).toEqual([
+      'done-then',
+      'tomorrow-9',
+      'tomorrow',
+    ]);
   });
 });
 

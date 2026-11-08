@@ -19,7 +19,13 @@ export interface PreparedQuickAdd {
 }
 
 /** Explicit input wins; the current view only supplies missing context. */
-export function prepareQuickAdd(input: string, view: View, now: Date): PreparedQuickAdd {
+export function prepareQuickAdd(
+  input: string,
+  view: View,
+  now: Date,
+  /** The day the Today screen shows, when not today. */
+  day: string | null = null,
+): PreparedQuickAdd {
   const parsed = parseQuickAdd(input, now);
   const task = toTaskCreate(parsed);
   if (!task) return { parsed, task: null, issue: 'title-required' };
@@ -37,7 +43,7 @@ export function prepareQuickAdd(input: string, view: View, now: Date): PreparedQ
       ...task,
       due_date:
         parsed.dueDate ??
-        (view.kind === 'list' && view.list === 'today' ? toLocalDateString(now) : null),
+        (view.kind === 'list' && view.list === 'today' ? (day ?? toLocalDateString(now)) : null),
       tags,
       // Typed into one of the user's lists: the task goes into that list.
       ...(view.kind === 'taskList' ? { list_id: view.listId } : {}),

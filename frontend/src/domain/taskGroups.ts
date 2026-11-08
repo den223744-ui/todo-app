@@ -1,6 +1,7 @@
 import type { TaskListRead, TaskRead } from '../api/schema';
+import { toLocalDateString } from './dates';
 import { searchTasks } from './search';
-import { groupByDueDate, selectList, selectTag, selectToday, selectTomorrow } from './smartLists';
+import { groupByDueDate, selectDay, selectList, selectTag, selectTomorrow } from './smartLists';
 import { groupByList, selectInList } from './taskLists';
 import type { AppLocation } from './view';
 
@@ -15,21 +16,23 @@ export interface TaskGroup {
 export function selectTaskGroups(
   tasks: readonly TaskRead[],
   lists: readonly TaskListRead[],
-  { view, query }: AppLocation,
+  { view, query, day }: AppLocation,
   now: Date,
 ): TaskGroup[] {
   const matching = searchTasks(tasks, query);
   if (view.kind === 'list' && view.list === 'today') {
-    // Today's tasks by list, then tomorrow's as one group at the very bottom.
-    const today: TaskGroup[] = groupByList(selectToday(matching, now), lists).map(
+    // The chosen day's tasks by list; for today itself, tomorrow's follow as one group.
+    const today = toLocalDateString(now);
+    const shown = day ?? today;
+    const byList: TaskGroup[] = groupByList(selectDay(matching, shown, now), lists).map(
       ({ list, tasks: grouped }) => ({
         key: list ? `list:${list.id}` : 'list:none',
         tasks: grouped,
         list,
       }),
     );
-    const tomorrow = selectTomorrow(matching, now);
-    return tomorrow.length > 0 ? [...today, { key: 'tomorrow', tasks: tomorrow }] : today;
+    const tomorrow = shown === today ? selectTomorrow(matching, now) : [];
+    return tomorrow.length > 0 ? [...byList, { key: 'tomorrow', tasks: tomorrow }] : byList;
   }
   const selected =
     view.kind === 'tag'

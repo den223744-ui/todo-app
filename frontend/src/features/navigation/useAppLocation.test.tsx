@@ -16,6 +16,7 @@ describe('useAppLocation', () => {
       view: { kind: 'list', list: 'upcoming' },
       query: 'x',
       taskId: null,
+      day: null,
     });
   });
 
