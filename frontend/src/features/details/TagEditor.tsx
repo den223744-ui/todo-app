@@ -32,8 +32,12 @@ export function TagEditor({ task, onUpdate }: TagEditorProps) {
       {task.tags.length > 0 && (
         <ul className="mb-2 flex flex-wrap gap-1.5">
           {task.tags.map((tag) => (
-            <li key={tag} className="flex items-center rounded bg-subtle pl-2 text-xs">
-              #{tag}
+            <li
+              key={tag}
+              className="flex max-w-full min-w-0 items-center rounded bg-subtle pl-2 text-xs"
+            >
+              {/* A 50-character tag must wrap, not push the panel wider than a phone. */}
+              <span className="min-w-0 wrap-anywhere">#{tag}</span>
               <button
                 type="button"
                 aria-label={EDIT_TEXTS.removeTag(tag)}
@@ -41,7 +45,7 @@ export function TagEditor({ task, onUpdate }: TagEditorProps) {
                   const result = removeTag(task, tag);
                   if (result.kind === 'patch') onUpdate(result.patch);
                 }}
-                className="flex size-7 items-center justify-center rounded text-ink-muted hover:text-ink"
+                className="flex size-7 shrink-0 items-center justify-center rounded text-ink-muted hover:text-ink"
               >
                 ×
               </button>

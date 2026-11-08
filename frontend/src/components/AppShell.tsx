@@ -26,7 +26,7 @@ export function AppShell({ sidebar, details, children }: AppShellProps) {
     <div className="flex h-dvh overflow-hidden">
       <aside
         aria-label={TEXTS.navigation}
-        className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface md:flex"
+        className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r border-line bg-surface md:flex"
       >
         {sidebar}
       </aside>

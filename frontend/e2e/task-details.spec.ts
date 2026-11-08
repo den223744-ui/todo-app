@@ -119,7 +119,8 @@ test('on a phone the panel covers the list and closes back to it', async ({ page
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/?list=inbox&task=p');
 
-  const panel = page.getByRole('complementary', { name: 'Детали задачи' });
+  // On a phone the panel covers the page: a modal dialog.
+  const panel = page.getByRole('dialog', { name: 'Детали задачи' });
   await expect(panel).toBeVisible();
   const box = await panel.boundingBox();
   expect(box).toMatchObject({ x: 0, y: 0, width: 375 });
@@ -159,4 +160,43 @@ test('a failed delete puts the task back and shows a toast', async ({ page }) =>
   const toasts = page.getByRole('region', { name: 'Уведомления' });
   await expect(toasts).toContainText('Нет связи с сервером');
   await expect(page.getByRole('main').getByRole('link', { name: /Важная задача/ })).toBeVisible();
+});
+
+test('a 50-character tag wraps inside the panel on a phone', async ({ page }) => {
+  const longTag = 'w'.repeat(50);
+  await fakeServer(page, [makeTask({ id: 'p', title: 'Задача', tags: [longTag] })]);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/?list=inbox&task=p');
+
+  const panel = page.getByRole('dialog', { name: 'Детали задачи' });
+  const chip = panel.getByRole('listitem').filter({ hasText: `#${longTag}` });
+  const remove = panel.getByRole('button', { name: `Убрать тег ${longTag}` });
+  // Real geometry: the page width alone does not show overflow hidden by a container.
+  for (const element of [chip, remove]) {
+    const box = await element.boundingBox();
+    expect(box).not.toBeNull();
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(375);
+  }
+});
+
+test('the desktop sidebar scrolls to reach every tag', async ({ page }) => {
+  const tags = Array.from({ length: 20 }, (_, i) => `тег${String(i).padStart(2, '0')}`);
+  await fakeServer(
+    page,
+    tags.map((tag, i) => makeTask({ id: `t${String(i)}`, title: tag, tags: [tag] })),
+  );
+  await page.setViewportSize({ width: 1280, height: 700 });
+  await page.goto('/?list=inbox');
+
+  const last = page.getByRole('navigation', { name: 'Теги' }).getByRole('link', { name: /тег19/ });
+  const bottom = async () => {
+    const box = await last.boundingBox();
+    return (box?.y ?? 0) + (box?.height ?? 0);
+  };
+  expect(await bottom()).toBeGreaterThan(700); // below the fold at first
+  // Scroll with the mouse wheel like a person (a click would scrollIntoView,
+  // which works even on an overflow:hidden container).
+  await page.mouse.move(120, 400);
+  await page.mouse.wheel(0, 2000);
+  await expect.poll(bottom).toBeLessThanOrEqual(700);
 });
