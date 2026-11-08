@@ -81,7 +81,7 @@ describe('undo', () => {
   it('Ctrl+Z brings a deleted task back with its subtasks', async () => {
     const { remove, restore, queryClient } = openApp('/?list=inbox&task=t1');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Удалить задачу', exact: true }));
+    await userEvent.click(screen.getByRole('button', { name: /^Удалить задачу$/ }));
     await waitFor(() => {
       expect(remove).toHaveBeenCalledWith('t1');
     });
@@ -101,7 +101,7 @@ describe('undo', () => {
 
   it('Ctrl+Z in a field with text stays the field’s own undo', async () => {
     const { restore, queryClient } = openApp('/?list=inbox&task=t1');
-    await userEvent.click(screen.getByRole('button', { name: 'Удалить задачу', exact: true }));
+    await userEvent.click(screen.getByRole('button', { name: /^Удалить задачу$/ }));
 
     await userEvent.type(screen.getByRole('textbox', { name: 'Новая задача' }), 'черновик');
     await userEvent.keyboard('{Control>}z{/Control}');
