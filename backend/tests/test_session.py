@@ -25,7 +25,9 @@ WHOAMI = "/api/_test/whoami"
 def build_app(database_url: str, **overrides: object) -> FastAPI:
     app = create_app(Settings(database_url=database_url, **overrides))  # type: ignore[arg-type]
 
-    @app.api_route(WHOAMI, methods=["GET", "POST", "PATCH", "DELETE"], include_in_schema=False)
+    @app.api_route(
+        WHOAMI, methods=["GET", "HEAD", "POST", "PATCH", "DELETE"], include_in_schema=False
+    )
     async def whoami(workspace_id: WorkspaceId) -> dict[str, str]:
         return {"workspace_id": str(workspace_id)}
 
@@ -170,19 +172,50 @@ async def test_write_with_session_uses_it(client: AsyncClient, method: str) -> N
     assert session_cookie(response) is None
 
 
-async def test_parallel_first_visits_cannot_lose_writes(
-    app: FastAPI, session: AsyncSession
-) -> None:
-    # Two first requests race without a cookie. Only the read may start a
-    # session; the write is refused, so it cannot land in a workspace whose
-    # cookie the browser later replaces.
-    async with new_client(app) as tab_one, new_client(app) as tab_two:
-        read = await tab_one.get(WHOAMI)
-        write = await tab_two.post(WHOAMI)
+async def test_head_starts_a_session_like_get(client: AsyncClient, session: AsyncSession) -> None:
+    response = await client.head(WHOAMI)
 
-    assert read.status_code == 200
-    assert write.status_code == 401
+    assert response.status_code == 200
+    cookie = session_cookie(response)
+    assert cookie is not None
+    assert await session.get(Workspace, uuid.UUID(cookie[COOKIE].value)) is not None
     assert await workspace_count(session) == 1
+
+
+@pytest.mark.parametrize(
+    ("path", "status", "code"),
+    [(WHOAMI, 405, "method_not_allowed"), ("/api/does-not-exist", 404, "not_found")],
+)
+@pytest.mark.parametrize(
+    "headers",
+    [
+        pytest.param({}, id="plain"),
+        pytest.param(
+            {
+                "Origin": "https://elsewhere.example",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+            id="cors-preflight",
+        ),
+    ],
+)
+async def test_options_never_creates_a_session(
+    client: AsyncClient,
+    session: AsyncSession,
+    path: str,
+    status: int,
+    code: str,
+    headers: dict[str, str],
+) -> None:
+    # Preflights carry no credentials and browsers ignore cookies set on them,
+    # so a workspace created here would be orphaned.
+    response = await client.options(path, headers=headers)
+
+    assert response.status_code == status
+    assert response.json()["error"]["code"] == code
+    assert session_cookie(response) is None
+    assert await workspace_count(session) == 0
 
 
 async def test_cookie_is_set_on_handled_error_responses(

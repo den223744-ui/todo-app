@@ -13,7 +13,7 @@ from app.core.errors import SessionRequiredError, error_response
 from app.services.workspaces import create_workspace, delete_workspace, find_workspace
 
 # Only these methods may start a new session. See WorkspaceSessionMiddleware.
-SESSION_STARTING_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+SESSION_STARTING_METHODS = frozenset({"GET", "HEAD"})
 
 
 class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
@@ -22,16 +22,22 @@ class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
     The workspace id is put on ``request.state.workspace_id``.
 
     Rules:
-    - Only safe methods (GET, HEAD, OPTIONS) create a workspace. A write without
-      a valid cookie gets 401 ``session_required``. Why:
-      * a cross-site form POST arrives without the SameSite=Lax cookie; creating
-        a session there would let a foreign site overwrite the visitor's cookie
-        and cut them off from their list;
-      * a write can never land in a workspace whose cookie the browser then
-        replaces with a parallel response, so no data is lost.
+    - Only GET and HEAD create a workspace. A write without a valid cookie gets
+      401 ``session_required``: a cross-site form POST arrives without the
+      SameSite=Lax cookie, and creating a session there would let a foreign
+      site overwrite the visitor's cookie and cut them off from their list.
+    - OPTIONS is never bound to a session. CORS preflights are sent without
+      credentials and the browser does not keep cookies set on them, so a
+      workspace created there would be orphaned. The API has no OPTIONS handlers.
     - The cookie is set whenever a workspace was created, error responses
       included. If the handler raises, the new workspace is deleted again:
       a workspace never exists without a cookie pointing at it.
+
+    Known limit, handled by the client: if a new visitor sends several first
+    requests in parallel, each gets its own workspace and the browser keeps the
+    cookie of whichever response arrives last. The server cannot link those
+    requests to one visitor without trusting a client-chosen id, so the API
+    client must let the first request finish before sending others.
     """
 
     def __init__(
@@ -53,7 +59,7 @@ class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
         return path.startswith(self._scoped_prefix) and path.rstrip("/") not in self._exempt_paths
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        if not self._needs_workspace(request.url.path):
+        if request.method == "OPTIONS" or not self._needs_workspace(request.url.path):
             return await call_next(request)
 
         async with self._session_factory() as session:
