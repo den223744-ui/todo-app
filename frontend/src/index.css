@@ -1,1 +1,89 @@
+@import '@fontsource-variable/inter';
 @import 'tailwindcss';
+
+/*
+ * Design tokens. One neutral palette (warm grey) and one accent: dark emerald.
+ * Components use the semantic names below (bg-canvas, text-ink, bg-accent ...),
+ * never raw colours, so both themes come from these variables alone.
+ *
+ * Contrast (WCAG): text >= 4.5:1, UI parts and the focus ring >= 3:1 on both
+ * themes; checked when the palette was chosen (see the stage 3 commit).
+ */
+:root {
+  color-scheme: light;
+  --canvas: #fafaf9;
+  --surface: #ffffff;
+  --subtle: #f4f4f3;
+  --line: #e7e5e4;
+  --ink: #1c1917;
+  --ink-muted: #57534e;
+  --ink-faint: #78716c;
+  --accent: #065f46; /* fill: buttons, checkbox */
+  --accent-hover: #064e3b;
+  --accent-fg: #ffffff; /* text on the accent fill */
+  --accent-ink: #065f46; /* accent-coloured text and icons */
+  --accent-soft: #ecfdf5; /* selected item background */
+  --danger: #b91c1c;
+  --warning: #b45309;
+  --shadow-soft: 0 1px 2px rgb(28 25 23 / 0.06), 0 4px 16px rgb(28 25 23 / 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --canvas: #0c0a09;
+    --surface: #1c1917;
+    --subtle: #292524;
+    --line: #44403c;
+    --ink: #f5f5f4;
+    --ink-muted: #a8a29e;
+    --ink-faint: #a8a29e;
+    --accent: #047857;
+    --accent-hover: #065f46;
+    --accent-fg: #ffffff;
+    --accent-ink: #34d399;
+    --accent-soft: #022c22;
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3);
+  }
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+
+  --shadow-soft: var(--shadow-soft);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01'; /* Inter: single-storey a, open digits */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-canvas text-ink;
+  }
+
+  /* Visible focus for keyboard users everywhere (SPEC: accessibility). */
+  :focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 2px;
+  }
+}
