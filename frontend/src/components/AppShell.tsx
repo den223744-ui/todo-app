@@ -38,7 +38,7 @@ export function AppShell({ sidebar, details, children }: AppShellProps) {
           <IconButton label={TEXTS.openMenu} aria-expanded={drawerOpen} onClick={openDrawer}>
             <MenuIcon />
           </IconButton>
-          <BrandLogo className="text-lg font-bold tracking-[0.04em]" />
+          <BrandLogo className="text-base" />
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>

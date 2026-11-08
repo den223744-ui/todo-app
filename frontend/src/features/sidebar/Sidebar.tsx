@@ -56,7 +56,7 @@ export function Sidebar({
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex flex-col gap-7 px-4 pt-6 pb-4">
-        <BrandLogo className="self-start px-3 text-[30px] font-bold tracking-[0.04em]" />
+        <BrandLogo className="self-start px-3 text-xl" />
 
         <nav aria-label={TEXTS.smartLists}>
           <ul className="flex flex-col gap-1">
