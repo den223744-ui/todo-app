@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -175,6 +175,100 @@ describe('TaskDetailsContainer', () => {
         ['p', { tags: ['ремонт'] }],
       ]);
     });
+    queryClient.clear();
+  });
+
+  it('keeps both tags when two quick edits reach a server that answers out of order', async () => {
+    window.history.replaceState(null, '', '/?list=inbox&task=p');
+    let stored: TaskRead = { ...PARENT };
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let calls = 0;
+    let applied = 0;
+    vi.spyOn(api, 'listTasks').mockImplementation(() => Promise.resolve([stored, SUB]));
+    // The server applies each PATCH when it arrives; the first one is slow.
+    vi.spyOn(api, 'updateTask').mockImplementation(async (_id, patch) => {
+      if (++calls === 1) await gate;
+      stored = { ...stored, ...(patch as Partial<TaskRead>) };
+      applied += 1;
+      return stored;
+    });
+    const { queryClient } = renderWithClient(<TaskDetailsContainer />, [PARENT, SUB]);
+    const panel = screen.getByRole('complementary', { name: 'Детали задачи' });
+    const tagInput = within(panel).getByLabelText('Теги');
+
+    await userEvent.type(tagInput, 'первый{Enter}');
+    await within(panel).findByText('#первый');
+    await userEvent.type(tagInput, 'второй{Enter}');
+    await within(panel).findByText('#второй');
+    release();
+
+    // Compare only after the server has applied both requests.
+    await waitFor(() => {
+      expect(applied).toBe(2);
+    });
+    expect(stored.tags).toEqual(['дом', 'первый', 'второй']);
+    queryClient.clear();
+  });
+
+  it('keeps new typing when an earlier save of the same field fails', async () => {
+    window.history.replaceState(null, '', '/?list=inbox&task=p');
+    let reject!: (error: Error) => void;
+    vi.spyOn(api, 'listTasks').mockResolvedValue([PARENT, SUB]);
+    vi.spyOn(api, 'updateTask').mockImplementation(
+      () =>
+        new Promise<TaskRead>((_resolve, rej) => {
+          reject = rej;
+        }),
+    );
+    const { queryClient } = renderWithClient(<TaskDetailsContainer />, [PARENT, SUB]);
+    const notes = within(screen.getByRole('complementary')).getByLabelText('Заметки');
+
+    await userEvent.type(notes, ' 1');
+    fireEvent.blur(notes); // save "Кухня 1": the request hangs
+    await userEvent.type(notes, ' 2'); // keep typing meanwhile
+    act(() => {
+      reject(new Error('offline')); // the first save fails and rolls back
+    });
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData<TaskRead[]>(['tasks', 'list'])?.[0]?.notes).toBe('Кухня');
+    });
+    expect(notes).toHaveValue('Кухня 1 2');
+    queryClient.clear();
+  });
+
+  it('Esc in an edited field reverts it first; a second Esc closes the panel', async () => {
+    const { panel, update, queryClient } = open('p');
+    const notes = within(panel).getByLabelText('Заметки');
+
+    await userEvent.type(notes, ' черновик');
+    await userEvent.keyboard('{Escape}');
+
+    expect(notes).toHaveValue('Кухня');
+    expect(screen.getByRole('complementary', { name: 'Детали задачи' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(update).not.toHaveBeenCalled();
+    queryClient.clear();
+  });
+
+  it('Esc reverts the title and clears the tag and subtask inputs before closing', async () => {
+    const { panel, queryClient } = open('p');
+    const title = within(panel).getByLabelText('Название');
+    await userEvent.type(title, '!!!');
+    await userEvent.keyboard('{Escape}');
+    expect(title).toHaveValue('Починить кран');
+
+    for (const label of ['Теги', 'Новая подзадача']) {
+      const input = within(panel).getByLabelText(label);
+      await userEvent.type(input, 'черновик');
+      await userEvent.keyboard('{Escape}');
+      expect(input).toHaveValue('');
+    }
+    expect(screen.getByRole('complementary', { name: 'Детали задачи' })).toBeInTheDocument();
     queryClient.clear();
   });
 

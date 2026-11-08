@@ -14,6 +14,7 @@ import {
 import { PriorityPicker } from './PriorityPicker';
 import { SubtaskList } from './SubtaskList';
 import { TagEditor } from './TagEditor';
+import { useSyncedDraft } from './useSyncedDraft';
 
 interface TaskDetailsProps {
   task: TaskRead;
@@ -40,15 +41,11 @@ export function TaskDetails({
   onDelete,
 }: TaskDetailsProps) {
   const ids = useId();
-  const [title, setTitle] = useState(task.title);
-  const [notes, setNotes] = useState(task.notes ?? '');
-  // Drafts follow changes made elsewhere (inline rename, the server's answer).
-  const [synced, setSynced] = useState({ title: task.title, notes: task.notes });
-  if (synced.title !== task.title || synced.notes !== task.notes) {
-    if (synced.title !== task.title) setTitle(task.title);
-    if (synced.notes !== task.notes) setNotes(task.notes ?? '');
-    setSynced({ title: task.title, notes: task.notes });
-  }
+  // Drafts follow changes made elsewhere, but never over the user's own edits.
+  const titleDraft = useSyncedDraft(task.title);
+  const notesDraft = useSyncedDraft(task.notes ?? '');
+  const title = titleDraft.draft;
+  const notes = notesDraft.draft;
   const [issue, setIssue] = useState<{ field: string; issue: EditIssue } | null>(null);
   const completed = task.completed_at !== null;
 
@@ -87,16 +84,20 @@ export function TaskDetails({
             aria-invalid={issueFor('title') !== null || undefined}
             aria-describedby={issueFor('title') ? `${ids}-title-issue` : undefined}
             onChange={(event) => {
-              setTitle(event.currentTarget.value);
+              titleDraft.setDraft(event.currentTarget.value);
             }}
             onBlur={() => {
               // An invalid title is not kept: the stored one comes back.
-              if (!apply('title', editTitle(task, title))) setTitle(task.title);
+              if (!apply('title', editTitle(task, title))) titleDraft.revert();
             }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
                 event.preventDefault();
                 apply('title', editTitle(task, title));
+              } else if (event.key === 'Escape' && titleDraft.dirty) {
+                event.preventDefault(); // revert first; a second Esc closes the panel
+                titleDraft.revert();
+                setIssue(null);
               }
             }}
             className={`w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-base font-medium hover:border-line focus:border-accent-ink ${
@@ -123,10 +124,17 @@ export function TaskDetails({
           aria-invalid={issueFor('notes') !== null || undefined}
           aria-describedby={issueFor('notes') ? `${ids}-notes-issue` : undefined}
           onChange={(event) => {
-            setNotes(event.currentTarget.value);
+            notesDraft.setDraft(event.currentTarget.value);
           }}
           onBlur={() => {
             apply('notes', editNotes(task, notes));
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape' && notesDraft.dirty) {
+              event.preventDefault(); // revert first; a second Esc closes the panel
+              notesDraft.revert();
+              setIssue(null);
+            }
           }}
           className="w-full resize-y rounded-lg border border-line bg-surface px-2.5 py-2 text-sm placeholder:text-ink-faint"
         />

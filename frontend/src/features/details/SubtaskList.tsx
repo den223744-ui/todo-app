@@ -94,6 +94,10 @@ export function SubtaskList({
               if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
                 event.preventDefault();
                 add();
+              } else if (event.key === 'Escape' && draft) {
+                event.preventDefault(); // clear first; a second Esc closes the panel
+                setDraft('');
+                setIssue(null);
               }
             }}
             className="w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm placeholder:text-ink-faint"
