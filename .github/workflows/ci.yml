@@ -19,6 +19,21 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      # Production runs on PostgreSQL; concurrency tests also run against it.
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TEST_POSTGRES_URL: postgresql://postgres:ci@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v7
@@ -91,6 +106,17 @@ jobs:
         run: curl --fail --silent http://localhost:5173/api/health
       - name: Frontend serves index.html
         run: curl --fail --silent http://localhost:5173/ | grep -q '<div id="root">'
+      - name: Task survives a backend restart (session cookie, migrations, volume)
+        run: |
+          set -euo pipefail
+          jar=$(mktemp)
+          api=http://localhost:5173/api/tasks
+          curl --fail --silent -c "$jar" -b "$jar" "$api" | grep -qx '\[\]'
+          curl --fail --silent -c "$jar" -b "$jar" -H 'content-type: application/json' \
+            -d '{"title":"smoke","tags":["#CI"]}' "$api" | grep -q '"tags":\["ci"\]'
+          docker compose restart backend
+          docker compose up --wait --wait-timeout 120
+          curl --fail --silent -b "$jar" "$api" | grep -q '"title":"smoke"'
       - if: failure()
         run: docker compose logs
       - if: always()
