@@ -20,6 +20,7 @@
  * Pure: `now` is passed in; the local calendar of `now` is the user's calendar.
  */
 import type { TaskCreate } from '../api/schema';
+import { addDays, startOfDay, toLocalDateString, toTimeString } from './dates';
 import { normalizeTag } from './tags';
 
 export type QuickAddTokenKind = 'date' | 'time' | 'tag' | 'priority';
@@ -140,8 +141,8 @@ export function parseQuickAdd(input: string, now: Date): QuickAddResult {
 
   return {
     title: removeTokens(input, tokens),
-    dueDate: date ? formatDate(date) : null,
-    dueTime: time ? formatTime(time.hour, time.minute) : null,
+    dueDate: date ? toLocalDateString(date) : null,
+    dueTime: time ? toTimeString(time.hour, time.minute) : null,
     tags,
     priority,
     tokens,
@@ -207,22 +208,4 @@ function removeTokens(input: string, tokens: readonly QuickAddToken[]): string {
   }
   title += input.slice(cursor);
   return title.replace(/\s+/g, ' ').trim();
-}
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function addDays(date: Date, days: number): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-}
-
-const pad = (value: number) => String(value).padStart(2, '0');
-
-function formatDate(date: Date): string {
-  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-function formatTime(hour: number, minute: number): string {
-  return `${pad(hour)}:${pad(minute)}`;
 }
