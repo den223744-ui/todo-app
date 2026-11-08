@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { App } from './App';
+import { renderWithClient } from './test/renderWithClient';
 
 describe('App', () => {
   it('shows today by default', () => {
-    render(<App />);
+    renderWithClient(<App />);
 
     expect(screen.getByRole('heading', { level: 1, name: 'Сегодня' })).toBeInTheDocument();
   });
@@ -17,7 +18,7 @@ describe('App', () => {
   ])('titles the view from the URL %s', (url, title) => {
     window.history.replaceState(null, '', url);
 
-    render(<App />);
+    renderWithClient(<App />);
 
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument();
   });
