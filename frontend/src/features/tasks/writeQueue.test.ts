@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { onlineManager } from '@tanstack/react-query';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { enqueueTaskWrite, queuedTaskCount } from './writeQueue';
 
@@ -15,6 +16,10 @@ function deferred<T>() {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('enqueueTaskWrite', () => {
+  afterEach(() => {
+    onlineManager.setOnline(true);
+  });
+
   it('runs writes to one task strictly in order', async () => {
     const first = deferred<string>();
     const started: string[] = [];
@@ -58,6 +63,29 @@ describe('enqueueTaskWrite', () => {
 
     expect(started).toEqual(['a', 'b']);
     slow.resolve('a');
+  });
+
+  it('holds a queued write while offline and sends it on reconnect', async () => {
+    const first = deferred<string>();
+    const started: string[] = [];
+    void enqueueTaskWrite('net', () => {
+      started.push('first');
+      return first.promise;
+    });
+    const second = enqueueTaskWrite('net', () => {
+      started.push('second');
+      return Promise.resolve('second');
+    });
+    await flush();
+
+    onlineManager.setOnline(false); // the network goes while the first is out
+    first.resolve('first');
+    await flush();
+    expect(started).toEqual(['first']); // the second is not sent into the void
+
+    onlineManager.setOnline(true);
+    await expect(second).resolves.toBe('second');
+    expect(started).toEqual(['first', 'second']);
   });
 
   it('forgets a task once its queue is empty', async () => {
