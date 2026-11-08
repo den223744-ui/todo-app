@@ -14,9 +14,9 @@ export function NewListForm({ onCreate }: { onCreate: (name: string) => void }) 
         onClick={() => {
           setOpen(true);
         }}
-        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm text-ink-muted hover:bg-subtle hover:text-ink"
+        className="nav-glow-hover flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-[15px] text-ink-muted hover:text-ink"
       >
-        <span aria-hidden="true" className="w-4 text-center">
+        <span aria-hidden="true" className="w-[22px] text-center text-2xl leading-none font-bold">
           +
         </span>
         {TEXTS.newList}
@@ -50,7 +50,7 @@ export function NewListForm({ onCreate }: { onCreate: (name: string) => void }) 
         }
       }}
       onBlur={close}
-      className="w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm placeholder:text-ink-faint"
+      className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[15px] placeholder:text-ink-faint"
     />
   );
 }

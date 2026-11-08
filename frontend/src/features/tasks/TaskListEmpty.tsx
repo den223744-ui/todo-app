@@ -11,10 +11,7 @@ export function TaskListEmpty({ location }: { location: AppLocation }) {
         : EMPTY_LIST_TEXTS[location.view.list];
 
   return (
-    <div
-      role="status"
-      className="rounded-xl border border-dashed border-line px-5 py-12 text-center"
-    >
+    <div role="status" className="rounded-2xl px-5 py-12 text-center">
       <p className="text-sm font-medium">{title}</p>
       <p className="mt-2 text-sm text-ink-muted">{hint}</p>
     </div>

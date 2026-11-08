@@ -62,7 +62,7 @@ export function TodayStats({ tasks, now }: { tasks: readonly TaskRead[]; now: Da
 const CALENDAR = 'M4 5.5h12v10.5H4zM4 8.5h12M7 3.5v3M13 3.5v3';
 const ARROW = 'M4 5.5h12v10.5H4zM4 8.5h12M7 3.5v3M13 3.5v3M8 12.3h4M10.6 10.7l1.6 1.6-1.6 1.6';
 const ALERT = 'M10 3.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM10 6.8v3.6M10 13.2v.1';
-const BANG = 'M10 3.6v8.2M10 15.6v.6';
+const BANG = 'M10 3.2v9M10 16v.4';
 
 function Stat({
   icon,
@@ -78,11 +78,11 @@ function Stat({
   return (
     <div className="flex items-center gap-3 sm:flex-1 sm:px-5">
       <svg
-        className={`size-5 shrink-0 ${tone}`}
+        className={`size-7 shrink-0 ${tone}`}
         viewBox="0 0 20 20"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="2"
         strokeLinecap="round"
         aria-hidden="true"
       >

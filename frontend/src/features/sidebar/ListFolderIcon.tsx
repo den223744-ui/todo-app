@@ -4,7 +4,7 @@ import type { TaskListRead } from '../../api/schema';
 export function ListFolderIcon({ color }: { color: TaskListRead['color'] }) {
   return (
     <svg
-      className="size-4 shrink-0"
+      className="size-5 shrink-0"
       viewBox="0 0 20 20"
       aria-hidden="true"
       style={{ color: `var(--list-${color})` }}

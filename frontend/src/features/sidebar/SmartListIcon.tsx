@@ -57,11 +57,11 @@ const ICONS: Record<SmartList, ReactNode> = {
 export function SmartListIcon({ list }: { list: SmartList }) {
   return (
     <svg
-      className="size-[18px] shrink-0"
+      className="size-[22px] shrink-0"
       viewBox="0 0 20 20"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

@@ -35,7 +35,7 @@ export function SidebarLink({
       href={href}
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-3 rounded-xl px-2.5 py-2 text-[13px] ${
+      className={`flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-[15px] ${
         active ? 'nav-glow font-medium text-ink' : 'nav-glow-hover text-ink-muted hover:text-ink'
       }`}
     >
@@ -43,7 +43,7 @@ export function SidebarLink({
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {count !== undefined && count > 0 && (
         <span
-          className={`min-w-5 rounded-md px-1 text-center text-xs tabular-nums ${
+          className={`min-w-6 rounded-md px-1 text-center text-sm tabular-nums ${
             urgent ? 'font-medium text-danger' : 'text-ink-faint'
           } ${active ? 'bg-surface shadow-soft' : ''}`}
         >

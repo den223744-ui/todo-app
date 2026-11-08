@@ -56,7 +56,7 @@ export function Sidebar({
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex flex-col gap-7 px-4 pt-6 pb-4">
-        <BrandLogo className="self-start px-2.5 text-lg" />
+        <BrandLogo className="self-start px-3 text-xl" />
 
         <nav aria-label={TEXTS.smartLists}>
           <ul className="flex flex-col gap-1">
@@ -75,7 +75,7 @@ export function Sidebar({
         </nav>
 
         <nav aria-labelledby="sidebar-lists-heading">
-          <h2 id="sidebar-lists-heading" className="px-2.5 pb-2 text-xs text-ink-faint">
+          <h2 id="sidebar-lists-heading" className="px-3 pb-2 text-sm text-ink-faint">
             {TEXTS.favorites}
           </h2>
           <ul className="flex flex-col gap-1">
@@ -85,7 +85,7 @@ export function Sidebar({
                 <li
                   key={list.id}
                   aria-busy="true"
-                  className="flex items-center gap-3 px-2.5 py-2 text-[13px] text-ink-faint"
+                  className="flex items-center gap-3.5 px-3 py-2.5 text-[15px] text-ink-faint"
                 >
                   <ListFolderIcon color={list.color} />
                   <span className="min-w-0 flex-1 truncate">{list.name}</span>
@@ -110,18 +110,21 @@ export function Sidebar({
         </nav>
 
         <nav aria-labelledby="sidebar-tags-heading">
-          <h2 id="sidebar-tags-heading" className="px-2.5 pb-2 text-xs text-ink-faint">
+          <h2 id="sidebar-tags-heading" className="px-3 pb-2 text-sm text-ink-faint">
             {TEXTS.tags}
           </h2>
           {tasks && tagCounts.length === 0 ? (
-            <p className="px-2.5 text-xs text-ink-faint">{TEXTS.tagsEmpty}</p>
+            <p className="px-3 text-sm text-ink-faint">{TEXTS.tagsEmpty}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {tagCounts.map(({ tag, count }) => (
                 <li key={tag}>
                   {link(
                     { kind: 'tag', tag },
-                    <span aria-hidden="true" className="w-4 text-center text-ink-faint">
+                    <span
+                      aria-hidden="true"
+                      className="w-[22px] text-center text-lg font-bold text-ink-faint"
+                    >
                       #
                     </span>,
                     tag,

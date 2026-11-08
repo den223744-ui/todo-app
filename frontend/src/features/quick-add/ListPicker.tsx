@@ -18,15 +18,15 @@ export function ListPicker({ lists, value, onChange }: ListPickerProps) {
   const chosen = lists.find((list) => list.id === value);
   return (
     <label
-      className="relative flex min-h-12 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-sm text-ink-muted shadow-soft focus-within:border-check focus-within:ring-2 focus-within:ring-check/25 hover:text-ink"
+      className="relative flex min-h-12 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-line bg-transparent px-3 text-sm text-ink-muted focus-within:border-check focus-within:ring-2 focus-within:ring-check/25 hover:text-ink"
       style={chosen ? { color: `var(--list-${chosen.color}-ink)` } : undefined}
     >
       <svg
-        className="size-[18px] shrink-0"
+        className="size-[22px] shrink-0"
         viewBox="0 0 20 20"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="1.8"
         strokeLinejoin="round"
         aria-hidden="true"
       >

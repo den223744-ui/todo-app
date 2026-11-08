@@ -27,7 +27,7 @@
   --accent-ink: #b0480f; /* orange text and icons */
   --accent-soft: #fdeadf;
   --check: #4f69a6; /* checked checkbox, focus ring */
-  --nav-active: #ede8ec;
+  --nav-active: #e4dbd5;
   --danger: #c0392b;
   --warning: #b45309;
   --shadow-soft: 0 1px 2px rgb(60 40 30 / 0.04), 0 6px 20px rgb(60 40 30 / 0.06);
@@ -80,7 +80,7 @@
     --accent-ink: #f6a066;
     --accent-soft: #3a261a;
     --check: #8ea5dc;
-    --nav-active: #322c29;
+    --nav-active: #433a35;
     --danger: #f2877c;
     --warning: #fbbf24;
     --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
@@ -142,18 +142,19 @@
   background: linear-gradient(
     90deg,
     var(--nav-active) 0%,
-    color-mix(in srgb, var(--nav-active) 35%, transparent) 30%,
+    color-mix(in srgb, var(--nav-active) 55%, transparent) 22%,
     transparent 50%,
-    color-mix(in srgb, var(--nav-active) 35%, transparent) 70%,
+    color-mix(in srgb, var(--nav-active) 55%, transparent) 78%,
     var(--nav-active) 100%
   );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nav-active) 60%, transparent);
 }
 .nav-glow-hover:hover {
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--nav-active) 70%, transparent) 0%,
+    color-mix(in srgb, var(--nav-active) 80%, transparent) 0%,
     transparent 50%,
-    color-mix(in srgb, var(--nav-active) 70%, transparent) 100%
+    color-mix(in srgb, var(--nav-active) 80%, transparent) 100%
   );
 }
 
