@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # Off by default so tests and fresh installs start empty.
     seed_demo_data: bool = False
 
+    # Directory with the built frontend (index.html + assets). Set in the
+    # production image, where one process serves both; unset in development,
+    # where Vite serves the frontend.
+    static_dir: str | None = None
+
     @field_validator("database_url")
     @classmethod
     def _normalize_database_url(cls, value: str) -> str:

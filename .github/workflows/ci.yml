@@ -146,3 +146,43 @@ jobs:
         run: docker compose logs
       - if: always()
         run: docker compose down --volumes
+
+  production-image:
+    name: Production image on PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: tood
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-retries 30
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build --tag tood:ci .
+      - name: Start the image the way Render runs it (migrations, then the server)
+        run: |
+          docker run --detach --name tood --network host \
+            -e PORT=8000 -e SEED_DEMO_DATA=true \
+            -e DATABASE_URL='postgresql://postgres:ci@localhost:5432/tood?sslmode=disable' \
+            tood:ci
+          for _ in $(seq 60); do curl --fail --silent http://localhost:8000/api/health && break; sleep 1; done
+          curl --fail --silent http://localhost:8000/api/health
+      - name: One service serves the app, its assets and the API
+        run: |
+          set -euo pipefail
+          curl --fail --silent 'http://localhost:8000/?list=inbox' | grep -q '<div id="root">'
+          asset=$(curl --fail --silent http://localhost:8000/ | grep -o '/assets/[^"]*\.js' | head -1)
+          curl --fail --silent --head "http://localhost:8000$asset" | grep -qi 'cache-control: .*immutable'
+          curl --fail --silent http://localhost:8000/api/tasks | grep -q '"title":"Купить продукты"'
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:8000/api/nope)" = 404
+      - name: Restart re-runs migrations harmlessly
+        run: |
+          docker restart tood
+          for _ in $(seq 60); do curl --fail --silent http://localhost:8000/api/health && break; sleep 1; done
+          curl --fail --silent http://localhost:8000/api/health
+      - if: failure()
+        run: docker logs tood

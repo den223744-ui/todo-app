@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -8,6 +9,7 @@ from app.core.config import Settings, get_settings
 from app.core.db import create_engine, create_session_factory
 from app.core.errors import register_error_handlers
 from app.core.session import WorkspaceSessionMiddleware
+from app.core.spa import SpaStaticFiles
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -45,6 +47,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     register_error_handlers(app)
     app.include_router(api_router, prefix=settings.api_prefix)
+    if settings.static_dir:
+        # Mounted last: API routes match first, everything else is the frontend.
+        app.mount("/", SpaStaticFiles(Path(settings.static_dir), settings.api_prefix), name="spa")
     return app
 
 
