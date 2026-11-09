@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { makeTask } from '../test/makeTask';
+
 import {
   applyUpdate,
   buildOptimisticTask,
@@ -13,7 +15,6 @@ import {
   revertUpdate,
   updateTask,
 } from './taskCache';
-import { makeTask } from '../test/makeTask';
 
 const NOW = new Date('2026-11-08T12:30:00.000Z');
 const ids = (tasks: { id: string }[]) => tasks.map((task) => task.id);

@@ -4,14 +4,15 @@ import userEvent from '@testing-library/user-event';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../api';
+import type { TaskRead } from '../../api/schema';
+import { parseLocation } from '../../domain/view';
 import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
 import { taskKeys } from '../tasks/taskQueries';
-import { parseLocation } from '../../domain/view';
-import type { TaskRead } from '../../api/schema';
-import { SidebarListItem } from './SidebarListItem';
+
 import { SidebarContainer } from './SidebarContainer';
+import { SidebarListItem } from './SidebarListItem';
 
 const list = makeList({ id: 'work', name: 'Работа' });
 const modalDescriptor = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'showModal');

@@ -1,5 +1,6 @@
-import { LIST_TITLES } from '../../constants/texts';
 import type { MouseEvent, ReactNode } from 'react';
+
+import { LIST_TITLES } from '../../constants/texts';
 
 interface SidebarLinkProps {
   href: string;

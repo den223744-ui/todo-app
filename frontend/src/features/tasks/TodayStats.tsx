@@ -3,6 +3,7 @@ import { STATS_TEXTS } from '../../constants/texts';
 import { toLocalDateString } from '../../domain/dates';
 import { countLists, selectDay, selectOpenOn } from '../../domain/smartLists';
 import { progressOf } from '../../domain/taskLists';
+
 import { DayStat } from './DayStat';
 
 interface TodayStatsProps {

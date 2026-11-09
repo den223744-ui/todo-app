@@ -6,6 +6,7 @@
  * covers 08:00–22:00 and grows to fit earlier or later tasks.
  */
 import type { TaskRead } from '../api/schema';
+
 import { canonicalTime } from './dates';
 
 export const SLOT_MINUTES = 30;

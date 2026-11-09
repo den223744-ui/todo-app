@@ -1,10 +1,9 @@
-import { AnimatePresence } from 'framer-motion';
 import { Command } from 'cmdk';
-import { NavigationCommands } from './NavigationCommands';
-import { TaskCommands } from './TaskCommands';
+import { AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+
 import { ShortcutDialog } from '../../components/ShortcutDialog';
-import { D_TEXTS } from '../../constants/texts';
+import { PALETTE_TEXTS, SHORTCUT_TEXTS, THEME_TEXTS } from '../../constants/texts';
 import { searchTopLevelTasks } from '../../domain/search';
 import { THEMES } from '../../domain/theme';
 import type { View } from '../../domain/view';
@@ -12,9 +11,12 @@ import { useThemeStore } from '../../store/themeStore';
 import { useUiStore } from '../../store/uiStore';
 import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
-import { useTasks } from '../tasks/useTasks';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+import { useTasks } from '../tasks/useTasks';
+
 import { focusQuickAdd, focusSearch } from './focus';
+import { NavigationCommands } from './NavigationCommands';
+import { TaskCommands } from './TaskCommands';
 
 export function CommandPalette() {
   const open = useUiStore((state) => state.paletteOpen);
@@ -50,68 +52,68 @@ export function CommandPalette() {
   return (
     <AnimatePresence>
       {open && (
-        <ShortcutDialog key="dialog" title={D_TEXTS.palette} onClose={close}>
-          <Command label={D_TEXTS.commandPlaceholder}>
+        <ShortcutDialog key="dialog" title={PALETTE_TEXTS.palette} onClose={close}>
+          <Command label={PALETTE_TEXTS.commandPlaceholder}>
             <Command.Input
               value={input}
               onValueChange={setInput}
-              placeholder={D_TEXTS.commandPlaceholder}
-              aria-label={D_TEXTS.commandPlaceholder}
+              placeholder={PALETTE_TEXTS.commandPlaceholder}
+              aria-label={PALETTE_TEXTS.commandPlaceholder}
               className="min-h-12 w-full border-b border-line bg-transparent px-4 outline-none"
             />
             <Command.List
-              aria-label={D_TEXTS.commands}
+              aria-label={PALETTE_TEXTS.commands}
               className="command-list max-h-[60dvh] overflow-y-auto p-2"
             >
               <Command.Empty className="p-4 text-sm text-ink-muted">
-                {D_TEXTS.noCommands}
+                {PALETTE_TEXTS.noCommands}
               </Command.Empty>
-              <Command.Group heading={D_TEXTS.actions}>
+              <Command.Group heading={PALETTE_TEXTS.actions}>
                 <Command.Item
-                  value={D_TEXTS.newTask}
+                  value={PALETTE_TEXTS.newTask}
                   onSelect={() => {
                     run(focusQuickAdd);
                   }}
                 >
-                  {D_TEXTS.newTask}
+                  {PALETTE_TEXTS.newTask}
                 </Command.Item>
                 <Command.Item
-                  value={D_TEXTS.search}
+                  value={PALETTE_TEXTS.search}
                   onSelect={() => {
                     run(focusSearch);
                   }}
                 >
-                  {D_TEXTS.search}
+                  {PALETTE_TEXTS.search}
                 </Command.Item>
                 <Command.Item
-                  value={D_TEXTS.help}
+                  value={SHORTCUT_TEXTS.help}
                   onSelect={() => {
                     run(() => {
                       useUiStore.getState().setHelpOpen(true);
                     });
                   }}
                 >
-                  {D_TEXTS.help}
+                  {SHORTCUT_TEXTS.help}
                 </Command.Item>
               </Command.Group>
               <NavigationCommands tasks={tasks} lists={lists} onGo={go} />
               {task && !task.id.startsWith(OPTIMISTIC_ID_PREFIX) && (
                 <TaskCommands task={task} run={run} />
               )}
-              <Command.Group heading={D_TEXTS.theme}>
+              <Command.Group heading={THEME_TEXTS.theme}>
                 {THEMES.map((value) => (
                   <Command.Item
                     key={value}
                     value={`theme-${value}`}
                     aria-current={theme === value ? 'true' : undefined}
-                    keywords={[D_TEXTS.themes[value]]}
+                    keywords={[THEME_TEXTS.themes[value]]}
                     onSelect={() => {
                       run(() => {
                         setTheme(value);
                       });
                     }}
                   >
-                    <span>{D_TEXTS.themes[value]}</span>
+                    <span>{THEME_TEXTS.themes[value]}</span>
                     <span aria-hidden="true" className="ml-auto">
                       {theme === value ? '✓' : ''}
                     </span>
@@ -119,7 +121,7 @@ export function CommandPalette() {
                 ))}
               </Command.Group>
               {input.trim() && (
-                <Command.Group heading={D_TEXTS.tasks}>
+                <Command.Group heading={PALETTE_TEXTS.tasks}>
                   {searchTopLevelTasks(tasks, input)
                     .filter((task) => !task.id.startsWith(OPTIMISTIC_ID_PREFIX))
                     .map((task) => (

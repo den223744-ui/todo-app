@@ -4,6 +4,7 @@
  * (in any field, in any order). An empty query matches everything.
  */
 import type { TaskRead } from '../api/schema';
+
 import { compareByDue } from './smartLists';
 
 export function normalizeForSearch(text: string): string {

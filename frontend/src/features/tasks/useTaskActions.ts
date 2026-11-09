@@ -6,12 +6,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { TaskRead, TaskUpdate } from '../../api/schema';
-import { D_TEXTS, UNDO_TEXTS } from '../../constants/texts';
-import { removeTaskWithSubtasks } from '../../domain/taskCache';
+import { UNDO_TEXTS, MOVE_TEXTS } from '../../constants/texts';
 import { addDays, toLocalDateString } from '../../domain/dates';
-import { undoPatch } from '../../domain/undo';
 import { selectList } from '../../domain/smartLists';
+import { removeTaskWithSubtasks } from '../../domain/taskCache';
+import { undoPatch } from '../../domain/undo';
 import { useToastStore } from '../../store/toastStore';
+
 import { taskKeys } from './taskQueries';
 import { useDeleteTask, useRestoreTask, useUpdateTask } from './useTasks';
 
@@ -116,7 +117,7 @@ export function useTaskActions() {
         ? UNDO_TEXTS.movedToToday
         : day === toLocalDateString(addDays(now, 1))
           ? UNDO_TEXTS.movedToTomorrow
-          : D_TEXTS.movedDate(day);
+          : MOVE_TEXTS.movedDate(day);
     change(task, { due_date: day }, message);
   };
 

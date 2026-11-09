@@ -1,9 +1,10 @@
 /// <reference lib="dom" />
 import { expect, test, type Locator, type Page } from '@playwright/test';
+
 import type { TaskRead, TaskUpdate } from '../src/api/schema';
 import { addDays, toLocalDateString } from '../src/domain/dates';
-import { makeTask } from '../src/test/makeTask';
 import { makeList } from '../src/test/makeList';
+import { makeTask } from '../src/test/makeTask';
 
 test.use({ timezoneId: 'UTC' });
 const now = new Date();
@@ -333,6 +334,6 @@ test.describe('375px touch layout', () => {
       .click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.getByRole('button', { name: 'Закрыть меню' }).click();
-    await page.screenshot({ path: info.outputPath('phase-d-mobile.png'), fullPage: true });
+    await page.screenshot({ path: info.outputPath('drag-mobile.png'), fullPage: true });
   });
 });

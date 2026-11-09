@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+
+import { makeTask } from '../test/makeTask';
+
 import { canReorderGroup, reorderPatches, reorderSiblings, topLevelOrder } from './reorder';
 import { DEFAULT_LOCATION } from './view';
-import { makeTask } from '../test/makeTask';
 
 describe('visible-group ordering', () => {
   const siblings = [

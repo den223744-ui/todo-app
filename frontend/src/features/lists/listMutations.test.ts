@@ -4,11 +4,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, type ApiClient } from '../../api/client';
 import { createQueryClient } from '../../api/queryClient';
 import type { TaskListRead, TaskRead } from '../../api/schema';
-import { makeTask } from '../../test/makeTask';
-import { taskKeys } from '../tasks/taskQueries';
-import { hasPendingTaskMutations } from '../tasks/pendingMutations';
-import { hasPendingListMutations } from './pendingListMutations';
 import { makeList } from '../../test/makeList';
+import { makeTask } from '../../test/makeTask';
+import { hasPendingTaskMutations } from '../tasks/pendingMutations';
+import { taskKeys } from '../tasks/taskQueries';
+
 import {
   LIST_COLORS,
   createListMutation,
@@ -16,6 +16,7 @@ import {
   deleteListMutation,
 } from './listMutations';
 import { listKeys } from './listQueries';
+import { hasPendingListMutations } from './pendingListMutations';
 
 const NOW = new Date('2026-11-08T12:00:00.000Z');
 const FAIL = new ApiError(409, 'conflict', 'taken');

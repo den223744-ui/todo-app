@@ -28,7 +28,7 @@ export interface AppLocation {
   day?: string | null;
 }
 
-export const DEFAULT_LIST: SmartList = 'today';
+const DEFAULT_LIST: SmartList = 'today';
 
 export const DEFAULT_LOCATION: AppLocation = {
   view: { kind: 'list', list: DEFAULT_LIST },

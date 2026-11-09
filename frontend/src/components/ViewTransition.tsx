@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'framer-motion';
-import { ViewFrame } from './ViewFrame';
 import { useRef, type ReactNode } from 'react';
+
+import { ViewFrame } from './ViewFrame';
 
 /** Search text and task selection deliberately are not part of viewKey. */
 export function ViewTransition({

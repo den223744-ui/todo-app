@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+
 import { makeTask } from '../test/makeTask';
+
 import { undoPatch } from './undo';
 
 describe('undoPatch', () => {

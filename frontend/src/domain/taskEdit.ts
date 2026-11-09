@@ -6,6 +6,7 @@
  * be rejected is not sent, and an edit that changes nothing sends no request.
  */
 import type { TaskRead, TaskUpdate } from '../api/schema';
+
 import { canonicalTime } from './dates';
 import {
   NOTES_MAX_LENGTH,

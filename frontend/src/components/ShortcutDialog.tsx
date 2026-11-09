@@ -1,11 +1,13 @@
-import { useInertOnExit } from './useInertOnExit';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useFocusTrap } from './useFocusTrap';
+
+import { SHORTCUT_TEXTS } from '../constants/texts';
+
 import { IconButton } from './IconButton';
 import { CloseIcon } from './icons/CloseIcon';
-import { D_TEXTS } from '../constants/texts';
+import { useFocusTrap } from './useFocusTrap';
+import { useInertOnExit } from './useInertOnExit';
 
 export function ShortcutDialog({
   title,
@@ -65,7 +67,7 @@ export function ShortcutDialog({
           <h2 id={id} className="font-display text-xl font-bold">
             {title}
           </h2>
-          <IconButton label={D_TEXTS.close} onClick={onClose}>
+          <IconButton label={SHORTCUT_TEXTS.close} onClick={onClose}>
             <CloseIcon />
           </IconButton>
         </div>

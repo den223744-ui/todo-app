@@ -2,15 +2,16 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { App } from '../../App';
+
 import { api } from '../../api';
 import type { TaskRead } from '../../api/schema';
+import { App } from '../../App';
 import { addDays, toLocalDateString } from '../../domain/dates';
-import { useUiStore } from '../../store/uiStore';
-import { useToastStore } from '../../store/toastStore';
 import { useThemeStore } from '../../store/themeStore';
-import { makeTask } from '../../test/makeTask';
+import { useToastStore } from '../../store/toastStore';
+import { useUiStore } from '../../store/uiStore';
 import { makeList } from '../../test/makeList';
+import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
 import { navigateTo } from '../navigation/useAppLocation';
 
@@ -64,7 +65,7 @@ async function select(id: string) {
   });
 }
 
-describe('phase D shortcuts and command surfaces', () => {
+describe('keyboard shortcuts and the command palette', () => {
   beforeEach(() => {
     useUiStore.setState({
       selectedTaskId: null,

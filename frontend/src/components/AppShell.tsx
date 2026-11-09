@@ -3,10 +3,11 @@ import type { ReactNode } from 'react';
 
 import { TEXTS } from '../constants/texts';
 import { useUiStore } from '../store/uiStore';
+
 import { BrandLogo } from './BrandLogo';
 import { IconButton } from './IconButton';
-import { MobileDrawer } from './MobileDrawer';
 import { MenuIcon } from './icons/MenuIcon';
+import { MobileDrawer } from './MobileDrawer';
 
 interface AppShellProps {
   sidebar: ReactNode;

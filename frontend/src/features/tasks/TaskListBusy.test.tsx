@@ -8,8 +8,9 @@ import { api } from '../../api';
 import type { TaskRead } from '../../api/schema';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
-import { mutationTaskId, updateTaskMutation } from './taskMutations';
+
 import { TaskListContainer } from './TaskListContainer';
+import { mutationTaskId, updateTaskMutation } from './taskMutations';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

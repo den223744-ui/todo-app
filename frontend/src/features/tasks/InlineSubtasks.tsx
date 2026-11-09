@@ -1,7 +1,8 @@
-import { TaskTitle } from '../../components/TaskTitle';
-import { TaskCheckbox } from '../../components/TaskCheckbox';
 import type { TaskRead } from '../../api/schema';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
+import { TaskTitle } from '../../components/TaskTitle';
 import { TEXTS } from '../../constants/texts';
+
 import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
 
 interface InlineSubtasksProps {

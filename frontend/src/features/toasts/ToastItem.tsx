@@ -1,9 +1,9 @@
-import { useInertOnExit } from '../../components/useInertOnExit';
-import { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect } from 'react';
 
 import { IconButton } from '../../components/IconButton';
 import { CloseIcon } from '../../components/icons/CloseIcon';
+import { useInertOnExit } from '../../components/useInertOnExit';
 import { TOAST_TEXTS } from '../../constants/texts';
 import { DEFAULT_TOAST_DURATION_MS, useToastStore, type Toast } from '../../store/toastStore';
 

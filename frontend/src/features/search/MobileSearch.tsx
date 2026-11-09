@@ -1,9 +1,10 @@
 import { useId, useRef, useState } from 'react';
 
-import { CloseIcon } from '../../components/icons/CloseIcon';
 import { IconButton } from '../../components/IconButton';
+import { CloseIcon } from '../../components/icons/CloseIcon';
 import { SEARCH_TEXTS } from '../../constants/texts';
 import { useAppLocation } from '../navigation/useAppLocation';
+
 import { SearchField } from './SearchField';
 
 export function MobileSearch() {

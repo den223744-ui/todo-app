@@ -9,12 +9,13 @@ import { createQueryClient } from '../../api/queryClient';
 import type { TaskListRead, TaskRead } from '../../api/schema';
 import { EMPTY_LIST_TEXTS, SEARCH_TEXTS, TEXTS } from '../../constants/texts';
 import { SMART_LISTS } from '../../domain/smartLists';
-import { navigateTo } from '../navigation/useAppLocation';
 import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
-import { taskKeys } from './taskQueries';
+import { navigateTo } from '../navigation/useAppLocation';
+
 import { TaskListContainer } from './TaskListContainer';
+import { taskKeys } from './taskQueries';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

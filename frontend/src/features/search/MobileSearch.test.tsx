@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, it } from 'vitest';
 
 import { renderWithClient } from '../../test/renderWithClient';
+
 import { MobileSearch } from './MobileSearch';
 
 it('opens and focuses search, clears before collapsing with Esc, and returns focus', async () => {

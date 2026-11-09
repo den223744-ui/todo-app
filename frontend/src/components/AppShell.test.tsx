@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useUiStore } from '../store/uiStore';
+
 import { AppShell } from './AppShell';
 
 function renderShell() {

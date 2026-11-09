@@ -1,6 +1,7 @@
-import { useInertOnExit } from './useInertOnExit';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { ReactNode } from 'react';
+
+import { useInertOnExit } from './useInertOnExit';
 
 /** Inert during exit: removed controls must leave the keyboard order immediately. */
 export function AnimatedListItem({ children, busy }: { children: ReactNode; busy: boolean }) {

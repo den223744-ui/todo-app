@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { dayHeading } from './dayHeading';
 
 describe('dayHeading', () => {

@@ -1,12 +1,13 @@
 /// <reference lib="dom" />
 import type { Page } from '@playwright/test';
+
 import type { TaskCreate, TaskRead, TaskUpdate } from '../../src/api/schema';
 import { makeList } from '../../src/test/makeList';
 import { makeTask } from '../../src/test/makeTask';
 
-export const NOW = new Date('2026-02-03T12:00:00Z');
-export const TODAY = '2026-02-03';
-export const TASKS = [
+const NOW = new Date('2026-02-03T12:00:00Z');
+const TODAY = '2026-02-03';
+const TASKS = [
   makeTask({
     id: 'timed',
     title: 'Обсудить проект',

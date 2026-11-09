@@ -3,6 +3,7 @@
  * one; subtasks follow their parent. Pure functions over cached data.
  */
 import type { TaskListRead, TaskRead } from '../api/schema';
+
 import { compareByPosition } from './taskCache';
 
 const isTopLevel = (task: TaskRead) => task.parent_id === null;

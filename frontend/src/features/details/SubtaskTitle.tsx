@@ -1,7 +1,9 @@
 import { motion, useReducedMotion } from 'framer-motion';
+
 import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { EDIT_TEXTS } from '../../constants/texts';
 import { editTitle } from '../../domain/taskEdit';
+
 import { useSyncedDraft } from './useSyncedDraft';
 
 /** A subtask title edited in place; saved on blur or Enter, Esc reverts. */

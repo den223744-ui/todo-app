@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../api';
-import { App } from '../../App';
 import type { TaskRead } from '../../api/schema';
+import { App } from '../../App';
+import { useUiStore } from '../../store/uiStore';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
-import { useUiStore } from '../../store/uiStore';
 
 const A = makeTask({ id: 'a', title: 'Первая', position: 1 });
 const B = makeTask({ id: 'b', title: 'Вторая', position: 2 });

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+
 import { validateTheme, THEME_KEY } from '../../domain/theme';
 import { applyTheme, useThemeStore } from '../../store/themeStore';
 

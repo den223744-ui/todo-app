@@ -1,20 +1,21 @@
 // @vitest-environment jsdom
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+
 import { api } from '../../api';
 import { createQueryClient } from '../../api/queryClient';
 import type { TaskRead } from '../../api/schema';
 import { toLocalDateString } from '../../domain/dates';
-import { makeTask } from '../../test/makeTask';
 import { useToastStore } from '../../store/toastStore';
+import { makeTask } from '../../test/makeTask';
+import { listKeys } from '../lists/listQueries';
+import { taskKeys } from '../tasks/taskQueries';
 import { mutationErrorToast } from '../toasts/mutationToast';
 import { Toaster } from '../toasts/Toaster';
 import { UndoShortcut } from '../toasts/UndoShortcut';
-import { taskKeys } from '../tasks/taskQueries';
-import { listKeys } from '../lists/listQueries';
+
 import { TimelineContainer } from './TimelineContainer';
 
 const now = new Date(2026, 10, 9, 12);

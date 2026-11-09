@@ -1,13 +1,14 @@
 import { useDraggable } from '@dnd-kit/core';
-import type { TimelineItem } from '../../domain/timeline';
+
+import type { TaskListRead, TaskRead } from '../../api/schema';
+import { durationLabel, DRAG_TEXTS } from '../../constants/texts';
 import {
   clampTimelineStart,
   formatTimelineTime,
   pixelsToMinutes,
   SLOT_MINUTES,
 } from '../../domain/timeline';
-import { D_TEXTS, durationLabel } from '../../constants/texts';
-import type { TaskListRead, TaskRead } from '../../api/schema';
+import type { TimelineItem } from '../../domain/timeline';
 
 interface Props {
   item: TimelineItem;
@@ -61,7 +62,7 @@ export function TimelineBlock({
         data-timeline-task={task.id}
         data-shortcut-arrows
         aria-describedby={instructionsId}
-        aria-roledescription={D_TEXTS.draggable}
+        aria-roledescription={DRAG_TEXTS.draggable}
         onKeyDown={(event) => {
           if (
             !onShift ||

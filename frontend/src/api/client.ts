@@ -15,6 +15,7 @@
  *   request once. Retrying is safe: the server refuses before doing anything.
  */
 import { toLocalDateString } from '../domain/dates';
+
 import type { paths } from './schema';
 
 type Json<T> = T extends { content: { 'application/json': infer Body } } ? Body : never;
@@ -44,7 +45,7 @@ export const CLIENT_ERROR_CODES = {
   invalidResponse: 'invalid_response',
 } as const;
 
-export const SESSION_REQUIRED = 'session_required';
+const SESSION_REQUIRED = 'session_required';
 
 export class ApiError extends Error {
   readonly status: number;

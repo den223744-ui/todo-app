@@ -1,8 +1,8 @@
 import { AnimatePresence } from 'framer-motion';
-import { ViewTransition } from './components/ViewTransition';
+
 import { AppShell } from './components/AppShell';
 import { useMediaQuery } from './components/useMediaQuery';
-import { useUiStore } from './store/uiStore';
+import { ViewTransition } from './components/ViewTransition';
 import { greeting } from './constants/texts';
 import { parseLocalDate, toLocalDateString } from './domain/dates';
 import { TaskDetailsContainer } from './features/details/TaskDetailsContainer';
@@ -10,22 +10,23 @@ import { useLists } from './features/lists/useLists';
 import { DayNav } from './features/navigation/DayNav';
 import { useAppLocation } from './features/navigation/useAppLocation';
 import { viewTitle } from './features/navigation/viewTitle';
-import { SearchField } from './features/search/SearchField';
-import { MobileSearch } from './features/search/MobileSearch';
-import { DayViewTabs } from './features/tasks/DayViewTabs';
-import { Toaster } from './features/toasts/Toaster';
-import { UndoShortcut } from './features/toasts/UndoShortcut';
 import { QuickAdd } from './features/quick-add/QuickAdd';
+import { MobileSearch } from './features/search/MobileSearch';
+import { SearchField } from './features/search/SearchField';
+import { CommandPalette } from './features/shortcuts/CommandPalette';
+import { GlobalShortcuts } from './features/shortcuts/GlobalShortcuts';
+import { ShortcutHelp } from './features/shortcuts/ShortcutHelp';
 import { SidebarContainer } from './features/sidebar/SidebarContainer';
+import { DayViewTabs } from './features/tasks/DayViewTabs';
 import { TaskListContainer } from './features/tasks/TaskListContainer';
 import { TodayStats } from './features/tasks/TodayStats';
 import { useTasks } from './features/tasks/useTasks';
+import { ThemeSync } from './features/theme/ThemeSync';
 import { useNow } from './features/time/useNow';
 import { TimelineContainer } from './features/timeline/TimelineContainer';
-import { GlobalShortcuts } from './features/shortcuts/GlobalShortcuts';
-import { CommandPalette } from './features/shortcuts/CommandPalette';
-import { ShortcutHelp } from './features/shortcuts/ShortcutHelp';
-import { ThemeSync } from './features/theme/ThemeSync';
+import { Toaster } from './features/toasts/Toaster';
+import { UndoShortcut } from './features/toasts/UndoShortcut';
+import { useUiStore } from './store/uiStore';
 
 const dateFormat = new Intl.DateTimeFormat('ru-RU', {
   weekday: 'long',

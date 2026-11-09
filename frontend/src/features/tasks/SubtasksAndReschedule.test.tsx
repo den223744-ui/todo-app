@@ -10,8 +10,9 @@ import { useToastStore } from '../../store/toastStore';
 import { useUiStore } from '../../store/uiStore';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
-import { Toaster } from '../toasts/Toaster';
 import { navigateTo } from '../navigation/useAppLocation';
+import { Toaster } from '../toasts/Toaster';
+
 import { TaskListContainer } from './TaskListContainer';
 import { taskKeys } from './taskQueries';
 
@@ -58,7 +59,7 @@ function open(tasks: TaskRead[], url = '/?list=inbox') {
   };
 }
 
-describe('phase B task interactions', () => {
+describe('inline subtasks and rescheduling', () => {
   beforeEach(() => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     vi.useFakeTimers({ toFake: ['Date'] });

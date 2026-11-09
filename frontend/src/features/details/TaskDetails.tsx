@@ -1,17 +1,11 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import { TaskCheckbox } from '../../components/TaskCheckbox';
 import { useId, useState } from 'react';
 
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { AutosizeTextarea } from '../../components/AutosizeTextarea';
 import { CloseIcon } from '../../components/icons/CloseIcon';
-import {
-  DURATION_TEXTS,
-  EDIT_ISSUES,
-  EDIT_TEXTS,
-  TEXTS,
-  durationLabel,
-} from '../../constants/texts';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
+import { EDIT_ISSUES, EDIT_TEXTS, TEXTS } from '../../constants/texts';
 import {
   editDueDate,
   editDueTime,
@@ -21,10 +15,12 @@ import {
   type EditIssue,
   type EditResult,
 } from '../../domain/taskEdit';
-import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+
+import { DurationField } from './DurationField';
 import { PriorityPicker } from './PriorityPicker';
 import { SubtaskList } from './SubtaskList';
 import { TagEditor } from './TagEditor';
+import { TaskListField } from './TaskListField';
 import { useSyncedDraft } from './useSyncedDraft';
 
 interface TaskDetailsProps {
@@ -63,7 +59,6 @@ export function TaskDetails({
   const notes = notesDraft.draft;
   const [issue, setIssue] = useState<{ field: string; issue: EditIssue } | null>(null);
   const completed = task.completed_at !== null;
-  const selectedList = lists.find((list) => list.id === task.list_id);
 
   const apply = (field: string, result: EditResult) => {
     if (result.kind === 'invalid') {
@@ -188,66 +183,21 @@ export function TaskDetails({
           </p>
         )}
 
-        <div className="detail-property">
-          <label htmlFor={`${ids}-duration`} className="text-xs text-ink-muted">
-            {DURATION_TEXTS.label}
-          </label>
-          <select
-            id={`${ids}-duration`}
-            value={task.duration_minutes ?? ''}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
-              const minutes = value === '' ? null : Number(value);
-              if (minutes !== task.duration_minutes) onUpdate(task, { duration_minutes: minutes });
-            }}
-            className="h-9 min-w-0 max-w-full rounded bg-transparent text-right text-sm"
-          >
-            <option value="">{DURATION_TEXTS.none}</option>
-            {[...new Set([...DURATION_TEXTS.options, task.duration_minutes ?? 15])]
-              .sort((a, b) => a - b)
-              .map((minutes) => (
-                <option key={minutes} value={minutes}>
-                  {durationLabel(minutes)}
-                </option>
-              ))}
-          </select>
-        </div>
+        <DurationField
+          task={task}
+          onUpdate={(patch) => {
+            onUpdate(task, patch);
+          }}
+        />
 
         {task.parent_id === null && (
-          <div className="detail-property">
-            <label htmlFor={`${ids}-list`} className="text-xs text-ink-muted">
-              {EDIT_TEXTS.list}
-            </label>
-            <div className="flex min-w-0 items-center justify-end gap-2">
-              {selectedList && (
-                <span
-                  aria-hidden="true"
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: `var(--list-${selectedList.color})` }}
-                />
-              )}
-              <select
-                id={`${ids}-list`}
-                value={task.list_id ?? ''}
-                onChange={(event) => {
-                  const listId = event.currentTarget.value || null;
-                  if (listId !== task.list_id) onUpdate(task, { list_id: listId });
-                }}
-                className="h-9 min-w-0 max-w-full rounded bg-transparent text-right text-sm"
-              >
-                <option value="">{EDIT_TEXTS.noList}</option>
-                {lists.map((list) => (
-                  <option
-                    key={list.id}
-                    value={list.id}
-                    disabled={list.id.startsWith(OPTIMISTIC_ID_PREFIX)}
-                  >
-                    {list.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <TaskListField
+            task={task}
+            lists={lists}
+            onUpdate={(patch) => {
+              onUpdate(task, patch);
+            }}
+          />
         )}
 
         <PriorityPicker

@@ -1,13 +1,13 @@
-import { useInertOnExit } from '../../components/useInertOnExit';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Toaster } from '../toasts/Toaster';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { IconButton } from '../../components/IconButton';
 import { CloseIcon } from '../../components/icons/CloseIcon';
 import { useFocusTrap } from '../../components/useFocusTrap';
+import { useInertOnExit } from '../../components/useInertOnExit';
 import { useMediaQuery } from '../../components/useMediaQuery';
 import { EDIT_TEXTS } from '../../constants/texts';
+import { Toaster } from '../toasts/Toaster';
 
 interface DetailsPanelProps {
   /** Changes when another task opens: focus moves into the panel again. */

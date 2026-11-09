@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+
 import { readTheme, validateTheme } from './theme';
 
 it('validates stored themes and handles unavailable or corrupt storage', () => {

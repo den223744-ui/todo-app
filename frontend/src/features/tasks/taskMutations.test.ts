@@ -14,6 +14,8 @@ import { ApiError, type ApiClient } from '../../api/client';
 import { createQueryClient } from '../../api/queryClient';
 import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { makeTask } from '../../test/makeTask';
+
+import { hasPendingTaskMutations } from './pendingMutations';
 import {
   OPTIMISTIC_ID_PREFIX,
   createTaskMutation,
@@ -22,7 +24,6 @@ import {
   updateTaskMutation,
   type MutationDeps,
 } from './taskMutations';
-import { hasPendingTaskMutations } from './pendingMutations';
 import { taskKeys, tasksQueryOptions } from './taskQueries';
 
 const NOW = new Date('2026-11-08T12:00:00.000Z');

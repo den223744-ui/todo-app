@@ -10,8 +10,9 @@ import { AppProviders } from '../../app/AppProviders';
 import { TOAST_TEXTS } from '../../constants/texts';
 import { useToastStore } from '../../store/toastStore';
 import { makeTask } from '../../test/makeTask';
-import { TOAST_DURATION_MS } from './ToastItem';
+
 import { Toaster } from './Toaster';
+import { TOAST_DURATION_MS } from './ToastItem';
 
 const renderApp = () =>
   render(

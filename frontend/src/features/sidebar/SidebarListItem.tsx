@@ -2,8 +2,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import type { TaskListRead, TaskListUpdate } from '../../api/schema';
 import { LIST_ACTION_TEXTS, TEXTS } from '../../constants/texts';
-import { LIST_COLORS } from '../lists/listMutations';
+
 import { DeleteListDialog } from './DeleteListDialog';
+import { ListActionsMenu } from './ListActionsMenu';
 import { ListFolderIcon } from './ListFolderIcon';
 import { SidebarLink } from './SidebarLink';
 
@@ -34,9 +35,9 @@ export function SidebarListItem({
   const [name, setName] = useState(list.name);
   const rootRef = useRef<HTMLLIElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const lastOnOpen = useRef(false);
+  // Opened with ArrowUp: the menu starts on its last item.
+  const [focusLast, setFocusLast] = useState(false);
   const menuId = useId();
   const close = () => {
     setOpen(false);
@@ -45,8 +46,6 @@ export function SidebarListItem({
 
   useEffect(() => {
     if (!open) return;
-    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]');
-    (lastOnOpen.current ? items?.item(items.length - 1) : items?.item(0))?.focus();
     const onPointerDown = (event: PointerEvent) => {
       if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
     };
@@ -117,14 +116,14 @@ export function SidebarListItem({
             aria-disabled={busy || undefined}
             onClick={() => {
               if (!busy) {
-                lastOnOpen.current = false;
+                setFocusLast(false);
                 setOpen(!open);
               }
             }}
             onKeyDown={(event) => {
               if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && !busy) {
                 event.preventDefault();
-                lastOnOpen.current = event.key === 'ArrowUp';
+                setFocusLast(event.key === 'ArrowUp');
                 setOpen(true);
               }
             }}
@@ -145,101 +144,29 @@ export function SidebarListItem({
         )}
       </div>
       {open && (
-        <div
-          ref={menuRef}
+        <ListActionsMenu
           id={menuId}
-          role="menu"
-          aria-label={LIST_ACTION_TEXTS.actions(list.name)}
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+          list={list}
+          busy={busy}
+          focusLast={focusLast}
+          onRename={() => {
+            setName(list.name);
+            setRenaming(true);
+            setOpen(false);
           }}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              event.preventDefault();
-              event.stopPropagation();
-              close();
-            }
-            if (
-              ['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)
-            ) {
-              event.preventDefault();
-              const items = [
-                ...event.currentTarget.querySelectorAll<HTMLElement>(
-                  '[role="menuitem"], [role="menuitemradio"]',
-                ),
-              ];
-              const index = items.findIndex((item) => item === document.activeElement);
-              const next =
-                event.key === 'Home'
-                  ? 0
-                  : event.key === 'End'
-                    ? items.length - 1
-                    : (index +
-                        (event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? -1 : 1) +
-                        items.length) %
-                      items.length;
-              items[next]?.focus();
-            }
+          onColor={(color) => {
+            onUpdate?.({ color });
+            close();
           }}
-          className="relative z-10 mb-2 rounded-xl border border-line bg-surface p-1 shadow-soft"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            tabIndex={-1}
-            onClick={() => {
-              setName(list.name);
-              setRenaming(true);
-              setOpen(false);
-            }}
-            className="min-h-11 w-full rounded-lg px-3 text-left text-sm text-ink-muted hover:bg-subtle"
-          >
-            {LIST_ACTION_TEXTS.rename}
-          </button>
-          <div role="group" aria-label={LIST_ACTION_TEXTS.color}>
-            <p className="px-3 pt-1 text-xs text-ink-faint">{LIST_ACTION_TEXTS.color}</p>
-            <div className="grid grid-cols-3">
-              {LIST_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  role="menuitemradio"
-                  tabIndex={-1}
-                  aria-checked={list.color === color}
-                  aria-label={LIST_ACTION_TEXTS.colors[color]}
-                  onClick={() => {
-                    if (!busy) {
-                      onUpdate?.({ color });
-                      close();
-                    }
-                  }}
-                  className="flex min-h-11 flex-1 items-center justify-center rounded-lg hover:bg-subtle"
-                >
-                  <span
-                    className="size-5 rounded-full border-2"
-                    style={{
-                      borderColor: `var(--list-${color})`,
-                      outline: list.color === color ? '2px solid var(--ink-muted)' : undefined,
-                      outlineOffset: 3,
-                    }}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-          <button
-            type="button"
-            role="menuitem"
-            tabIndex={-1}
-            onClick={() => {
-              setOpen(false);
-              setConfirming(true);
-            }}
-            className="min-h-11 w-full rounded-lg px-3 text-left text-sm text-danger hover:bg-subtle"
-          >
-            {LIST_ACTION_TEXTS.delete}
-          </button>
-        </div>
+          onDelete={() => {
+            setOpen(false);
+            setConfirming(true);
+          }}
+          onClose={close}
+          onDismiss={() => {
+            setOpen(false);
+          }}
+        />
       )}
       {confirming && (
         <DeleteListDialog

@@ -1,16 +1,17 @@
-import { AnimatedListItem } from '../../components/AnimatedListItem';
-import { AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
-import { taskPresentationKey } from '../tasks/taskPresentation';
-import { TaskCheckbox } from '../../components/TaskCheckbox';
+import { AnimatePresence } from 'framer-motion';
 import { useId, useState } from 'react';
 
 import type { TaskRead, TaskUpdate } from '../../api/schema';
+import { AnimatedListItem } from '../../components/AnimatedListItem';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
 import { EDIT_ISSUES, EDIT_TEXTS, TEXTS } from '../../constants/texts';
 import { TITLE_MAX_LENGTH, codePoints } from '../../domain/limits';
-import type { EditIssue } from '../../domain/taskEdit';
 import { subtaskProgress } from '../../domain/subtasks';
+import type { EditIssue } from '../../domain/taskEdit';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+import { taskPresentationKey } from '../tasks/taskPresentation';
+
 import { SubtaskTitle } from './SubtaskTitle';
 
 interface SubtaskListProps {

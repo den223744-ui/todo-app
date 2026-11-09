@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { makeTask } from '../test/makeTask';
+
 import { isDayClosed } from './dayClosed';
 import { DEFAULT_LOCATION } from './view';
 
