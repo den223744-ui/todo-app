@@ -1,12 +1,18 @@
+import { useRef } from 'react';
+import { useIsPresent } from 'framer-motion';
+import type { TaskRead } from '../../api/schema';
 import { useMutationState } from '@tanstack/react-query';
 
-import { EDIT_TEXTS } from '../../constants/texts';
+import { EDIT_TEXTS, UNDO_TEXTS } from '../../constants/texts';
 import { subtasksOf } from '../../domain/taskEdit';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { OPTIMISTIC_ID_PREFIX, mutationTaskId } from '../tasks/taskMutations';
 import { taskKeys } from '../tasks/taskQueries';
-import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../tasks/useTasks';
+import { useTasks } from '../tasks/useTasks';
+import { useUndoableCreate } from '../tasks/useUndoableCreate';
 import { DetailsPanel } from './DetailsPanel';
+import { useLists } from '../lists/useLists';
+import { useTaskActions } from '../tasks/useTaskActions';
 import { TaskDetails } from './TaskDetails';
 
 const rowLink = (taskId: string) =>
@@ -15,7 +21,12 @@ const rowLink = (taskId: string) =>
 /** Focus the task's row link again after the panel closes. */
 function focusTaskRow(taskId: string) {
   requestAnimationFrame(() => {
-    rowLink(taskId)?.focus();
+    const row = rowLink(taskId);
+    const target =
+      row && !row.closest('[hidden]')
+        ? row
+        : document.querySelector<HTMLElement>(`[data-timeline-task="${CSS.escape(taskId)}"]`);
+    target?.focus();
   });
 }
 
@@ -25,12 +36,13 @@ function focusTaskRow(taskId: string) {
  * while the row is still there.
  */
 function focusTargetAfterDelete(taskId: string): HTMLElement | null {
-  const row = rowLink(taskId)?.closest('li');
-  const neighbour = (element: Element | null | undefined) =>
-    element?.querySelector<HTMLElement>('[data-task-link]') ?? null;
+  const rows = [...document.querySelectorAll<HTMLElement>('[data-task-link]')].filter(
+    (row) => !row.closest('[hidden], [inert], [aria-hidden="true"]'),
+  );
+  const index = rows.findIndex((row) => row.dataset.taskLink === taskId);
   return (
-    neighbour(row?.nextElementSibling) ??
-    neighbour(row?.previousElementSibling) ??
+    rows[index + 1] ??
+    rows[index - 1] ??
     document.querySelector<HTMLElement>('[data-quick-add-input]')
   );
 }
@@ -39,9 +51,9 @@ function focusTargetAfterDelete(taskId: string): HTMLElement | null {
 export function TaskDetailsContainer() {
   const [location, navigate] = useAppLocation();
   const { data } = useTasks();
-  const update = useUpdateTask();
-  const create = useCreateTask();
-  const remove = useDeleteTask();
+  const create = useUndoableCreate();
+  const actions = useTaskActions();
+  const { data: lists } = useLists();
   const busyIds = new Set(
     useMutationState({
       filters: { mutationKey: taskKeys.mutation(), status: 'pending' },
@@ -49,9 +61,12 @@ export function TaskDetailsContainer() {
     }).filter((id): id is string => id !== null),
   );
 
-  const taskId = location.taskId;
+  const present = useIsPresent();
+  const previous = useRef<{ id: string; task: TaskRead | undefined } | null>(null);
+  const taskId = present ? location.taskId : (previous.current?.id ?? null);
   if (taskId === null || data === undefined) return null;
-  const task = data.find((candidate) => candidate.id === taskId);
+  const task = present ? data.find((candidate) => candidate.id === taskId) : previous.current?.task;
+  if (present) previous.current = { id: taskId, task };
 
   const close = () => {
     navigate({ taskId: null });
@@ -67,17 +82,31 @@ export function TaskDetailsContainer() {
           subtasks={subtasksOf(data, task.id)}
           busyIds={busyIds}
           canAddSubtasks={!task.id.startsWith(OPTIMISTIC_ID_PREFIX)}
+          lists={lists}
           onUpdate={(target, patch) => {
-            update.mutate({ id: target.id, patch });
+            // Completing goes through the undoable action (toast with «Отменить»).
+            if (patch.completed !== undefined && Object.keys(patch).length === 1) {
+              actions.toggle(target);
+              return;
+            }
+            const message =
+              'list_id' in patch
+                ? UNDO_TEXTS.movedToList(
+                    lists?.find((list) => list.id === patch.list_id)?.name ?? EDIT_TEXTS.noList,
+                  )
+                : 'due_date' in patch || 'due_time' in patch
+                  ? UNDO_TEXTS.dateChanged
+                  : UNDO_TEXTS.changed;
+            actions.change(target, patch, message);
           }}
-          onCreateSubtask={(title) => create.mutateAsync({ title, parent_id: task.id })}
+          onCreateSubtask={(title) => create({ title, parent_id: task.id })}
           onDelete={(target) => {
             if (target.id !== task.id) {
-              remove.mutate(target.id); // a subtask: the panel stays
+              actions.destroy(target); // a subtask: the panel stays
               return;
             }
             const next = focusTargetAfterDelete(task.id);
-            remove.mutate(task.id);
+            actions.destroy(task);
             navigate({ taskId: null });
             requestAnimationFrame(() => next?.focus());
           }}

@@ -4,6 +4,7 @@
  * (in any field, in any order). An empty query matches everything.
  */
 import type { TaskRead } from '../api/schema';
+import { compareByDue } from './smartLists';
 
 export function normalizeForSearch(text: string): string {
   return text.toLowerCase().replaceAll('ё', 'е');
@@ -24,4 +25,14 @@ export function matchesSearch(task: TaskRead, query: string): boolean {
 
 export function searchTasks(tasks: readonly TaskRead[], query: string): TaskRead[] {
   return tasks.filter((task) => matchesSearch(task, query));
+}
+
+/** Global results: a matching child brings its parent, once, dated tasks first. */
+export function searchTopLevelTasks(tasks: readonly TaskRead[], query: string): TaskRead[] {
+  const ids = new Set(searchTasks(tasks, query).map((task) => task.parent_id ?? task.id));
+  return tasks
+    .filter((task) => task.parent_id === null && ids.has(task.id))
+    .sort(
+      (a, b) => Number(a.due_date === null) - Number(b.due_date === null) || compareByDue(a, b),
+    );
 }

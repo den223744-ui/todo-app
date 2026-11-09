@@ -5,6 +5,12 @@ import type { EditIssue } from '../domain/taskEdit';
 /** All UI texts (AGENTS.md: Russian UI texts live in constants). */
 export const TEXTS = {
   appTitle: 'Задачи',
+  brand: 'TOOD',
+  quickAddList: 'Список для новой задачи',
+  quickAddNoList: 'Без списка',
+  favorites: 'Избранное',
+  newList: 'Новый список',
+  newListName: 'Название списка',
   navigation: 'Навигация',
   openMenu: 'Открыть меню',
   closeMenu: 'Закрыть меню',
@@ -12,10 +18,12 @@ export const TEXTS = {
   tags: 'Теги',
   tagsEmpty: 'Добавьте к задаче #тег — он появится здесь.',
   quickAdd: 'Новая задача',
-  quickAddPlaceholder: 'Купить молоко завтра в 18:00 #дом !!',
-  quickAddHint: 'Enter — добавить. Даты, #теги и !приоритет распознаются автоматически.',
+  quickAddPlaceholder: 'Запланировать дело',
+  quickAddHint: 'Enter — добавить. Даты, #теги, @списки и !приоритет распознаются автоматически.',
   quickAddSubmit: 'Добавить',
-  quickAddSuccess: 'Задача добавлена.',
+  quickAddAdded: (section: string, date: string | null) =>
+    `Добавлено в «${section}»${date ? `, ${date}` : ''}`,
+  quickAddShow: 'Показать',
   taskList: 'Список задач',
   loadingTasks: 'Загружаем задачи…',
   loadTasksError: 'Не удалось загрузить задачи.',
@@ -23,12 +31,42 @@ export const TEXTS = {
   retry: 'Повторить',
   dismissError: 'Закрыть сообщение',
   searchEmpty: 'Ничего не найдено',
-  searchEmptyHint: 'Попробуйте другой запрос или выберите другой список.',
+  searchEmptyHint: 'Попробуйте другой запрос.',
   tagEmpty: 'В этом теге пока нет задач',
   tagEmptyHint: 'Здесь появятся невыполненные задачи с этим тегом.',
+  listEmpty: 'В этом списке пока нет задач',
+  dayEmpty: 'На этот день задач нет',
+  dayEmptyHint: 'Добавьте задачу — она будет запланирована на этот день.',
+  dayClosed: 'Все дела на сегодня сделаны',
+  dayClosedHint: 'Отдыхайте или запланируйте что-то на завтра',
+  dayViews: 'Вид задач на день',
+  listTab: 'Список',
+  listEmptyHint: 'Добавьте задачу — она попадёт в этот список.',
+  listFallbackTitle: 'Список',
+  noList: 'Без списка',
+  tomorrow: 'Завтра',
+  dayAfterTomorrow: 'Послезавтра',
+  /** Starts with the visible counter (WCAG 2.5.3: the name contains the visible label). */
+  subtasksToggle: (done: number, total: number, expanded: boolean, title: string) =>
+    `${String(done)}/${String(total)}, ${expanded ? 'скрыть' : 'показать'} подзадачи: ${title}`,
+  subtasksFor: (title: string) => `Подзадачи: ${title}`,
+  moveToToday: 'На сегодня',
+  moveToTodayNamed: (title: string) => `Перенести на сегодня: ${title}`,
+  moveAllToToday: (count: number) => `Перенести все на сегодня (${String(count)})`,
+  taskCount: (count: number) => {
+    const ten = count % 10;
+    const hundred = count % 100;
+    const word =
+      ten === 1 && hundred !== 11
+        ? 'задача'
+        : ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14)
+          ? 'задачи'
+          : 'задач';
+    return `${String(count)} ${word}`;
+  },
   completeTask: (title: string) => `Выполнить: ${title}`,
+  deleteTaskNamed: (title: string) => `Удалить задачу: ${title}`,
   reopenTask: (title: string) => `Вернуть в работу: ${title}`,
-  taskCount: (count: number) => `${String(count)} ${plural(count, 'задача', 'задачи', 'задач')}`,
 } as const;
 
 export const QUICK_ADD_ISSUES: Record<QuickAddIssue, string> = {
@@ -90,6 +128,8 @@ export const EDIT_ISSUES: Record<EditIssue, string> = {
 
 /** Task editing: inline title and the detail panel. */
 export const EDIT_TEXTS = {
+  list: 'Список',
+  noList: 'Без списка',
   editTitle: (title: string) => `Изменить название: ${title}`,
   details: 'Детали задачи',
   closeDetails: 'Закрыть детали',
@@ -97,17 +137,21 @@ export const EDIT_TEXTS = {
   notFoundHint: 'Возможно, она удалена или открыта ссылка из другого браузера.',
   title: 'Название',
   notes: 'Заметки',
+  noteHeading: 'Заметка',
+  due: 'Срок',
   notesPlaceholder: 'Добавьте детали…',
   dueDate: 'Дата',
   dueTime: 'Время',
   clearDate: 'Убрать дату',
   priority: 'Приоритет',
   priorityNone: 'Нет',
+  priorityNames: ['Без приоритета', 'Низкий', 'Средний', 'Высокий'],
   tags: 'Теги',
   addTag: 'Добавить тег',
   addTagPlaceholder: 'Новый тег',
   removeTag: (tag: string) => `Убрать тег ${tag}`,
   subtasks: 'Подзадачи',
+  subtaskProgress: (done: number, total: number) => `${String(done)} из ${String(total)}`,
   addSubtask: 'Новая подзадача',
   addSubtaskPlaceholder: 'Добавить подзадачу…',
   subtaskTitle: (title: string) => `Название подзадачи: ${title}`,
@@ -118,8 +162,12 @@ export const EDIT_TEXTS = {
 } as const;
 
 export const SEARCH_TEXTS = {
+  open: 'Открыть поиск',
+  close: 'Закрыть поиск',
   label: 'Поиск по задачам',
-  placeholder: 'Поиск в этом списке',
+  placeholder: 'Поиск по всем задачам',
+  found: 'Найдено',
+  completed: 'Выполненные',
   results: (query: string) => `Результаты поиска «${query}»`,
 } as const;
 
@@ -131,5 +179,163 @@ export const TOAST_TEXTS = {
   updateFailed: 'Не удалось сохранить изменение — оно отменено.',
   deleteFailed: 'Не удалось удалить задачу — она возвращена в список.',
   restoreFailed: 'Не удалось восстановить задачу.',
+  createListFailed: (name: string) => `Не удалось создать список «${name}».`,
+  listNameTaken: 'Список с таким названием уже есть.',
+  updateListFailed: 'Не удалось изменить список — изменение отменено.',
+  deleteListFailed: 'Не удалось удалить список — он восстановлен.',
   offline: 'Нет связи с сервером. Проверьте подключение.',
+} as const;
+
+export const DAY_NAV_TEXTS = {
+  group: 'Выбор дня',
+  previous: 'Предыдущий день',
+  next: 'Следующий день',
+  today: 'Сегодня',
+} as const;
+
+/** 30 -> '30 мин', 60 -> '1 ч', 90 -> '1 ч 30 мин'. */
+export function durationLabel(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${String(rest)} мин`;
+  return rest === 0 ? `${String(hours)} ч` : `${String(hours)} ч ${String(rest)} мин`;
+}
+
+export const DURATION_TEXTS = {
+  label: 'Длительность',
+  none: 'Не задана',
+  /** Choices in the details panel, in minutes. */
+  options: [15, 30, 45, 60, 90, 120, 180, 240],
+} as const;
+
+export const TIMELINE_TEXTS = {
+  region: 'Таймлайн дня',
+  tab: 'Таймлайн',
+  today: 'Сегодня',
+  now: 'Сейчас',
+  untimed: 'Без времени',
+  empty: 'На этот день нет задач со временем.',
+  count: (count: number) => TEXTS.taskCount(count),
+  planned: (total: string) => `запланировано ${total}`,
+} as const;
+
+export const UNDO_TEXTS = {
+  undo: 'Отменить',
+  added: 'Добавлено',
+  reopened: (title: string) => `Возвращено: «${title}»`,
+  changed: 'Изменено',
+  dateChanged: 'Срок изменён',
+  movedToTomorrow: 'Перенесено на завтра',
+  movedToList: (name: string) => `Перемещено в «${name}»`,
+  completed: (title: string) => `Выполнено: «${title}»`,
+  deleted: (title: string) => `Удалено: «${title}»`,
+  movedToToday: 'Перенесено на сегодня',
+} as const;
+
+export const LIST_ACTION_TEXTS = {
+  actions: (name: string) => `Действия со списком ${name}`,
+  rename: 'Переименовать',
+  color: 'Цвет',
+  delete: 'Удалить',
+  cancel: 'Отмена',
+  confirm: (name: string) => `Удалить список «${name}»?`,
+  consequence: 'Задачи останутся, но без списка.',
+  colors: {
+    blue: 'Синий',
+    brown: 'Коричневый',
+    gray: 'Серый',
+    green: 'Зелёный',
+    red: 'Красный',
+    olive: 'Оливковый',
+  },
+} as const;
+
+export const STATS_TEXTS = {
+  region: 'Итоги дня',
+  done: (done: number, total: number) => `${String(done)} из ${String(total)}`,
+  doneHint: 'выполнено',
+  dueToday: 'на сегодня',
+  dueThatDay: 'на этот день',
+  overdue: 'просрочено',
+  highPriority: 'высокий приоритет',
+  important: 'важные',
+} as const;
+
+/** Greeting above the date, by the local hour: morning 5–11, day 12–17, evening otherwise. */
+export function greeting(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'Доброе утро';
+  if (hour >= 12 && hour < 18) return 'Добрый день';
+  return 'Добрый вечер';
+}
+
+export const D_TEXTS = {
+  theme: 'Тема',
+  themes: { light: 'Светлая', dark: 'Тёмная', system: 'Как в системе' },
+  help: 'Горячие клавиши',
+  close: 'Закрыть',
+  palette: 'Палитра команд',
+  commandPlaceholder: 'Команда или название задачи…',
+  noCommands: 'Ничего не найдено',
+  commands: 'Команды',
+  sortable: 'Сортируемая задача',
+  draggable: 'Перемещаемый блок задачи',
+  actions: 'Действия',
+  go: 'Перейти',
+  task: 'Задача',
+  tasks: 'Задачи',
+  newTask: 'Новая задача',
+  search: 'Поиск',
+  complete: 'Выполнить',
+  reopen: 'Вернуть',
+  today: 'На сегодня',
+  tomorrow: 'На завтра',
+  tomorrowView: 'Завтра',
+  delete: 'Удалить',
+  movedTime: (time: string) => `Перенесено на ${time}`,
+  movedDate: (day: string) => `Перенесено на ${day}`,
+  dragHandle: (title: string) => `Переместить «${title}»`,
+  dragInstructions:
+    'Чтобы взять задачу, нажмите Пробел или Enter. Стрелки вверх и вниз меняют порядок внутри группы. Пробел или Enter — поставить, Escape — отменить.',
+  dragStart: (title: string) => `Взята задача «${title}».`,
+  dragOver: (title: string, position: number, total: number) =>
+    `«${title}»: позиция ${String(position)} из ${String(total)}.`,
+  dragEnd: (title: string) => `Задача «${title}» перемещена.`,
+  dragCancel: 'Перемещение отменено.',
+  timelineInstructions:
+    'Стрелки вверх и вниз — перенести на 15 минут, с Shift — на час. Мышью тяните блок по вертикали, на сенсорном экране удерживайте перед переносом.',
+  keyColumn: 'Клавиша',
+  actionColumn: 'Действие',
+  shortcutGroups: [
+    {
+      title: 'Навигация',
+      rows: [
+        ['N', 'Новая задача'],
+        ['/', 'Поиск'],
+        ['J / ↓', 'Следующая задача'],
+        ['K / ↑', 'Предыдущая задача'],
+        ['Enter', 'Открыть детали'],
+        ['Esc', 'Снять выделение'],
+      ],
+    },
+    {
+      title: 'Задачи',
+      rows: [
+        ['X', 'Выполнить / вернуть'],
+        ['E', 'Редактировать название'],
+        ['Backspace / Delete', 'Удалить'],
+        ['Alt + ↑ / ↓', 'Переместить в списке'],
+        ['Пробел / Enter', 'Взять / поставить за ручку'],
+        ['↑ / ↓', 'На таймлайне: 15 минут'],
+        ['Shift + ↑ / ↓', 'На таймлайне: 60 минут'],
+      ],
+    },
+    {
+      title: 'Общие',
+      rows: [
+        ['Mod + K', 'Палитра команд'],
+        ['Mod + Z', 'Отменить действие'],
+        ['?', 'Горячие клавиши'],
+      ],
+    },
+  ],
 } as const;

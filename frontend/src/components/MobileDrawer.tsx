@@ -1,3 +1,5 @@
+import { useInertOnExit } from './useInertOnExit';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { TEXTS } from '../constants/texts';
@@ -16,9 +18,11 @@ interface MobileDrawerProps {
  * backdrop close it; focus moves into it and returns to where it was.
  */
 export function MobileDrawer({ onClose, children }: MobileDrawerProps) {
+  const { ref: rootRef, present } = useInertOnExit<HTMLDivElement>();
+  const reduced = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   // aria-modal promises that the page behind is out of reach: keep Tab inside.
-  useFocusTrap(panelRef, true);
+  useFocusTrap(panelRef, present);
   // From md up the drawer is hidden by CSS and the sidebar is back in place:
   // close it, or its focus trap would hold Tab on elements nobody can see.
   const wide = useMediaQuery('(min-width: 768px)');
@@ -27,6 +31,7 @@ export function MobileDrawer({ onClose, children }: MobileDrawerProps) {
   }, [wide, onClose]);
 
   useEffect(() => {
+    if (!present) return;
     const previouslyFocused = document.activeElement;
     panelRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
@@ -37,12 +42,24 @@ export function MobileDrawer({ onClose, children }: MobileDrawerProps) {
       document.removeEventListener('keydown', onKeyDown);
       if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
     };
-  }, [onClose]);
+  }, [onClose, present]);
 
   return (
-    <div className="fixed inset-0 z-40 md:hidden">
+    <motion.div
+      initial={reduced ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={reduced ? {} : { opacity: 0 }}
+      transition={{ duration: reduced ? 0 : 0.2 }}
+      aria-hidden={!present || undefined}
+      ref={rootRef}
+      className="fixed inset-0 z-40 md:hidden"
+    >
       <div className="absolute inset-0 bg-black/40" aria-hidden="true" onClick={onClose} />
-      <div
+      <motion.div
+        initial={reduced ? false : { x: -288 }}
+        animate={{ x: 0 }}
+        exit={reduced ? {} : { x: -288 }}
+        transition={{ duration: reduced ? 0 : 0.2, ease: 'easeOut' }}
         ref={panelRef}
         role="dialog"
         aria-modal="true"
@@ -55,8 +72,8 @@ export function MobileDrawer({ onClose, children }: MobileDrawerProps) {
             <CloseIcon />
           </IconButton>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-      </div>
-    </div>
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
+      </motion.div>
+    </motion.div>
   );
 }

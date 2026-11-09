@@ -5,7 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../api';
 import type { TaskRead } from '../../api/schema';
+import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
+import { listKeys } from '../lists/listQueries';
 import { renderWithClient } from '../../test/renderWithClient';
 import { TaskDetailsContainer } from './TaskDetailsContainer';
 
@@ -78,7 +80,7 @@ describe('TaskDetailsContainer', () => {
     expect(within(panel).getByLabelText('Заметки')).toHaveValue('Кухня');
     expect(within(panel).getByLabelText('Дата')).toHaveValue('2026-11-09');
     expect(within(panel).getByLabelText('Время')).toHaveValue('18:00');
-    expect(within(panel).getByRole('radio', { name: 'Низкий приоритет' })).toBeChecked();
+    expect(within(panel).getByRole('radio', { name: 'Низкий' })).toBeChecked();
     expect(within(panel).getByText('#дом')).toBeInTheDocument();
     expect(
       within(panel).getByLabelText('Название подзадачи: Купить прокладку'),
@@ -126,7 +128,7 @@ describe('TaskDetailsContainer', () => {
   it('changes priority, date, time and clears the date', async () => {
     const { panel, update, queryClient } = open('p');
 
-    await userEvent.click(within(panel).getByRole('radio', { name: 'Высокий приоритет' }));
+    await userEvent.click(within(panel).getByRole('radio', { name: 'Высокий' }));
     fireEvent.change(within(panel).getByLabelText('Дата'), { target: { value: '2026-11-12' } });
     const time = within(panel).getByLabelText('Время');
     fireEvent.change(time, { target: { value: '09:30' } });
@@ -360,6 +362,46 @@ describe('TaskDetailsContainer', () => {
     expect(update.mock.calls).toEqual([
       ['s', { completed: true }],
       ['s', { title: 'Купить прокладку 1/2' }],
+    ]);
+    queryClient.clear();
+  });
+
+  it('moves the task into a list and out again', async () => {
+    const { panel, update, queryClient } = open('p');
+    queryClient.setQueryData(listKeys.list(), [
+      makeList({ id: 'work', name: 'Работа' }),
+      makeList({ id: 'optimistic-2', name: 'Сохраняется' }),
+    ]);
+    const picker = await within(panel).findByRole('combobox', { name: 'Список' });
+    expect(within(picker).getByRole('option', { name: 'Сохраняется' })).toBeDisabled();
+
+    await userEvent.selectOptions(picker, 'work');
+    await userEvent.selectOptions(picker, '');
+
+    expect(update.mock.calls).toEqual([
+      ['p', { list_id: 'work' }],
+      ['p', { list_id: null }],
+    ]);
+    queryClient.clear();
+  });
+
+  it('offers no list picker for a subtask (it follows its parent)', () => {
+    const { panel, queryClient } = open('s');
+
+    expect(within(panel).queryByRole('combobox', { name: 'Список' })).toBeNull();
+    queryClient.clear();
+  });
+
+  it('sets, changes and clears the duration', async () => {
+    const { panel, update, queryClient } = open('p');
+    const picker = within(panel).getByRole('combobox', { name: 'Длительность' });
+
+    await userEvent.selectOptions(picker, '90');
+    await userEvent.selectOptions(picker, '');
+
+    expect(update.mock.calls).toEqual([
+      ['p', { duration_minutes: 90 }],
+      ['p', { duration_minutes: null }],
     ]);
     queryClient.clear();
   });

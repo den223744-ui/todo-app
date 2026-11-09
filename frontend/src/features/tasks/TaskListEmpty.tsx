@@ -6,13 +6,14 @@ export function TaskListEmpty({ location }: { location: AppLocation }) {
     ? { title: TEXTS.searchEmpty, hint: TEXTS.searchEmptyHint }
     : location.view.kind === 'tag'
       ? { title: TEXTS.tagEmpty, hint: TEXTS.tagEmptyHint }
-      : EMPTY_LIST_TEXTS[location.view.list];
+      : location.view.kind === 'taskList'
+        ? { title: TEXTS.listEmpty, hint: TEXTS.listEmptyHint }
+        : location.view.list === 'today' && location.day
+          ? { title: TEXTS.dayEmpty, hint: TEXTS.dayEmptyHint }
+          : EMPTY_LIST_TEXTS[location.view.list];
 
   return (
-    <div
-      role="status"
-      className="rounded-xl border border-dashed border-line px-5 py-12 text-center"
-    >
+    <div role="status" className="rounded-2xl px-5 py-12 text-center">
       <p className="text-sm font-medium">{title}</p>
       <p className="mt-2 text-sm text-ink-muted">{hint}</p>
     </div>

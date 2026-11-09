@@ -1,20 +1,28 @@
 import { useMutationState } from '@tanstack/react-query';
 
 import { TEXTS } from '../../constants/texts';
+import { isDayClosed } from '../../domain/dayClosed';
+import { DayClosed } from './DayClosed';
 import { useUiStore } from '../../store/uiStore';
 import { selectTaskGroups } from '../../domain/taskGroups';
+import { selectList } from '../../domain/smartLists';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useNow } from '../time/useNow';
 import { TaskList } from './TaskList';
 import { TaskListEmpty } from './TaskListEmpty';
 import { TaskListSkeleton } from './TaskListSkeleton';
-import { mutationTaskId } from './taskMutations';
+import { mutationTaskId, OPTIMISTIC_ID_PREFIX } from './taskMutations';
 import { taskKeys } from './taskQueries';
+import { useLists } from '../lists/useLists';
+import { useTaskActions } from './useTaskActions';
 import { useTasks, useUpdateTask } from './useTasks';
+import { focusAfterTask } from '../shortcuts/focus';
+import type { AppLocation } from '../../domain/view';
 
-export function TaskListContainer() {
+export function TaskListContainer({ snapshot }: { snapshot?: AppLocation }) {
   const { data, isPending, isError, refetch } = useTasks();
   const update = useUpdateTask();
+  const actions = useTaskActions();
   // Only the tasks being written are locked; the rest stay usable (optimistic UI).
   const busyIds = new Set(
     useMutationState({
@@ -23,14 +31,36 @@ export function TaskListContainer() {
     }).filter((id): id is string => id !== null),
   );
   const now = useNow();
-  const [location, navigate] = useAppLocation();
+  const [current, navigate] = useAppLocation();
+  // An exiting view keeps its original filters until the cross-fade finishes.
+  const location = snapshot ?? current;
   const editingId = useUiStore((state) => state.editingTaskId);
   const startEditing = useUiStore((state) => state.startEditing);
   const stopEditing = useUiStore((state) => state.stopEditing);
-  const groups = selectTaskGroups(data ?? [], location, now);
+  const { data: lists } = useLists();
+  const groups = selectTaskGroups(data ?? [], lists ?? [], location, now);
+  const overdue = selectList(data ?? [], 'overdue', now);
+  const closed = isDayClosed(data ?? [], location, now);
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="mt-4 space-y-4 md:mt-6">
+      {location.view.kind === 'list' &&
+        location.view.list === 'overdue' &&
+        !location.query.trim() &&
+        overdue.length > 0 && (
+          <button
+            type="button"
+            disabled={overdue.some(
+              (task) => busyIds.has(task.id) || task.id.startsWith(OPTIMISTIC_ID_PREFIX),
+            )}
+            onClick={() => {
+              actions.moveToToday(overdue, new Date());
+            }}
+            className="min-h-11 rounded-lg border border-line px-3 text-sm text-ink-muted hover:text-accent-ink disabled:opacity-50"
+          >
+            {TEXTS.moveAllToToday(overdue.length)}
+          </button>
+        )}
       {isError && (
         <div role="alert" className="rounded-lg border border-line bg-surface p-4 text-sm">
           <p className="text-danger">{data ? TEXTS.refreshTasksError : TEXTS.loadTasksError}</p>
@@ -45,32 +75,46 @@ export function TaskListContainer() {
           </button>
         </div>
       )}
+      {!isPending && closed && <DayClosed />}
       {isPending ? (
         <TaskListSkeleton />
       ) : (
-        data &&
-        (groups.length === 0 ? (
-          <TaskListEmpty location={location} />
-        ) : (
-          <TaskList
-            groups={groups}
-            now={now}
-            location={location}
-            busyIds={busyIds}
-            onToggle={(task) => {
-              update.mutate({ id: task.id, patch: { completed: task.completed_at === null } });
-            }}
-            onOpen={(taskId) => {
-              navigate({ taskId });
-            }}
-            editingId={editingId}
-            onStartEdit={startEditing}
-            onRename={(task, patch) => {
-              update.mutate({ id: task.id, patch });
-            }}
-            onStopEdit={stopEditing}
-          />
-        ))
+        data && (
+          <>
+            {groups.length === 0 && <TaskListEmpty location={location} />}
+            <TaskList
+              dayClosed={closed}
+              groups={groups}
+              now={now}
+              location={location}
+              busyIds={busyIds}
+              onToggle={(task) => {
+                if (task.parent_id === null && useUiStore.getState().selectedTaskId === task.id)
+                  focusAfterTask(task.id);
+                actions.toggle(task);
+              }}
+              onOpen={(taskId) => {
+                navigate({ taskId });
+              }}
+              editingId={editingId}
+              onStartEdit={startEditing}
+              onRename={(task, patch) => {
+                update.mutate({ id: task.id, patch });
+              }}
+              onStopEdit={stopEditing}
+              lists={lists}
+              tasks={data}
+              onMoveToToday={(task) => {
+                actions.moveToToday([task], new Date());
+              }}
+              onDelete={(task) => {
+                focusAfterTask(task.id);
+                actions.destroy(task);
+                navigate({ taskId: null });
+              }}
+            />
+          </>
+        )
       )}
     </div>
   );

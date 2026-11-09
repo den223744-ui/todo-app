@@ -21,6 +21,8 @@ type Json<T> = T extends { content: { 'application/json': infer Body } } ? Body 
 type TasksPath = paths['/api/tasks'];
 type TaskPath = paths['/api/tasks/{task_id}'];
 type RestorePath = paths['/api/tasks/{task_id}/restore'];
+type ListsPath = paths['/api/lists'];
+type ListPath = paths['/api/lists/{list_id}'];
 
 export type ListTasksResponse = Json<TasksPath['get']['responses'][200]>;
 export type CreateTaskBody = Json<NonNullable<TasksPath['post']['requestBody']>>;
@@ -28,6 +30,11 @@ export type CreateTaskResponse = Json<TasksPath['post']['responses'][201]>;
 export type UpdateTaskBody = Json<NonNullable<TaskPath['patch']['requestBody']>>;
 export type UpdateTaskResponse = Json<TaskPath['patch']['responses'][200]>;
 export type RestoreTaskResponse = Json<RestorePath['post']['responses'][200]>;
+export type ListListsResponse = Json<ListsPath['get']['responses'][200]>;
+export type CreateListBody = Json<NonNullable<ListsPath['post']['requestBody']>>;
+export type CreateListResponse = Json<ListsPath['post']['responses'][201]>;
+export type UpdateListBody = Json<NonNullable<ListPath['patch']['requestBody']>>;
+export type UpdateListResponse = Json<ListPath['patch']['responses'][200]>;
 
 /** Error codes produced by the client itself, next to the server's codes. */
 export const CLIENT_ERROR_CODES = {
@@ -56,6 +63,10 @@ export interface ApiClient {
   updateTask(id: string, body: UpdateTaskBody): Promise<UpdateTaskResponse>;
   deleteTask(id: string): Promise<void>;
   restoreTask(id: string): Promise<RestoreTaskResponse>;
+  listLists(options?: { signal?: AbortSignal }): Promise<ListListsResponse>;
+  createList(body: CreateListBody): Promise<CreateListResponse>;
+  updateList(id: string, body: UpdateListBody): Promise<UpdateListResponse>;
+  deleteList(id: string): Promise<void>;
 }
 
 export interface ApiClientOptions {
@@ -71,6 +82,7 @@ interface RequestSpec {
 }
 
 const TASKS_PATH = '/api/tasks';
+const LISTS_PATH = '/api/lists';
 
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
@@ -184,18 +196,24 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   }
 
   const taskPath = (id: string) => `${TASKS_PATH}/${encodeURIComponent(id)}`;
+  const listPath = (id: string) => `${LISTS_PATH}/${encodeURIComponent(id)}`;
+  const remove = async (path: string) => {
+    const response = await request({ method: 'DELETE', path });
+    if (!response.ok) {
+      throw await toApiError(response);
+    }
+  };
 
   return {
     listTasks: (opts) => json({ method: 'GET', path: TASKS_PATH, signal: opts?.signal }),
     createTask: (body) => json({ method: 'POST', path: TASKS_PATH, body }),
     updateTask: (id, body) => json({ method: 'PATCH', path: taskPath(id), body }),
-    deleteTask: async (id) => {
-      const response = await request({ method: 'DELETE', path: taskPath(id) });
-      if (!response.ok) {
-        throw await toApiError(response);
-      }
-    },
+    deleteTask: (id) => remove(taskPath(id)),
     restoreTask: (id) => json({ method: 'POST', path: `${taskPath(id)}/restore` }),
+    listLists: (opts) => json({ method: 'GET', path: LISTS_PATH, signal: opts?.signal }),
+    createList: (body) => json({ method: 'POST', path: LISTS_PATH, body }),
+    updateList: (id, body) => json({ method: 'PATCH', path: listPath(id), body }),
+    deleteList: (id) => remove(listPath(id)),
   };
 }
 

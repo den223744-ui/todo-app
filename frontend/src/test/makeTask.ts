@@ -4,11 +4,13 @@ import type { TaskRead } from '../api/schema';
 export function makeTask(overrides: Partial<TaskRead> & { id: string }): TaskRead {
   return {
     parent_id: null,
+    list_id: null,
     title: overrides.id,
     notes: null,
     priority: 0,
     due_date: null,
     due_time: null,
+    duration_minutes: null,
     tags: [],
     position: 1,
     completed_at: null,

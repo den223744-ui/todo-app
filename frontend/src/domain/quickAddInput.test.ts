@@ -28,6 +28,19 @@ describe('prepareQuickAdd', () => {
     },
   );
 
+  it('dates an undated task on Today with the day shown there', () => {
+    expect(prepareQuickAdd('Отчёт', today, now, '2026-11-12').task?.due_date).toBe('2026-11-12');
+  });
+
+  it('puts a task typed into one of the user lists into that list', () => {
+    expect(prepareQuickAdd('Отчёт', { kind: 'taskList', listId: 'work' }, now).task).toMatchObject({
+      title: 'Отчёт',
+      due_date: null,
+      list_id: 'work',
+    });
+    expect(prepareQuickAdd('Отчёт', today, now).task).not.toHaveProperty('list_id');
+  });
+
   it('preserves an explicit date and time in today', () => {
     expect(prepareQuickAdd('Молоко завтра в 18:00 #дом !!', today, now).task).toEqual({
       title: 'Молоко',

@@ -46,6 +46,10 @@ function fakeApi(overrides: Partial<ApiClient> = {}): ApiClient {
     updateTask: vi.fn(unexpected),
     deleteTask: vi.fn(unexpected),
     restoreTask: vi.fn(unexpected),
+    listLists: vi.fn(unexpected),
+    createList: vi.fn(unexpected),
+    updateList: vi.fn(unexpected),
+    deleteList: vi.fn(unexpected),
     ...overrides,
   };
 }

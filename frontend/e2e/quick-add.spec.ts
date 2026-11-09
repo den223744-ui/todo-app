@@ -55,7 +55,9 @@ test('highlights literal tokens and creates the parsed task, fetched again after
       priority: 2,
     },
   ]);
-  await expect(page.getByText('Задача добавлена.', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Добавлено в «Предстоящие», пн, 9 нояб.', { exact: true }),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'Предстоящие 1' }).click();
   await expect(page.getByRole('main').getByRole('link', { name: /Купить молоко/ })).toContainText(
     '18:00',

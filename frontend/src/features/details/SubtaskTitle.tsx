@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from 'framer-motion';
 import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { EDIT_TEXTS } from '../../constants/texts';
 import { editTitle } from '../../domain/taskEdit';
@@ -11,6 +12,7 @@ export function SubtaskTitle({
   subtask: TaskRead;
   onUpdate: (task: TaskRead, patch: TaskUpdate) => void;
 }) {
+  const reduced = useReducedMotion();
   const { draft: value, setDraft: setValue, dirty, revert } = useSyncedDraft(subtask.title);
   const save = () => {
     const result = editTitle(subtask, value);
@@ -18,7 +20,10 @@ export function SubtaskTitle({
     else revert(); // invalid or unchanged: show the stored title
   };
   return (
-    <input
+    <motion.input
+      initial={false}
+      animate={{ textDecorationColor: subtask.completed_at ? 'var(--ink-faint)' : 'transparent' }}
+      transition={{ duration: reduced ? 0 : 0.18, ease: 'easeOut' }}
       type="text"
       value={value}
       aria-label={EDIT_TEXTS.subtaskTitle(subtask.title)}
@@ -35,8 +40,8 @@ export function SubtaskTitle({
           revert();
         }
       }}
-      className={`min-w-0 flex-1 rounded border border-transparent bg-transparent px-1.5 py-1 text-sm hover:border-line focus:border-accent-ink ${
-        subtask.completed_at !== null ? 'text-ink-faint line-through' : ''
+      className={`min-w-0 flex-1 rounded border border-transparent bg-transparent px-1.5 py-1 text-sm hover:border-line focus:border-accent-ink line-through ${
+        subtask.completed_at !== null ? 'text-ink-faint' : ''
       }`}
     />
   );

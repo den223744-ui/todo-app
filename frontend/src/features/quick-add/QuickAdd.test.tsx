@@ -8,7 +8,10 @@ import { api } from '../../api';
 import { createQueryClient } from '../../api/queryClient';
 import type { TaskRead } from '../../api/schema';
 import { App } from '../../App';
-import { QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
+import { LIST_TITLES, QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
+import { parseLocation } from '../../domain/view';
+import { useToastStore } from '../../store/toastStore';
+import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
 import { navigateTo } from '../navigation/useAppLocation';
@@ -27,6 +30,7 @@ function deferred<T>() {
 
 describe('QuickAdd', () => {
   beforeEach(() => {
+    useToastStore.setState({ toasts: [] });
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 10, 8, 12));
   });
@@ -92,7 +96,83 @@ describe('QuickAdd', () => {
       tags: ['дом'],
     });
     expect(input).toHaveFocus();
-    expect(screen.getByRole('status')).toHaveTextContent(TEXTS.quickAddSuccess);
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toEqual([
+        expect.objectContaining({
+          message: TEXTS.quickAddAdded(LIST_TITLES.upcoming, 'пн, 9 нояб.'),
+          duration: 5_000,
+          action: { label: 'Отменить', undo: true, run: expect.any(Function) as () => void },
+          secondaryAction: undefined, // Tomorrow is already visible at the bottom of Today.
+        }),
+      ]);
+    });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    queryClient.clear();
+  });
+
+  it('puts the task into the list picked with the folder button', async () => {
+    const created = makeTask({ id: 't1', title: 'Отчёт', list_id: 'work' });
+    const request = vi.spyOn(api, 'createTask').mockResolvedValue(created);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
+    const { queryClient } = renderWithClient(
+      <QuickAdd />,
+      [],
+      [makeList({ id: 'work', name: 'Работа' }), makeList({ id: 'optimistic-9', name: 'Ещё нет' })],
+    );
+    const picker = screen.getByRole('combobox', { name: TEXTS.quickAddList });
+    expect(screen.getByRole('option', { name: 'Ещё нет' })).toBeDisabled();
+
+    await userEvent.selectOptions(picker, 'work');
+    await userEvent.type(screen.getByRole('textbox'), 'Отчёт{Enter}');
+
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledOnce();
+    });
+    expect(request.mock.calls[0]?.[0]).toMatchObject({ title: 'Отчёт', list_id: 'work' });
+    queryClient.clear();
+  });
+
+  it('highlights @lists, uses their id and lets the folder override the token', async () => {
+    const lists = [
+      makeList({ id: 'work', name: 'Работа' }),
+      makeList({ id: 'home', name: 'Личные дела' }),
+      makeList({ id: 'optimistic-1', name: 'Будущее' }),
+    ];
+    const request = vi
+      .spyOn(api, 'createTask')
+      .mockImplementation((task) =>
+        Promise.resolve(makeTask({ ...task, id: 'new', position: task.position ?? 1 })),
+      );
+    vi.spyOn(api, 'listTasks').mockResolvedValue([]);
+    const { queryClient, container } = renderWithClient(<QuickAdd />, [], lists);
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'Отчёт @РАБОТА @неизвестно @будущее');
+    expect(container.querySelectorAll('[data-token-kind="list"]')).toHaveLength(1);
+    expect(container.querySelector('[data-token-kind="list"]')).toHaveTextContent('@РАБОТА');
+    expect(screen.getByText(TEXTS.quickAddHint)).toHaveTextContent('@списки');
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+    expect(request.mock.calls[0]?.[0]).toMatchObject({
+      title: 'Отчёт @неизвестно @будущее',
+      list_id: 'work',
+    });
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: TEXTS.quickAddList }),
+      'home',
+    );
+    await userEvent.type(input, 'Звонок @работа{Enter}');
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(2);
+    });
+    expect(request.mock.calls[1]?.[0]).toMatchObject({ title: 'Звонок', list_id: 'home' });
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: TEXTS.quickAddList }), '');
+    await userEvent.type(input, 'Заметка @работа{Enter}');
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(3);
+    });
+    expect(request.mock.calls[2]?.[0]).toMatchObject({ title: 'Заметка', list_id: null });
     queryClient.clear();
   });
 
@@ -145,11 +225,140 @@ describe('QuickAdd', () => {
     act(() => {
       response.resolve(created);
     });
-    expect(await screen.findByRole('status')).toHaveTextContent(TEXTS.quickAddSuccess);
+    expect(
+      await screen.findByText(TEXTS.quickAddAdded(LIST_TITLES.today, null)),
+    ).toBeInTheDocument();
     expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())?.map((task) => task.id)).toEqual([
       'o',
       't1',
     ]);
+    queryClient.clear();
+  });
+
+  it('shows a destination action for a hidden task; clears search and opens the saved task', async () => {
+    window.history.replaceState(null, '', '/?list=inbox&q=другое');
+    const created = makeTask({ id: 'saved', title: 'Квартира', due_date: '2026-11-13' });
+    vi.spyOn(api, 'createTask').mockResolvedValue(created);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
+    const { queryClient } = renderWithClient(<QuickAdd />);
+    await userEvent.type(screen.getByRole('textbox'), 'Квартира в пятницу{Enter}');
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toHaveLength(1);
+    });
+    const toast = useToastStore.getState().toasts[0];
+    expect(toast).toMatchObject({
+      message: 'Добавлено в «Предстоящие», пт, 13 нояб.',
+      duration: 5_000,
+      action: { label: 'Отменить', undo: true },
+      secondaryAction: { label: TEXTS.quickAddShow },
+    });
+    expect(toast?.secondaryAction?.undo).toBeUndefined();
+    act(() => toast?.secondaryAction?.run());
+    expect(parseLocation(window.location.search)).toEqual({
+      view: { kind: 'list', list: 'upcoming' },
+      query: '',
+      taskId: 'saved',
+      day: null,
+    });
+    queryClient.clear();
+  });
+
+  it('opens Today itself for an overdue task added outside Today', async () => {
+    window.history.replaceState(null, '', '/?day=2026-11-07');
+    const response = deferred<TaskRead>();
+    const created = makeTask({ id: 'saved', title: 'Задача', due_date: '2026-11-07' });
+    vi.spyOn(api, 'createTask').mockReturnValue(response.promise);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
+    const { queryClient } = renderWithClient(<QuickAdd />);
+    await userEvent.type(screen.getByRole('textbox'), 'Задача{Enter}');
+    act(() => {
+      navigateTo({ view: { kind: 'list', list: 'inbox' }, day: null });
+    });
+    act(() => {
+      response.resolve(created);
+    });
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts[0]?.secondaryAction).toBeDefined();
+    });
+    act(() => useToastStore.getState().toasts[0]?.secondaryAction?.run());
+    expect(parseLocation(window.location.search)).toMatchObject({
+      view: { kind: 'list', list: 'today' },
+      taskId: 'saved',
+      day: null, // overdue tasks are listed on Today; no past day to open
+    });
+    queryClient.clear();
+  });
+
+  it('names the open user list and omits Show for its visible task and keeps Undo', async () => {
+    window.history.replaceState(null, '', '/?listId=work');
+    const created = makeTask({ id: 'saved', title: 'Отчёт', list_id: 'work' });
+    vi.spyOn(api, 'createTask').mockResolvedValue(created);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
+    const { queryClient } = renderWithClient(
+      <QuickAdd />,
+      [],
+      [makeList({ id: 'work', name: 'Работа' })],
+    );
+    await userEvent.type(screen.getByRole('textbox'), 'Отчёт{Enter}');
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toEqual([
+        expect.objectContaining({
+          message: 'Добавлено в «Работа»',
+          action: { label: 'Отменить', undo: true, run: expect.any(Function) as () => void },
+          secondaryAction: undefined,
+        }),
+      ]);
+    });
+    queryClient.clear();
+  });
+
+  it('confirms every successful create even when both visible tasks have the same destination', async () => {
+    const first = makeTask({ id: 'first', title: 'Первая', due_date: '2026-11-08' });
+    const second = makeTask({ id: 'second', title: 'Вторая', due_date: '2026-11-08' });
+    vi.spyOn(api, 'createTask').mockResolvedValueOnce(first).mockResolvedValueOnce(second);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([first, second]);
+    const { queryClient } = renderWithClient(<QuickAdd />);
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'Первая{Enter}');
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toHaveLength(1);
+    });
+    await userEvent.type(input, 'Вторая{Enter}');
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toHaveLength(2);
+    });
+    expect(
+      useToastStore
+        .getState()
+        .toasts.map((toast) => [toast.message, toast.action?.label, toast.duration]),
+    ).toEqual([
+      ['Добавлено в «Сегодня»', 'Отменить', 5_000],
+      ['Добавлено в «Сегодня»', 'Отменить', 5_000],
+    ]);
+    queryClient.clear();
+  });
+
+  it('uses the screen open when the response arrives, after navigating away during saving', async () => {
+    const response = deferred<TaskRead>();
+    const created = makeTask({ id: 'saved', title: 'Задача', due_date: '2026-11-08' });
+    vi.spyOn(api, 'createTask').mockReturnValue(response.promise);
+    vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
+    const { queryClient } = renderWithClient(<QuickAdd />);
+    await userEvent.type(screen.getByRole('textbox'), 'Задача{Enter}');
+    expect(useToastStore.getState().toasts[0]).toMatchObject({
+      message: 'Добавлено',
+      action: { undo: true },
+    });
+    act(() => {
+      navigateTo({ view: { kind: 'list', list: 'upcoming' } });
+    });
+    act(() => {
+      response.resolve(created);
+    });
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts[0]?.secondaryAction?.label).toBe(TEXTS.quickAddShow);
+    });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     queryClient.clear();
   });
 

@@ -15,6 +15,7 @@ from app.core.errors import ConflictError, InvalidRequestError, NotFoundError
 from app.core.time import utcnow
 from app.models import Task
 from app.schemas.task import TaskCreate, TaskUpdate
+from app.services.task_lists import get_list
 
 # Gap between the last task and a newly appended one. Reordering (Stage 4)
 # places a moved task at the midpoint between its new neighbours.
@@ -81,6 +82,17 @@ async def _next_position(
     return POSITION_STEP if last is None else last + POSITION_STEP
 
 
+SUBTASK_LIST = "Subtasks follow their parent's list and cannot have their own"
+
+
+async def _check_list(
+    session: AsyncSession, workspace_id: uuid.UUID, list_id: uuid.UUID | None
+) -> None:
+    """The list exists in this workspace (404 otherwise) and stays until commit."""
+    if list_id is not None:
+        await get_list(session, workspace_id, list_id, lock=True)
+
+
 async def create_task(
     session: AsyncSession,
     workspace_id: uuid.UUID,
@@ -96,6 +108,9 @@ async def create_task(
             raise NotFoundError("Parent task not found") from None
         if parent.parent_id is not None:
             raise InvalidRequestError("Subtasks cannot have subtasks (one level of nesting)")
+        if data.list_id is not None:
+            raise InvalidRequestError(SUBTASK_LIST)
+    await _check_list(session, workspace_id, data.list_id)
 
     position = data.position
     if position is None:
@@ -104,11 +119,13 @@ async def create_task(
     task = Task(
         workspace_id=workspace_id,
         parent_id=data.parent_id,
+        list_id=data.list_id,
         title=data.title,
         notes=data.notes,
         priority=data.priority,
         due_date=data.due_date,
         due_time=data.due_time,
+        duration_minutes=data.duration_minutes,
         tags=data.tags,
         position=position,
         created_at=now,
@@ -141,6 +158,10 @@ async def update_task(
     due_time = changes.get("due_time", task.due_time)
     if due_time is not None and due_date is None:
         raise InvalidRequestError("due_time requires due_date")
+    if changes.get("list_id") is not None:
+        if task.parent_id is not None:
+            raise InvalidRequestError(SUBTASK_LIST)
+        await _check_list(session, workspace_id, changes["list_id"])
 
     for field, value in changes.items():
         setattr(task, field, value)

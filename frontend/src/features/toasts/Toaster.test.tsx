@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -41,7 +41,9 @@ describe('failed writes show a toast', () => {
     expect(await within(region).findByText(TOAST_TEXTS.updateFailed)).toBeInTheDocument();
     expect(await screen.findByRole('checkbox', { name: /Сделать тесты/ })).not.toBeChecked();
     await userEvent.click(within(region).getByRole('button', { name: TOAST_TEXTS.close }));
-    expect(within(region).queryByText(TOAST_TEXTS.updateFailed)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(region).queryByText(TOAST_TEXTS.updateFailed)).not.toBeInTheDocument();
+    });
   });
 
   it('also for quick add, naming the task, with its text brought back', async () => {
@@ -58,6 +60,27 @@ describe('failed writes show a toast', () => {
     expect(input).toHaveValue('Задача');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument(); // one message, not two
   });
+
+  it('Show removes only the secondary action; Ctrl+Z still uses the primary Undo', async () => {
+    useToastStore.setState({ toasts: [] });
+    render(<Toaster />);
+    const undo = vi.fn();
+    const show = vi.fn();
+    act(() => {
+      useToastStore.getState().showToast('Добавлено', {
+        action: { label: 'Отменить', undo: true, run: undo },
+        secondaryAction: { label: 'Показать', run: show },
+      });
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Показать' }));
+    expect(show).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Показать' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Отменить' })).toBeInTheDocument();
+    act(() => {
+      useToastStore.getState().undoLatest();
+    });
+    expect(undo).toHaveBeenCalledOnce();
+  });
 });
 
 describe('Toaster', () => {
@@ -69,7 +92,7 @@ describe('Toaster', () => {
     vi.useRealTimers();
   });
 
-  it('is a polite live region and hides a toast after a while', () => {
+  it('is a polite live region and hides a toast after a while', async () => {
     render(<Toaster />);
     const region = screen.getByRole('region', { name: TOAST_TEXTS.region });
     expect(region).toHaveAttribute('aria-live', 'polite');
@@ -82,6 +105,9 @@ describe('Toaster', () => {
     act(() => {
       vi.advanceTimersByTime(TOAST_DURATION_MS);
     });
-    expect(within(region).queryByText('Готово')).not.toBeInTheDocument();
+    vi.useRealTimers();
+    await waitFor(() => {
+      expect(within(region).queryByText('Готово')).not.toBeInTheDocument();
+    });
   });
 });

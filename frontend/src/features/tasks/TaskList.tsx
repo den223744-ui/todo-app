@@ -1,10 +1,21 @@
-import type { TaskRead, TaskUpdate } from '../../api/schema';
-import { LIST_TITLES, TEXTS } from '../../constants/texts';
+import { AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
+import { taskPresentationKey } from './taskPresentation';
+import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
+import { SEARCH_TEXTS, TEXTS } from '../../constants/texts';
 import type { TaskGroup } from '../../domain/taskGroups';
+import { dayHeading } from '../../domain/dayHeading';
+import { selectSubtasks } from '../../domain/subtasks';
 import type { AppLocation } from '../../domain/view';
+import { GroupBadge } from './GroupBadge';
 import { TaskRow } from './TaskRow';
+import { canReorderGroup, reorderSiblings } from '../../domain/reorder';
+import { SortableTaskGroup } from './SortableTaskGroup';
+import { useReorderTasks } from './useReorderTasks';
+import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
 
 interface TaskListProps {
+  dayClosed?: boolean;
   groups: TaskGroup[];
   location: AppLocation;
   now: Date;
@@ -16,16 +27,14 @@ interface TaskListProps {
   onStartEdit: (id: string) => void;
   onRename: (task: TaskRead, patch: TaskUpdate) => void;
   onStopEdit: () => void;
+  lists?: readonly TaskListRead[] | undefined;
+  onDelete?: ((task: TaskRead) => void) | undefined;
+  tasks?: readonly TaskRead[];
+  onMoveToToday?: ((task: TaskRead) => void) | undefined;
 }
 
-const dayFormat = new Intl.DateTimeFormat('ru-RU', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
-
 export function TaskList({
+  dayClosed = false,
   groups,
   location,
   now,
@@ -36,43 +45,94 @@ export function TaskList({
   onStartEdit,
   onRename,
   onStopEdit,
+  lists = [],
+  onDelete,
+  tasks = [],
+  onMoveToToday,
 }: TaskListProps) {
+  const reorder = useReorderTasks();
+  const client = useQueryClient();
+  const byId = new Map(lists.map((list) => [list.id, list]));
   return (
     // Each group is a labelled section; a plain div may not carry aria-label.
-    <div className="space-y-6">
+    <div className="space-y-7">
       {groups.map((group) => {
+        const sortable = canReorderGroup(location, group.key);
+        const siblings = reorderSiblings(group).filter(
+          (task) => !task.id.startsWith(OPTIMISTIC_ID_PREFIX),
+        );
+        const layoutVersion = group.tasks
+          .map((task) => `${task.id}:${task.completed_at ?? ''}`)
+          .sort()
+          .join('|');
         const title =
-          group.key === 'all'
-            ? null
-            : group.key === 'today' || group.key === 'overdue'
-              ? LIST_TITLES[group.key]
-              : dayFormat.format(new Date(`${group.key}T00:00:00`));
+          group.list !== undefined
+            ? (group.list?.name ?? TEXTS.noList)
+            : group.key === 'all'
+              ? null
+              : group.key === 'search:open'
+                ? SEARCH_TEXTS.found
+                : group.key === 'search:completed'
+                  ? SEARCH_TEXTS.completed
+                  : group.key === 'tomorrow'
+                    ? TEXTS.tomorrow
+                    : dayHeading(group.key, now);
         return (
           <section key={group.key} aria-label={title ?? TEXTS.taskList}>
-            {title && (
-              <h2
-                className={`mb-2 text-xs font-medium ${group.key === 'overdue' ? 'text-danger' : 'text-ink-muted'}`}
-              >
-                {title}
-              </h2>
+            {title && (!dayClosed || group.key === 'tomorrow') && (
+              <div className="mb-2 flex items-center gap-3 md:mb-3">
+                <GroupBadge list={group.list} />
+                <h2 className="font-display text-[22px] font-bold tracking-tight text-ink first-letter:uppercase">
+                  {title}
+                </h2>
+                <span className="text-xs text-ink-faint">
+                  {TEXTS.taskCount(group.tasks.length)}
+                </span>
+              </div>
             )}
-            <ul className="space-y-2">
-              {group.tasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  location={location}
-                  now={now}
-                  busy={busyIds.has(task.id)}
-                  onToggle={onToggle}
-                  onOpen={onOpen}
-                  editing={editingId === task.id}
-                  onStartEdit={onStartEdit}
-                  onRename={onRename}
-                  onStopEdit={onStopEdit}
-                />
-              ))}
-            </ul>
+            <SortableTaskGroup
+              tasks={sortable ? siblings : []}
+              onMove={(id, index) => {
+                void reorder(siblings, id, index);
+              }}
+            >
+              <ul className="@container divide-y divide-line rounded-2xl border border-line bg-transparent">
+                <AnimatePresence initial={false}>
+                  {group.tasks.map((task) => (
+                    <TaskRow
+                      key={taskPresentationKey(client, task.id)}
+                      task={task}
+                      sortable={
+                        sortable &&
+                        task.completed_at === null &&
+                        !task.id.startsWith(OPTIMISTIC_ID_PREFIX)
+                      }
+                      layoutVersion={layoutVersion}
+                      location={location}
+                      now={now}
+                      busy={busyIds.has(task.id)}
+                      onToggle={onToggle}
+                      onOpen={onOpen}
+                      editing={editingId === task.id}
+                      onStartEdit={onStartEdit}
+                      onRename={onRename}
+                      onStopEdit={onStopEdit}
+                      list={task.list_id ? byId.get(task.list_id) : undefined}
+                      onDelete={onDelete}
+                      subtasks={selectSubtasks(tasks, task.id)}
+                      busyIds={busyIds}
+                      timeOnly={
+                        group.key === 'tomorrow' ||
+                        (!location.query.trim() &&
+                          location.view.kind === 'list' &&
+                          location.view.list === 'upcoming')
+                      }
+                      onMoveToToday={onMoveToToday}
+                    />
+                  ))}
+                </AnimatePresence>
+              </ul>
+            </SortableTaskGroup>
           </section>
         );
       })}
