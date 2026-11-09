@@ -88,6 +88,19 @@ describe('requests', () => {
     expect(calls[0]?.init.credentials).toBe('same-origin');
   });
 
+  it("sends the visitor's local date for the demo content", async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    // Late evening local time: the local date, not the UTC one, goes out.
+    vi.setSystemTime(new Date(2026, 10, 9, 23, 30));
+    try {
+      const { fetch, calls } = fakeFetch(() => json([]));
+      await createApiClient({ fetch }).listTasks();
+      expect((calls[0]?.init.headers as Record<string, string>)['X-Local-Date']).toBe('2026-11-09');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('creates, updates and restores with JSON bodies', async () => {
     const { client, calls } = await startedClient(
       () => json(TASK, 201),

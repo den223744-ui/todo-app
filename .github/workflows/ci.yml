@@ -135,7 +135,8 @@ jobs:
           set -euo pipefail
           jar=$(mktemp)
           api=http://localhost:5173/api/tasks
-          curl --fail --silent -c "$jar" -b "$jar" "$api" | grep -qx '\[\]'
+          # docker-compose turns the demo on: a new visitor starts with example tasks.
+          curl --fail --silent -c "$jar" -b "$jar" "$api" | grep -q '"title":"Купить продукты"'
           curl --fail --silent -c "$jar" -b "$jar" -H 'content-type: application/json' \
             -d '{"title":"smoke","tags":["#CI"]}' "$api" | grep -q '"tags":\["ci"\]'
           docker compose restart backend

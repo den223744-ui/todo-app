@@ -10,7 +10,12 @@ from starlette.types import ASGIApp
 
 from app.core.config import Settings
 from app.core.errors import SessionRequiredError, error_response
+from app.core.time import utcnow
+from app.services.demo import visitor_today
 from app.services.workspaces import create_workspace, delete_workspace, find_workspace
+
+# The client sends its local date, so the demo's "today" is the visitor's today.
+LOCAL_DATE_HEADER = "X-Local-Date"
 
 # Only these methods may start a new session. See WorkspaceSessionMiddleware.
 SESSION_STARTING_METHODS = frozenset({"GET", "HEAD"})
@@ -70,7 +75,12 @@ class WorkspaceSessionMiddleware(BaseHTTPMiddleware):
             if workspace is None:
                 if request.method not in SESSION_STARTING_METHODS:
                     return session_required_response()
-                workspace = await create_workspace(session)
+                demo_day = (
+                    visitor_today(request.headers.get(LOCAL_DATE_HEADER), utcnow().date())
+                    if self._settings.seed_demo_data
+                    else None
+                )
+                workspace = await create_workspace(session, demo_day=demo_day)
         request.state.workspace_id = workspace.id
 
         try:

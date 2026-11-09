@@ -12,6 +12,8 @@ services:
       WATCHFILES_FORCE_POLLING: "true"
       # SQLite in a named volume: survives restarts, stays out of the source tree.
       DATABASE_URL: sqlite+aiosqlite:////data/todo.db
+      # Each new visitor starts with example lists and tasks.
+      SEED_DEMO_DATA: "true"
     volumes:
       - ./backend:/app
       - backend-data:/data
