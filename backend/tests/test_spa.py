@@ -19,7 +19,7 @@ def dist(tmp_path: Path) -> Path:
     root = tmp_path / "dist"
     (root / "assets").mkdir(parents=True)
     (root / "index.html").write_text(INDEX, encoding="utf-8")
-    (root / "assets" / "app-1a2b3c.js").write_text("console.log(1)", encoding="utf-8")
+    (root / "assets" / "app-1a2b3c.js").write_text("console.log(1);" * 200, encoding="utf-8")
     (root / "robots.txt").write_text("User-agent: *", encoding="utf-8")
     return root
 
@@ -73,3 +73,9 @@ async def test_api_keeps_working_and_unknown_api_paths_stay_json_404(
 
 async def test_without_static_dir_nothing_is_mounted(client: AsyncClient) -> None:
     assert (await client.get("/")).status_code == 404
+
+
+async def test_large_text_responses_are_gzipped(spa_client: AsyncClient) -> None:
+    response = await spa_client.get("/assets/app-1a2b3c.js", headers={"Accept-Encoding": "gzip"})
+    assert response.headers["content-encoding"] == "gzip"
+    assert response.text == "console.log(1);" * 200
