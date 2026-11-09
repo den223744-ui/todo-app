@@ -1,0 +1,17 @@
+# Render Blueprint: one web service from the root Dockerfile.
+# The database is Neon PostgreSQL; its URL is entered in the Render dashboard.
+services:
+  - type: web
+    name: tood
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false # secret: paste the Neon connection string in the dashboard
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SEED_DEMO_DATA
+        value: "true"
