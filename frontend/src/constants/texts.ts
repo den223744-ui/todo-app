@@ -2,7 +2,7 @@ import type { QuickAddIssue } from '../domain/quickAddInput';
 import type { SmartList } from '../domain/smartLists';
 import type { EditIssue } from '../domain/taskEdit';
 
-/** All UI texts (AGENTS.md: Russian UI texts live in constants). */
+/** All UI texts in one place: the UI is Russian, the code is English. */
 export const TEXTS = {
   appTitle: 'Задачи',
   brand: 'TOOD',

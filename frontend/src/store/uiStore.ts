@@ -1,5 +1,5 @@
 /**
- * UI-only state (AGENTS.md: Zustand holds UI state, never server data).
+ * UI-only state: Zustand holds UI state, never server data.
  * What is shareable lives in the URL instead (view, search, open task).
  */
 import { create } from 'zustand';

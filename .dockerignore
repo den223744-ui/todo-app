@@ -12,5 +12,3 @@ frontend/test-results
 frontend/playwright-report
 frontend/.vite
 .git
-.claude
-tasks
