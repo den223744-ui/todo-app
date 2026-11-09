@@ -1,14 +1,25 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+// @vitest-environment jsdom
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { App } from './App';
-import { TEXTS } from './constants/texts';
+import { renderWithClient } from './test/renderWithClient';
 
 describe('App', () => {
-  it('renders the app title as the main heading', () => {
-    const html = renderToStaticMarkup(<App />);
+  it('shows today by default', () => {
+    renderWithClient(<App />);
 
-    expect(html).toContain(`<h1`);
-    expect(html).toContain(TEXTS.appTitle);
+    expect(screen.getByRole('heading', { level: 1, name: 'Сегодня' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['/?list=upcoming', 'Предстоящие'],
+    ['/?tag=%D0%B4%D0%BE%D0%BC', '#дом'],
+  ])('titles the view from the URL %s', (url, title) => {
+    window.history.replaceState(null, '', url);
+
+    renderWithClient(<App />);
+
+    expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument();
   });
 });

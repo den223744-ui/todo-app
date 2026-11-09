@@ -35,3 +35,6 @@ Thumbs.db
 .env.*
 !.env.example
 .vite/
+
+# Local Claude Code preview config
+.claude/launch.json

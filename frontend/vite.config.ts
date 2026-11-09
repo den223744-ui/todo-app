@@ -19,7 +19,10 @@ export default defineConfig({
   },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
+    // Pure logic runs in Node; component tests opt into jsdom with a
+    // `// @vitest-environment jsdom` comment at the top of the file.
     environment: 'node',
+    setupFiles: ['src/test/setup.ts'],
     coverage: {
       provider: 'v8',
       // Pure domain logic must be fully covered (PLAN, stage 2). The rest of
