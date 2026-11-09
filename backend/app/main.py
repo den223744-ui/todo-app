@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from starlette.middleware.gzip import GZipMiddleware
 
 from app.api.router import api_router
 from app.core.config import Settings, get_settings
@@ -45,6 +46,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             f"{settings.api_prefix}/openapi.json",
         },
     )
+    # Text responses (the JS bundle, JSON) shrink several times; no hosting
+    # proxy is assumed to compress for us.
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
     register_error_handlers(app)
     app.include_router(api_router, prefix=settings.api_prefix)
     if settings.static_dir:

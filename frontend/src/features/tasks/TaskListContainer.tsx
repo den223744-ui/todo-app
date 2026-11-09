@@ -20,7 +20,7 @@ import { focusAfterTask } from '../shortcuts/focus';
 import type { AppLocation } from '../../domain/view';
 
 export function TaskListContainer({ snapshot }: { snapshot?: AppLocation }) {
-  const { data, isPending, isError, refetch } = useTasks();
+  const { data, isPending: tasksPending, isError, refetch } = useTasks();
   const update = useUpdateTask();
   const actions = useTaskActions();
   // Only the tasks being written are locked; the rest stay usable (optimistic UI).
@@ -37,7 +37,11 @@ export function TaskListContainer({ snapshot }: { snapshot?: AppLocation }) {
   const editingId = useUiStore((state) => state.editingTaskId);
   const startEditing = useUiStore((state) => state.startEditing);
   const stopEditing = useUiStore((state) => state.stopEditing);
-  const { data: lists } = useLists();
+  const { data: lists, isPending: listsPending } = useLists();
+  // Wait for the lists too: tasks shown before them would all sit in «Без списка»
+  // and then jump into their groups (a large layout shift on first load).
+  // A failed lists request is not pending, so it never blocks the tasks.
+  const isPending = tasksPending || listsPending;
   const groups = selectTaskGroups(data ?? [], lists ?? [], location, now);
   const overdue = selectList(data ?? [], 'overdue', now);
   const closed = isDayClosed(data ?? [], location, now);

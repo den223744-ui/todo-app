@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../api';
 import { createQueryClient } from '../../api/queryClient';
-import type { TaskRead } from '../../api/schema';
+import type { TaskListRead, TaskRead } from '../../api/schema';
 import { EMPTY_LIST_TEXTS, SEARCH_TEXTS, TEXTS } from '../../constants/texts';
 import { SMART_LISTS } from '../../domain/smartLists';
 import { navigateTo } from '../navigation/useAppLocation';
@@ -161,6 +161,7 @@ describe('TaskListContainer', () => {
   it('shows skeletons until the first response, without a false empty state', async () => {
     const response = deferred<TaskRead[]>();
     vi.spyOn(api, 'listTasks').mockReturnValue(response.promise);
+    vi.spyOn(api, 'listLists').mockResolvedValue([]);
     const client = createQueryClient();
     render(
       <QueryClientProvider client={client}>
@@ -171,6 +172,27 @@ describe('TaskListContainer', () => {
     expect(screen.queryByText(EMPTY_LIST_TEXTS.today.title)).not.toBeInTheDocument();
     act(() => {
       response.resolve([]);
+    });
+    expect(await screen.findByText(EMPTY_LIST_TEXTS.today.title)).toBeInTheDocument();
+    client.clear();
+  });
+
+  it('keeps the skeleton until the lists arrive too, so tasks do not jump between groups', async () => {
+    const lists = deferred<TaskListRead[]>();
+    vi.spyOn(api, 'listTasks').mockResolvedValue([]);
+    vi.spyOn(api, 'listLists').mockReturnValue(lists.promise);
+    const client = createQueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <TaskListContainer />
+      </QueryClientProvider>,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('status', { name: TEXTS.loadingTasks })).toBeInTheDocument();
+    act(() => {
+      lists.resolve([]);
     });
     expect(await screen.findByText(EMPTY_LIST_TEXTS.today.title)).toBeInTheDocument();
     client.clear();
