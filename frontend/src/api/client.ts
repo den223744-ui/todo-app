@@ -15,6 +15,7 @@
  *   request once. Retrying is safe: the server refuses before doing anything.
  */
 import { toLocalDateString } from '../domain/dates';
+
 import type { paths } from './schema';
 
 type Json<T> = T extends { content: { 'application/json': infer Body } } ? Body : never;

@@ -1,4 +1,5 @@
 import { Command } from 'cmdk';
+
 import type { TaskListRead, TaskRead } from '../../api/schema';
 import { LIST_TITLES, PALETTE_TEXTS } from '../../constants/texts';
 import { addDays, toLocalDateString } from '../../domain/dates';

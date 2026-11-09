@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_LOCATION } from '../../domain/view';
 import { makeTask } from '../../test/makeTask';
+
 import { InlineTitleEditor } from './InlineTitleEditor';
 import { TaskRow } from './TaskRow';
 

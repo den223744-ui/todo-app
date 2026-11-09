@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { TaskRead } from '../../api/schema';
 import { DEFAULT_LOCATION, type AppLocation } from '../../domain/view';
 import { makeTask } from '../../test/makeTask';
+
 import { Sidebar } from './Sidebar';
 
 const NOW = new Date(2026, 10, 9, 10, 0);

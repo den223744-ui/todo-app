@@ -7,8 +7,9 @@ import { api } from '../../api';
 import type { TaskRead } from '../../api/schema';
 import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
-import { listKeys } from '../lists/listQueries';
 import { renderWithClient } from '../../test/renderWithClient';
+import { listKeys } from '../lists/listQueries';
+
 import { TaskDetailsContainer } from './TaskDetailsContainer';
 
 const PARENT = makeTask({

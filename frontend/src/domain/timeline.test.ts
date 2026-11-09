@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { makeTask } from '../test/makeTask';
+
 import { SLOT_MINUTES, layoutTimeline } from './timeline';
 
 const DAY = '2026-11-09';

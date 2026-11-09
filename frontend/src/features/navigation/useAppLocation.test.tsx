@@ -2,8 +2,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { useAppLocation } from './useAppLocation';
 import { makeList } from '../../test/makeList';
+
+import { useAppLocation } from './useAppLocation';
 import { viewTitle } from './viewTitle';
 
 describe('useAppLocation', () => {

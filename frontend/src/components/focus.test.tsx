@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useUiStore } from '../store/uiStore';
+
 import { AppShell } from './AppShell';
 import { useFocusTrap } from './useFocusTrap';
 import { useMediaQuery } from './useMediaQuery';

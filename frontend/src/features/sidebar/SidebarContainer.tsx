@@ -1,14 +1,16 @@
-import { TEXTS } from '../../constants/texts';
-import { useMediaQuery } from '../../components/useMediaQuery';
-import { useUiStore } from '../../store/uiStore';
 import { useMutationState } from '@tanstack/react-query';
-import { useCreateList, useLists, useUpdateList, useDeleteList } from '../lists/useLists';
-import { listKeys } from '../lists/listQueries';
-import { mutationTaskId } from '../tasks/taskMutations';
+
+import { useMediaQuery } from '../../components/useMediaQuery';
+import { TEXTS } from '../../constants/texts';
 import { parseLocation } from '../../domain/view';
+import { useUiStore } from '../../store/uiStore';
+import { listKeys } from '../lists/listQueries';
+import { useCreateList, useLists, useUpdateList, useDeleteList } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
+import { mutationTaskId } from '../tasks/taskMutations';
 import { useTasks } from '../tasks/useTasks';
 import { useNow } from '../time/useNow';
+
 import { Sidebar } from './Sidebar';
 
 /** Wires the sidebar to server data, the clock and the URL. */

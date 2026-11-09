@@ -1,24 +1,24 @@
-import { useInertOnExit } from '../../components/useInertOnExit';
-import { TaskTitle } from '../../components/TaskTitle';
-import { TaskCheckbox } from '../../components/TaskCheckbox';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useRef } from 'react';
 
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
-import { TEXTS } from '../../constants/texts';
+import { GripIcon } from '../../components/icons/GripIcon';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
+import { TaskTitle } from '../../components/TaskTitle';
+import { useInertOnExit } from '../../components/useInertOnExit';
+import { TEXTS, DRAG_TEXTS } from '../../constants/texts';
 import { toLocalDateString } from '../../domain/dates';
 import { isOverdue } from '../../domain/smartLists';
 import { subtaskProgress } from '../../domain/subtasks';
 import { serializeLocation, type AppLocation } from '../../domain/view';
 import { useUiStore } from '../../store/uiStore';
+
 import { InlineSubtasks } from './InlineSubtasks';
-import { PriorityMark } from './PriorityMark';
 import { InlineTitleEditor } from './InlineTitleEditor';
+import { PriorityMark } from './PriorityMark';
 import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { DRAG_TEXTS } from '../../constants/texts';
-import { GripIcon } from '../../components/icons/GripIcon';
 
 interface TaskRowProps {
   sortable?: boolean;

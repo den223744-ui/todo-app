@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { makeList } from '../test/makeList';
 import { makeTask } from '../test/makeTask';
+
 import { quickAddFeedback } from './quickAddFeedback';
 import { DEFAULT_LOCATION, type AppLocation } from './view';
 

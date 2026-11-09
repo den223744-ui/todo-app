@@ -1,6 +1,6 @@
-import { SunIcon } from '../../components/icons/SunIcon';
-import { MoonIcon } from '../../components/icons/MoonIcon';
 import { MonitorIcon } from '../../components/icons/MonitorIcon';
+import { MoonIcon } from '../../components/icons/MoonIcon';
+import { SunIcon } from '../../components/icons/SunIcon';
 import { THEME_TEXTS } from '../../constants/texts';
 import { THEMES } from '../../domain/theme';
 import { useThemeStore } from '../../store/themeStore';

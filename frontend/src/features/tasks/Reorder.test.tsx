@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { afterEach, expect, it, vi, type MockInstance } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { afterEach, expect, it, vi, type MockInstance } from 'vitest';
+
 import { api } from '../../api';
 import { createQueryClient } from '../../api/queryClient';
 import type { TaskRead } from '../../api/schema';
-import { makeTask } from '../../test/makeTask';
-import { useUiStore } from '../../store/uiStore';
 import { useToastStore } from '../../store/toastStore';
+import { useUiStore } from '../../store/uiStore';
+import { makeTask } from '../../test/makeTask';
 import { mutationErrorToast } from '../toasts/mutationToast';
+
 import { taskKeys } from './taskQueries';
 import { useReorderTasks } from './useReorderTasks';
 

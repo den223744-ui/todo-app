@@ -1,6 +1,7 @@
-import { useInertOnExit } from './useInertOnExit';
 import { motion, usePresenceData, useReducedMotion } from 'framer-motion';
 import type { ReactNode } from 'react';
+
+import { useInertOnExit } from './useInertOnExit';
 
 export function ViewFrame({ children, direction }: { children: ReactNode; direction: number }) {
   const presenceDirection: unknown = usePresenceData();

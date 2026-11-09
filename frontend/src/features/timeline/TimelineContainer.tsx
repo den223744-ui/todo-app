@@ -1,11 +1,12 @@
 import { toLocalDateString } from '../../domain/dates';
+import type { AppLocation } from '../../domain/view';
 import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useTasks } from '../tasks/useTasks';
 import { useNow } from '../time/useNow';
+
 import { Timeline } from './Timeline';
 import { useTimelineMove } from './useTimelineMove';
-import type { AppLocation } from '../../domain/view';
 
 /**
  * The right column on wide screens while no task is open: the timeline of the

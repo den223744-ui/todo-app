@@ -1,4 +1,3 @@
-import { useEffect, type ReactNode } from 'react';
 import {
   DndContext,
   MouseSensor,
@@ -13,6 +12,8 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { useEffect, type ReactNode } from 'react';
+
 import type { TaskRead } from '../../api/schema';
 import { DRAG_TEXTS } from '../../constants/texts';
 import { useUiStore } from '../../store/uiStore';

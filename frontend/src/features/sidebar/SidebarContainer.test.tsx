@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { useUiStore } from '../../store/uiStore';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
+
 import { SidebarContainer } from './SidebarContainer';
 
 describe('SidebarContainer', () => {

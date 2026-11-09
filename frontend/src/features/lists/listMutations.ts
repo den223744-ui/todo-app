@@ -13,8 +13,9 @@ import {
   beginTaskWrite,
   endTaskWrite,
 } from '../tasks/pendingMutations';
-import { taskKeys } from '../tasks/taskQueries';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+import { taskKeys } from '../tasks/taskQueries';
+
 import { listKeys } from './listQueries';
 import { beginListMutation, endListMutation } from './pendingListMutations';
 

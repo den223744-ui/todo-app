@@ -1,5 +1,5 @@
-import type { SmartList } from '../domain/smartLists';
 import type { QuickAddIssue } from '../domain/quickAddInput';
+import type { SmartList } from '../domain/smartLists';
 import type { EditIssue } from '../domain/taskEdit';
 
 /** All UI texts (AGENTS.md: Russian UI texts live in constants). */

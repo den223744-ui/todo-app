@@ -1,8 +1,7 @@
-import { AnimatePresence } from 'framer-motion';
 import { Command } from 'cmdk';
-import { NavigationCommands } from './NavigationCommands';
-import { TaskCommands } from './TaskCommands';
+import { AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+
 import { ShortcutDialog } from '../../components/ShortcutDialog';
 import { PALETTE_TEXTS, SHORTCUT_TEXTS, THEME_TEXTS } from '../../constants/texts';
 import { searchTopLevelTasks } from '../../domain/search';
@@ -12,9 +11,12 @@ import { useThemeStore } from '../../store/themeStore';
 import { useUiStore } from '../../store/uiStore';
 import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
-import { useTasks } from '../tasks/useTasks';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+import { useTasks } from '../tasks/useTasks';
+
 import { focusQuickAdd, focusSearch } from './focus';
+import { NavigationCommands } from './NavigationCommands';
+import { TaskCommands } from './TaskCommands';
 
 export function CommandPalette() {
   const open = useUiStore((state) => state.paletteOpen);

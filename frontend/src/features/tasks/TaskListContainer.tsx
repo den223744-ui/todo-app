@@ -2,22 +2,23 @@ import { useMutationState } from '@tanstack/react-query';
 
 import { TEXTS } from '../../constants/texts';
 import { isDayClosed } from '../../domain/dayClosed';
-import { DayClosed } from './DayClosed';
-import { useUiStore } from '../../store/uiStore';
-import { selectTaskGroups } from '../../domain/taskGroups';
 import { selectList } from '../../domain/smartLists';
+import { selectTaskGroups } from '../../domain/taskGroups';
+import type { AppLocation } from '../../domain/view';
+import { useUiStore } from '../../store/uiStore';
+import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
+import { focusAfterTask } from '../shortcuts/focus';
 import { useNow } from '../time/useNow';
+
+import { DayClosed } from './DayClosed';
 import { TaskList } from './TaskList';
 import { TaskListEmpty } from './TaskListEmpty';
 import { TaskListSkeleton } from './TaskListSkeleton';
 import { mutationTaskId, OPTIMISTIC_ID_PREFIX } from './taskMutations';
 import { taskKeys } from './taskQueries';
-import { useLists } from '../lists/useLists';
 import { useTaskActions } from './useTaskActions';
 import { useTasks, useUpdateTask } from './useTasks';
-import { focusAfterTask } from '../shortcuts/focus';
-import type { AppLocation } from '../../domain/view';
 
 export function TaskListContainer({ snapshot }: { snapshot?: AppLocation }) {
   const { data, isPending: tasksPending, isError, refetch } = useTasks();

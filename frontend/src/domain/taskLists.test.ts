@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { makeList } from '../test/makeList';
 import { makeTask } from '../test/makeTask';
+
 import { compareLists, countByList, groupByList, progressOf, selectInList } from './taskLists';
 
 const ids = (tasks: { id: string }[]) => tasks.map((task) => task.id);

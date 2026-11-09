@@ -1,4 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
+
 import { ShortcutDialog } from '../../components/ShortcutDialog';
 import { SHORTCUT_TEXTS } from '../../constants/texts';
 import { isMacPlatform } from '../../domain/shortcuts';

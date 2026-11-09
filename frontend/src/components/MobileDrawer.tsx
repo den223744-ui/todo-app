@@ -1,12 +1,13 @@
-import { useInertOnExit } from './useInertOnExit';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { TEXTS } from '../constants/texts';
+
 import { IconButton } from './IconButton';
-import { useFocusTrap } from './useFocusTrap';
-import { useMediaQuery } from './useMediaQuery';
 import { CloseIcon } from './icons/CloseIcon';
+import { useFocusTrap } from './useFocusTrap';
+import { useInertOnExit } from './useInertOnExit';
+import { useMediaQuery } from './useMediaQuery';
 
 interface MobileDrawerProps {
   onClose: () => void;

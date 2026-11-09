@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../../api/client';
 import { TOAST_TEXTS } from '../../constants/texts';
+
 import { mutationErrorToast } from './mutationToast';
 
 const SERVER = new ApiError(500, 'internal_error', 'boom');

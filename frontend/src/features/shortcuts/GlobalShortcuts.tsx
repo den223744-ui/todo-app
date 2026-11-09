@@ -1,19 +1,21 @@
-import { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
+
+import { useMediaQuery } from '../../components/useMediaQuery';
+import { canReorderGroup, reorderSiblings } from '../../domain/reorder';
 import { adjacentTask, resolveShortcut } from '../../domain/shortcuts';
 import { selectTaskGroups } from '../../domain/taskGroups';
-import { canReorderGroup, reorderSiblings } from '../../domain/reorder';
 import { useUiStore } from '../../store/uiStore';
 import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
+import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+import { taskKeys } from '../tasks/taskQueries';
+import { useReorderTasks } from '../tasks/useReorderTasks';
 import { useTaskActions } from '../tasks/useTaskActions';
 import { useTasks } from '../tasks/useTasks';
-import { useReorderTasks } from '../tasks/useReorderTasks';
-import { taskKeys } from '../tasks/taskQueries';
-import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
 import { useNow } from '../time/useNow';
+
 import { focusAfterTask, focusQuickAdd, focusSearch, focusTask } from './focus';
-import { useMediaQuery } from '../../components/useMediaQuery';
 
 export function GlobalShortcuts() {
   const { data: tasks = [] } = useTasks();

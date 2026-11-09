@@ -1,18 +1,19 @@
-import { useRef } from 'react';
-import { useIsPresent } from 'framer-motion';
-import type { TaskRead } from '../../api/schema';
 import { useMutationState } from '@tanstack/react-query';
+import { useIsPresent } from 'framer-motion';
+import { useRef } from 'react';
 
+import type { TaskRead } from '../../api/schema';
 import { EDIT_TEXTS, UNDO_TEXTS } from '../../constants/texts';
 import { subtasksOf } from '../../domain/taskEdit';
+import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { OPTIMISTIC_ID_PREFIX, mutationTaskId } from '../tasks/taskMutations';
 import { taskKeys } from '../tasks/taskQueries';
+import { useTaskActions } from '../tasks/useTaskActions';
 import { useTasks } from '../tasks/useTasks';
 import { useUndoableCreate } from '../tasks/useUndoableCreate';
+
 import { DetailsPanel } from './DetailsPanel';
-import { useLists } from '../lists/useLists';
-import { useTaskActions } from '../tasks/useTaskActions';
 import { TaskDetails } from './TaskDetails';
 
 const rowLink = (taskId: string) =>

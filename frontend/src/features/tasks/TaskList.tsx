@@ -1,18 +1,20 @@
-import { AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
-import { taskPresentationKey } from './taskPresentation';
+import { AnimatePresence } from 'framer-motion';
+
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { SEARCH_TEXTS, TEXTS } from '../../constants/texts';
-import type { TaskGroup } from '../../domain/taskGroups';
 import { dayHeading } from '../../domain/dayHeading';
-import { selectSubtasks } from '../../domain/subtasks';
-import type { AppLocation } from '../../domain/view';
-import { GroupBadge } from './GroupBadge';
-import { TaskRow } from './TaskRow';
 import { canReorderGroup, reorderSiblings } from '../../domain/reorder';
+import { selectSubtasks } from '../../domain/subtasks';
+import type { TaskGroup } from '../../domain/taskGroups';
+import type { AppLocation } from '../../domain/view';
+
+import { GroupBadge } from './GroupBadge';
 import { SortableTaskGroup } from './SortableTaskGroup';
-import { useReorderTasks } from './useReorderTasks';
 import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
+import { taskPresentationKey } from './taskPresentation';
+import { TaskRow } from './TaskRow';
+import { useReorderTasks } from './useReorderTasks';
 
 interface TaskListProps {
   dayClosed?: boolean;

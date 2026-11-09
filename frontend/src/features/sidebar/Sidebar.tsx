@@ -1,20 +1,20 @@
 import type { ReactNode } from 'react';
 
 import type { TaskListRead, TaskRead, TaskListUpdate } from '../../api/schema';
-import { LIST_TITLES, TEXTS } from '../../constants/texts';
+import { BrandLogo } from '../../components/BrandLogo';
+import { LIST_TITLES, TEXTS, SHORTCUT_TEXTS } from '../../constants/texts';
 import { countLists, countTags, type SmartList } from '../../domain/smartLists';
 import { compareLists, countByList } from '../../domain/taskLists';
 import { sameView, serializeLocation, type AppLocation, type View } from '../../domain/view';
+import { useUiStore } from '../../store/uiStore';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
-import { BrandLogo } from '../../components/BrandLogo';
+import { ThemePicker } from '../theme/ThemePicker';
+
 import { ListFolderIcon } from './ListFolderIcon';
 import { NewListForm } from './NewListForm';
 import { SidebarLink } from './SidebarLink';
-import { SmartListIcon } from './SmartListIcon';
 import { SidebarListItem } from './SidebarListItem';
-import { ThemePicker } from '../theme/ThemePicker';
-import { useUiStore } from '../../store/uiStore';
-import { SHORTCUT_TEXTS } from '../../constants/texts';
+import { SmartListIcon } from './SmartListIcon';
 
 /** Today first, as in the mockup. */
 const NAV_ORDER: readonly SmartList[] = ['today', 'inbox', 'upcoming', 'overdue', 'completed'];

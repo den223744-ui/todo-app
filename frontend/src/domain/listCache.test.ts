@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+
 import { makeList } from '../test/makeList';
 import { makeTask } from '../test/makeTask';
+
 import { detachList, restoreTaskLists, revertListUpdate } from './listCache';
 
 describe('list cache transformations', () => {

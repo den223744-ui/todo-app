@@ -7,11 +7,12 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { UNDO_TEXTS, MOVE_TEXTS } from '../../constants/texts';
-import { removeTaskWithSubtasks } from '../../domain/taskCache';
 import { addDays, toLocalDateString } from '../../domain/dates';
-import { undoPatch } from '../../domain/undo';
 import { selectList } from '../../domain/smartLists';
+import { removeTaskWithSubtasks } from '../../domain/taskCache';
+import { undoPatch } from '../../domain/undo';
 import { useToastStore } from '../../store/toastStore';
+
 import { taskKeys } from './taskQueries';
 import { useDeleteTask, useRestoreTask, useUpdateTask } from './useTasks';
 

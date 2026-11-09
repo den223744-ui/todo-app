@@ -1,8 +1,9 @@
 import { useRef } from 'react';
+
 import type { TaskRead } from '../../api/schema';
+import { UNDO_TEXTS, MOVE_TEXTS } from '../../constants/texts';
 import { canonicalTime } from '../../domain/dates';
 import { shiftedTime, SLOT_MINUTES } from '../../domain/timeline';
-import { UNDO_TEXTS, MOVE_TEXTS } from '../../constants/texts';
 import { useToastStore } from '../../store/toastStore';
 import { UNDO_MS } from '../tasks/useTaskActions';
 import { useUpdateTask } from '../tasks/useTasks';

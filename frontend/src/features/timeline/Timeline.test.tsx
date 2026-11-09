@@ -3,10 +3,11 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { useUiStore } from '../../store/uiStore';
 import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
+
 import { Timeline } from './Timeline';
-import { useUiStore } from '../../store/uiStore';
 
 const TODAY = '2026-11-09';
 const NOW = new Date(2026, 10, 9, 13, 36);

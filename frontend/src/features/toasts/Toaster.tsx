@@ -1,6 +1,8 @@
-import { TOAST_TEXTS } from '../../constants/texts';
 import { AnimatePresence } from 'framer-motion';
+
+import { TOAST_TEXTS } from '../../constants/texts';
 import { useToastStore } from '../../store/toastStore';
+
 import { ToastItem } from './ToastItem';
 
 /**

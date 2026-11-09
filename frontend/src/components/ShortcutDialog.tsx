@@ -1,11 +1,13 @@
-import { useInertOnExit } from './useInertOnExit';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useFocusTrap } from './useFocusTrap';
+
+import { SHORTCUT_TEXTS } from '../constants/texts';
+
 import { IconButton } from './IconButton';
 import { CloseIcon } from './icons/CloseIcon';
-import { SHORTCUT_TEXTS } from '../constants/texts';
+import { useFocusTrap } from './useFocusTrap';
+import { useInertOnExit } from './useInertOnExit';
 
 export function ShortcutDialog({
   title,

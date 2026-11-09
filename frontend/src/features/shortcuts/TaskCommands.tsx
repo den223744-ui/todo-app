@@ -1,12 +1,14 @@
-import { Command } from 'cmdk';
 import { useMutationState } from '@tanstack/react-query';
+import { Command } from 'cmdk';
+
 import type { TaskRead } from '../../api/schema';
 import { PALETTE_TEXTS } from '../../constants/texts';
 import { addDays, toLocalDateString } from '../../domain/dates';
 import { useAppLocation } from '../navigation/useAppLocation';
-import { useTaskActions } from '../tasks/useTaskActions';
 import { mutationTaskId } from '../tasks/taskMutations';
 import { taskKeys } from '../tasks/taskQueries';
+import { useTaskActions } from '../tasks/useTaskActions';
+
 import { focusAfterTask } from './focus';
 
 export function TaskCommands({ task, run }: { task: TaskRead; run: (action: () => void) => void }) {

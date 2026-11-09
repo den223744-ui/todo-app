@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { TaskListRead, TaskListUpdate } from '../../api/schema';
 import { LIST_ACTION_TEXTS, TEXTS } from '../../constants/texts';
 import { LIST_COLORS } from '../lists/listMutations';
+
 import { DeleteListDialog } from './DeleteListDialog';
 import { ListFolderIcon } from './ListFolderIcon';
 import { SidebarLink } from './SidebarLink';

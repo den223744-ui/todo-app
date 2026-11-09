@@ -1,12 +1,12 @@
-import type { TaskListRead, TaskRead } from '../../api/schema';
-import { TIMELINE_TEXTS, durationLabel } from '../../constants/texts';
-import { parseLocalDate } from '../../domain/dates';
-import { layoutTimeline } from '../../domain/timeline';
-import { pixelsToMinutes, shiftedTime, SLOT_MINUTES } from '../../domain/timeline';
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useEffect, useId, useLayoutEffect, useRef } from 'react';
-import { DRAG_TEXTS } from '../../constants/texts';
+
+import type { TaskListRead, TaskRead } from '../../api/schema';
+import { TIMELINE_TEXTS, durationLabel, DRAG_TEXTS } from '../../constants/texts';
+import { parseLocalDate } from '../../domain/dates';
+import { layoutTimeline, pixelsToMinutes, shiftedTime, SLOT_MINUTES } from '../../domain/timeline';
 import { useUiStore } from '../../store/uiStore';
+
 import { TimelineBlock } from './TimelineBlock';
 
 interface TimelineProps {

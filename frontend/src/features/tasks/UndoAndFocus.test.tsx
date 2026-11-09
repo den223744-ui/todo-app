@@ -2,14 +2,16 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { App } from '../../App';
+
 import { api } from '../../api';
 import type { TaskRead } from '../../api/schema';
-import { makeTask } from '../../test/makeTask';
-import { makeList } from '../../test/makeList';
-import { renderWithClient } from '../../test/renderWithClient';
+import { App } from '../../App';
 import { useToastStore } from '../../store/toastStore';
 import { useUiStore } from '../../store/uiStore';
+import { makeList } from '../../test/makeList';
+import { makeTask } from '../../test/makeTask';
+import { renderWithClient } from '../../test/renderWithClient';
+
 import { taskKeys } from './taskQueries';
 import { UNDO_MS } from './useTaskActions';
 

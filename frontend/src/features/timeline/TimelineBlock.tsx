@@ -1,13 +1,14 @@
 import { useDraggable } from '@dnd-kit/core';
-import type { TimelineItem } from '../../domain/timeline';
+
+import type { TaskListRead, TaskRead } from '../../api/schema';
+import { durationLabel, DRAG_TEXTS } from '../../constants/texts';
 import {
   clampTimelineStart,
   formatTimelineTime,
   pixelsToMinutes,
   SLOT_MINUTES,
 } from '../../domain/timeline';
-import { durationLabel, DRAG_TEXTS } from '../../constants/texts';
-import type { TaskListRead, TaskRead } from '../../api/schema';
+import type { TimelineItem } from '../../domain/timeline';
 
 interface Props {
   item: TimelineItem;

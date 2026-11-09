@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_LOCATION } from '../../domain/view';
 import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
+
 import { Sidebar } from './Sidebar';
 
 const NOW = new Date(2026, 10, 9, 10, 0);

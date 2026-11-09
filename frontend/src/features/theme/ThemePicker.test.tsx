@@ -2,7 +2,9 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+
 import { useThemeStore } from '../../store/themeStore';
+
 import { ThemePicker } from './ThemePicker';
 import { ThemeSync } from './ThemeSync';
 

@@ -1,10 +1,10 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import { TaskCheckbox } from '../../components/TaskCheckbox';
 import { useId, useState } from 'react';
 
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { AutosizeTextarea } from '../../components/AutosizeTextarea';
 import { CloseIcon } from '../../components/icons/CloseIcon';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
 import {
   DURATION_TEXTS,
   EDIT_ISSUES,
@@ -22,6 +22,7 @@ import {
   type EditResult,
 } from '../../domain/taskEdit';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
+
 import { PriorityPicker } from './PriorityPicker';
 import { SubtaskList } from './SubtaskList';
 import { TagEditor } from './TagEditor';

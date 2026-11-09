@@ -1,9 +1,10 @@
 /// <reference lib="dom" />
 import { expect, test, type Locator, type Page } from '@playwright/test';
+
 import type { TaskRead, TaskUpdate } from '../src/api/schema';
 import { addDays, toLocalDateString } from '../src/domain/dates';
-import { makeTask } from '../src/test/makeTask';
 import { makeList } from '../src/test/makeList';
+import { makeTask } from '../src/test/makeTask';
 
 test.use({ timezoneId: 'UTC' });
 const now = new Date();
