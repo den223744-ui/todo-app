@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     # Must be true in production (HTTPS); false lets the cookie work on http://localhost.
     session_cookie_secure: bool = False
 
+    # A new visitor's workspace starts with example lists and tasks (the demo).
+    # Off by default so tests and fresh installs start empty.
+    seed_demo_data: bool = False
+
     @field_validator("database_url")
     @classmethod
     def _normalize_database_url(cls, value: str) -> str:

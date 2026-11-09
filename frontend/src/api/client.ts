@@ -14,6 +14,7 @@
  *   then starts a session once (shared by concurrent callers) and retries the
  *   request once. Retrying is safe: the server refuses before doing anything.
  */
+import { toLocalDateString } from '../domain/dates';
 import type { paths } from './schema';
 
 type Json<T> = T extends { content: { 'application/json': infer Body } } ? Body : never;
@@ -95,7 +96,11 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   let sessionStart: Promise<void> | null = null;
 
   async function send(spec: RequestSpec): Promise<Response> {
-    const headers: Record<string, string> = { Accept: 'application/json' };
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      // A new visitor's demo content is placed around their own local day.
+      'X-Local-Date': toLocalDateString(new Date()),
+    };
     const init: RequestInit = { method: spec.method, credentials: 'same-origin', headers };
     if (spec.body !== undefined) {
       init.body = JSON.stringify(spec.body);
