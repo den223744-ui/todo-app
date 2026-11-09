@@ -1,4 +1,4 @@
-/** Toast notifications: UI-only state (AGENTS.md: Zustand for UI state). */
+/** Toast notifications: UI-only state (Zustand holds UI state, never server data). */
 import { create } from 'zustand';
 
 export interface ToastAction {
