@@ -20,7 +20,7 @@ interface TimelineProps {
   today: string;
   now: Date;
   onOpen: (taskId: string) => void;
-  /** The «Таймлайн» label on top; off where a tab above already names it. */
+  /** The timeline icon badge on top; off where a tab above already names it. */
   showLabel?: boolean;
 }
 
@@ -122,7 +122,7 @@ export function Timeline({
         </p>
         {showLabel && (
           <div className="px-4 pt-4">
-            <div className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-1.5 text-sm font-semibold text-ink">
+            <div className="inline-flex items-center rounded-xl border border-line px-3 py-1.5 text-ink">
               <svg
                 className="size-4"
                 viewBox="0 0 16 16"
@@ -134,7 +134,6 @@ export function Timeline({
               >
                 <path d="M3 3v10M7 5v6M11 4v8M14 6v4" />
               </svg>
-              {TIMELINE_TEXTS.tab}
             </div>
           </div>
         )}
