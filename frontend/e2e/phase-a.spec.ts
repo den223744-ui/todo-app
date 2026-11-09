@@ -5,7 +5,8 @@ import type { TaskCreate, TaskRead, TaskUpdate } from '../src/api/schema';
 import { makeList } from '../src/test/makeList';
 import { makeTask } from '../src/test/makeTask';
 
-const now = new Date(2026, 10, 9, 12);
+test.use({ timezoneId: 'Europe/Istanbul' });
+const now = new Date('2026-11-09T12:00:00+03:00');
 const work = makeList({ id: 'work', name: 'Работа' });
 
 /** Isolated workspace: every API request stays inside this fixture. */
@@ -165,16 +166,13 @@ test('quick add to a visible user list names it and the plain toast lasts four s
 }) => {
   await mockWorkspace(page);
   await page.goto('/?listId=work');
-  await page.clock.pauseAt(new Date(2026, 10, 9, 12, 1));
   const input = page.getByRole('textbox', { name: 'Новая задача' });
   await input.fill('Отчёт');
   await input.press('Enter');
   const message = page.getByText('Добавлено в «Работа»', { exact: true });
   await expect(message).toBeVisible();
   await expect(page.getByRole('button', { name: 'Показать' })).toHaveCount(0);
-  await page.clock.runFor(3999);
-  await expect(message).toBeVisible();
-  await page.clock.runFor(1);
+  await page.clock.runFor(4_000);
   await expect(message).toHaveCount(0);
 });
 

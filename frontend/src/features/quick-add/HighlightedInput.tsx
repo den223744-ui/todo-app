@@ -57,7 +57,7 @@ export function HighlightedInput({
             <mark
               key={index}
               data-token-kind={segment.kind}
-              className="rounded-sm bg-accent-soft text-accent-ink underline decoration-accent-ink/40 underline-offset-4"
+              className={`rounded-sm underline underline-offset-4 ${segment.kind === 'list' ? 'text-check decoration-check' : 'bg-accent-soft text-accent-ink decoration-accent-ink/40'}`}
             >
               {segment.text}
             </mark>

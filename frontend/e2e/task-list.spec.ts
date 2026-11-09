@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 import type { TaskListRead, TaskRead } from '../src/api/schema';
 
+test.use({ timezoneId: 'UTC' });
+
 function task(id: string, fields: Partial<TaskRead>): TaskRead {
   return {
     id,
@@ -61,7 +63,7 @@ const lists: TaskListRead[] = [
 ];
 
 test.beforeEach(async ({ page }) => {
-  await page.clock.install({ time: new Date(2026, 10, 8, 12) });
+  await page.clock.setFixedTime(new Date('2026-11-08T12:00:00Z'));
   await page.route('**/api/tasks', (route) => route.fulfill({ json: fixtures }));
   await page.route('**/api/lists', (route) => route.fulfill({ json: lists }));
 });
@@ -73,7 +75,6 @@ test('task groups, URL navigation and history', async ({ page }, testInfo) => {
   await expect(main.getByRole('checkbox')).toHaveCount(3);
   await expect(main.getByRole('link', { name: /Отправить отчёт/ })).toContainText('18:30');
   await expect(main.getByRole('link', { name: /Отправить отчёт/ })).toBeVisible();
-  await page.clock.runFor(100);
   await page.screenshot({ path: testInfo.outputPath('tasks-desktop.png'), fullPage: true });
   await main.getByRole('link', { name: /Купить продукты/ }).click();
   await expect(page).toHaveURL(/task=today/);
@@ -83,7 +84,7 @@ test('task groups, URL navigation and history', async ({ page }, testInfo) => {
   );
   await page.getByRole('link', { name: 'Предстоящие 1' }).click();
   await expect(page).toHaveURL(/list=upcoming$/);
-  await expect(main.getByRole('heading', { level: 2 })).toContainText('10 ноября');
+  await expect(main.getByRole('heading', { level: 2 })).toHaveText('Послезавтра');
   await page.goBack();
   await expect(main.getByRole('heading', { level: 2 })).toHaveText(['Работа', 'Без списка']);
 });
@@ -104,7 +105,6 @@ test('mobile drawer, dark theme and long content fit 375px', async ({ page }, te
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(375);
     }
   }
-  await page.clock.runFor(100);
   await page.screenshot({ path: testInfo.outputPath('tasks-mobile-dark.png'), fullPage: true });
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await page.getByRole('dialog').getByRole('link', { name: 'Предстоящие 1' }).click();

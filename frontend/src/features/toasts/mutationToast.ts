@@ -5,7 +5,8 @@
 import { ApiError, CLIENT_ERROR_CODES } from '../../api/client';
 import { TOAST_TEXTS } from '../../constants/texts';
 
-export type TaskMutationKind = 'create' | 'update' | 'delete' | 'restore' | 'createList';
+export type TaskMutationKind =
+  'create' | 'update' | 'delete' | 'restore' | 'createList' | 'updateList' | 'deleteList';
 
 export interface TaskMutationMeta extends Record<string, unknown> {
   kind?: TaskMutationKind;
@@ -40,6 +41,12 @@ export function mutationErrorToast(
       return TOAST_TEXTS.deleteFailed;
     case 'restore':
       return TOAST_TEXTS.restoreFailed;
+    case 'updateList':
+      return error instanceof ApiError && error.code === 'conflict'
+        ? TOAST_TEXTS.listNameTaken
+        : TOAST_TEXTS.updateListFailed;
+    case 'deleteList':
+      return TOAST_TEXTS.deleteListFailed;
     case 'createList': {
       if (error instanceof ApiError && error.code === 'conflict') return TOAST_TEXTS.listNameTaken;
       const name =

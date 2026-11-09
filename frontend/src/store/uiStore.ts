@@ -13,6 +13,8 @@ interface UiState {
   editingTaskId: string | null;
   startEditing: (taskId: string) => void;
   stopEditing: () => void;
+  expandedTaskIds: ReadonlySet<string>;
+  toggleSubtasks: (taskId: string) => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -24,6 +26,15 @@ export const useUiStore = create<UiState>()((set) => ({
     set({ drawerOpen: false });
   },
   editingTaskId: null,
+  expandedTaskIds: new Set(),
+  toggleSubtasks: (taskId) => {
+    set((state) => {
+      const expandedTaskIds = new Set(state.expandedTaskIds);
+      if (expandedTaskIds.has(taskId)) expandedTaskIds.delete(taskId);
+      else expandedTaskIds.add(taskId);
+      return { expandedTaskIds };
+    });
+  },
   startEditing: (taskId) => {
     set({ editingTaskId: taskId });
   },

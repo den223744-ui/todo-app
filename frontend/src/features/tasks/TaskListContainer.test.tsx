@@ -79,8 +79,8 @@ describe('TaskListContainer', () => {
       makeTask({ id: 'earlier', due_date: '2026-11-09' }),
     ]);
     const headings = screen.getAllByRole('heading', { level: 2 });
-    expect(headings[0]).toHaveTextContent('9 ноября');
-    expect(headings[1]).toHaveTextContent('10 ноября');
+    expect(headings[0]).toHaveTextContent('Завтра');
+    expect(headings[1]).toHaveTextContent('Послезавтра');
     expect(screen.getAllByRole('link').map((node) => node.textContent)).toEqual([
       expect.stringContaining('earlier'),
       expect.stringContaining('later'),

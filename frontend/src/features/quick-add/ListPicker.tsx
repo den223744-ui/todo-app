@@ -4,7 +4,7 @@ import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
 
 interface ListPickerProps {
   lists: readonly TaskListRead[];
-  /** '' = no list chosen here (the open list, if any, still applies). */
+  /** '' shows no selected folder; the caller tracks whether it was picked explicitly. */
   value: string;
   onChange: (listId: string) => void;
 }

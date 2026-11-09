@@ -3,12 +3,13 @@ import { useMutationState } from '@tanstack/react-query';
 import { TEXTS } from '../../constants/texts';
 import { useUiStore } from '../../store/uiStore';
 import { selectTaskGroups } from '../../domain/taskGroups';
+import { selectList } from '../../domain/smartLists';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useNow } from '../time/useNow';
 import { TaskList } from './TaskList';
 import { TaskListEmpty } from './TaskListEmpty';
 import { TaskListSkeleton } from './TaskListSkeleton';
-import { mutationTaskId } from './taskMutations';
+import { mutationTaskId, OPTIMISTIC_ID_PREFIX } from './taskMutations';
 import { taskKeys } from './taskQueries';
 import { useLists } from '../lists/useLists';
 import { useTaskActions } from './useTaskActions';
@@ -32,9 +33,27 @@ export function TaskListContainer() {
   const stopEditing = useUiStore((state) => state.stopEditing);
   const { data: lists } = useLists();
   const groups = selectTaskGroups(data ?? [], lists ?? [], location, now);
+  const overdue = selectList(data ?? [], 'overdue', now);
 
   return (
     <div className="mt-6 space-y-4">
+      {location.view.kind === 'list' &&
+        location.view.list === 'overdue' &&
+        !location.query.trim() &&
+        overdue.length > 0 && (
+          <button
+            type="button"
+            disabled={overdue.some(
+              (task) => busyIds.has(task.id) || task.id.startsWith(OPTIMISTIC_ID_PREFIX),
+            )}
+            onClick={() => {
+              actions.moveToToday(overdue, new Date());
+            }}
+            className="min-h-11 rounded-lg border border-line px-3 text-sm text-ink-muted hover:text-accent-ink disabled:opacity-50"
+          >
+            {TEXTS.moveAllToToday(overdue.length)}
+          </button>
+        )}
       {isError && (
         <div role="alert" className="rounded-lg border border-line bg-surface p-4 text-sm">
           <p className="text-danger">{data ? TEXTS.refreshTasksError : TEXTS.loadTasksError}</p>
@@ -74,6 +93,10 @@ export function TaskListContainer() {
             }}
             onStopEdit={stopEditing}
             lists={lists}
+            tasks={data}
+            onMoveToToday={(task) => {
+              actions.moveToToday([task], new Date());
+            }}
             onDelete={(task) => {
               actions.destroy(task);
               navigate({ taskId: null });

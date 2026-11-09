@@ -19,7 +19,7 @@ export const TEXTS = {
   tagsEmpty: 'Добавьте к задаче #тег — он появится здесь.',
   quickAdd: 'Новая задача',
   quickAddPlaceholder: 'Запланировать дело',
-  quickAddHint: 'Enter — добавить. Даты, #теги и !приоритет распознаются автоматически.',
+  quickAddHint: 'Enter — добавить. Даты, #теги, @списки и !приоритет распознаются автоматически.',
   quickAddSubmit: 'Добавить',
   quickAddAdded: (section: string, date: string | null) =>
     `Добавлено в «${section}»${date ? `, ${date}` : ''}`,
@@ -41,6 +41,13 @@ export const TEXTS = {
   listFallbackTitle: 'Список',
   noList: 'Без списка',
   tomorrow: 'Завтра',
+  dayAfterTomorrow: 'Послезавтра',
+  showSubtasks: (title: string) => `Показать подзадачи: ${title}`,
+  hideSubtasks: (title: string) => `Скрыть подзадачи: ${title}`,
+  subtasksFor: (title: string) => `Подзадачи: ${title}`,
+  moveToToday: 'На сегодня',
+  moveToTodayNamed: (title: string) => `Перенести на сегодня: ${title}`,
+  moveAllToToday: (count: number) => `Перенести все на сегодня (${String(count)})`,
   taskCount: (count: number) => {
     const ten = count % 10;
     const hundred = count % 100;
@@ -163,6 +170,8 @@ export const TOAST_TEXTS = {
   restoreFailed: 'Не удалось восстановить задачу.',
   createListFailed: (name: string) => `Не удалось создать список «${name}».`,
   listNameTaken: 'Список с таким названием уже есть.',
+  updateListFailed: 'Не удалось изменить список — изменение отменено.',
+  deleteListFailed: 'Не удалось удалить список — он восстановлен.',
   offline: 'Нет связи с сервером. Проверьте подключение.',
 } as const;
 
@@ -203,6 +212,25 @@ export const UNDO_TEXTS = {
   undo: 'Отменить',
   completed: (title: string) => `Выполнено: «${title}»`,
   deleted: (title: string) => `Удалено: «${title}»`,
+  movedToToday: 'Перенесено на сегодня',
+} as const;
+
+export const LIST_ACTION_TEXTS = {
+  actions: (name: string) => `Действия со списком ${name}`,
+  rename: 'Переименовать',
+  color: 'Цвет',
+  delete: 'Удалить',
+  cancel: 'Отмена',
+  confirm: (name: string) => `Удалить список «${name}»?`,
+  consequence: 'Задачи останутся, но без списка.',
+  colors: {
+    blue: 'Синий',
+    brown: 'Коричневый',
+    gray: 'Серый',
+    green: 'Зелёный',
+    red: 'Красный',
+    olive: 'Оливковый',
+  },
 } as const;
 
 export const STATS_TEXTS = {

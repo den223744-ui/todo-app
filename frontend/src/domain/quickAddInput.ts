@@ -1,4 +1,4 @@
-import type { TaskCreate } from '../api/schema';
+import type { TaskCreate, TaskListRead } from '../api/schema';
 import { toLocalDateString } from './dates';
 import { TAGS_MAX_COUNT, TAG_MAX_LENGTH, TITLE_MAX_LENGTH, codePoints } from './limits';
 import {
@@ -25,8 +25,11 @@ export function prepareQuickAdd(
   now: Date,
   /** The day the Today screen shows, when not today. */
   day: string | null = null,
+  lists: readonly TaskListRead[] = [],
+  /** Undefined: use the token/view; null: explicitly picked "no list". */
+  explicitListId?: string | null,
 ): PreparedQuickAdd {
-  const parsed = parseQuickAdd(input, now);
+  const parsed = parseQuickAdd(input, now, lists);
   const task = toTaskCreate(parsed);
   if (!task) return { parsed, task: null, issue: 'title-required' };
   if (codePoints(parsed.title) > TITLE_MAX_LENGTH) {
@@ -46,7 +49,12 @@ export function prepareQuickAdd(
         (view.kind === 'list' && view.list === 'today' ? (day ?? toLocalDateString(now)) : null),
       tags,
       // Typed into one of the user's lists: the task goes into that list.
-      ...(view.kind === 'taskList' ? { list_id: view.listId } : {}),
+      ...(parsed.listId === null && view.kind === 'taskList' ? { list_id: view.listId } : {}),
+      ...(explicitListId === null
+        ? { list_id: null }
+        : explicitListId !== undefined && lists.some((list) => list.id === explicitListId)
+          ? { list_id: explicitListId }
+          : {}),
     },
     issue: null,
   };

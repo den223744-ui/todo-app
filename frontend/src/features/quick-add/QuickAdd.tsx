@@ -8,6 +8,7 @@ import { useToastStore } from '../../store/toastStore';
 import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useCreateTask, useTasks } from '../tasks/useTasks';
+import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
 import { useNow } from '../time/useNow';
 import { HighlightedInput } from './HighlightedInput';
 import { ListPicker } from './ListPicker';
@@ -36,8 +37,16 @@ export function QuickAdd() {
   const contextRef = useRef({ location, lists });
   contextRef.current = { location, lists };
   // The list picked with the folder button; it wins over the open list.
-  const [listId, setListId] = useState('');
-  const prepared = prepareQuickAdd(value, location.view, now, location.day ?? null);
+  const [listId, setListId] = useState<string | null | undefined>(undefined);
+  const savedLists = (lists ?? []).filter((list) => !list.id.startsWith(OPTIMISTIC_ID_PREFIX));
+  const prepared = prepareQuickAdd(
+    value,
+    location.view,
+    now,
+    location.day ?? null,
+    savedLists,
+    listId,
+  );
   const issue = value.trim() && prepared.issue ? QUICK_ADD_ISSUES[prepared.issue] : null;
 
   return (
@@ -49,15 +58,21 @@ export function QuickAdd() {
         if (composingRef.current || data === undefined) return;
         const draft = value;
         // Re-evaluate the actual submit time, including a tab left open overnight.
-        const { task } = prepareQuickAdd(draft, location.view, new Date(), location.day ?? null);
+        const { task } = prepareQuickAdd(
+          draft,
+          location.view,
+          new Date(),
+          location.day ?? null,
+          savedLists,
+          listId,
+        );
         if (!task) return;
-        const target = listId ? { ...task, list_id: listId } : task;
         setValue('');
         // Submitted with the button: put the caret back for the next task.
         if (event.currentTarget.contains(document.activeElement)) inputRef.current?.focus();
         // mutateAsync, not mutate: mutate's per-call callbacks only fire for the
         // latest call, so a failure of an earlier, still running create would be lost.
-        create.mutateAsync(target).then(
+        create.mutateAsync(task).then(
           (created) => {
             const context = contextRef.current;
             const feedback = quickAddFeedback(
@@ -109,8 +124,10 @@ export function QuickAdd() {
         />
         <ListPicker
           lists={[...(lists ?? [])].sort(compareLists)}
-          value={lists?.some((list) => list.id === listId) ? listId : ''}
-          onChange={setListId}
+          value={savedLists.find((list) => list.id === listId)?.id ?? ''}
+          onChange={(selectedId) => {
+            setListId(selectedId || null);
+          }}
         />
         <button
           type="submit"

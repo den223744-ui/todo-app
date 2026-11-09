@@ -9,21 +9,22 @@
  *   дд.мм                              (a past date means next year)
  *   в ЧЧ:ММ | в ЧЧ
  *   #тег
+ *   @список                            (a unique first word, е/ё equivalent)
  *   ! | !! | !!!                       (priority 1…3)
  *
  * Rules (agreed with the project owner, see SPEC/README):
  * - A weekday equal to today means the same weekday next week.
  * - A time without a date means today if that time is still ahead, else tomorrow.
- * - The first date, time and priority win; repeats stay in the title as text.
+ * - The first date, time, priority and list win; repeats stay in the title as text.
  * - Invalid values (31.02, в 25:00, через 0 дней, !!!!) are not tokens.
  *
  * Pure: `now` is passed in; the local calendar of `now` is the user's calendar.
  */
-import type { TaskCreate } from '../api/schema';
+import type { TaskCreate, TaskListRead } from '../api/schema';
 import { addDays, startOfDay, toLocalDateString, toTimeString } from './dates';
 import { normalizeTag } from './tags';
 
-export type QuickAddTokenKind = 'date' | 'time' | 'tag' | 'priority';
+export type QuickAddTokenKind = 'date' | 'time' | 'tag' | 'priority' | 'list';
 
 export interface QuickAddToken {
   kind: QuickAddTokenKind;
@@ -41,6 +42,7 @@ export interface QuickAddResult {
   dueTime: string | null;
   tags: string[];
   priority: number;
+  listId: string | null;
   /** Recognized parts, in input order. */
   tokens: QuickAddToken[];
 }
@@ -82,6 +84,7 @@ const weekdayNames = Object.keys(WEEKDAYS)
 
 const PATTERN = new RegExp(
   [
+    String.raw`(?<=^|\s)@(?<list>[\p{L}\p{N}_-]+)`,
     String.raw`${WORD_START}через\s+(?<inDays>\d+)\s+(?:день|дня|дней)${WORD_END}`,
     String.raw`${WORD_START}(?<relative>сегодня|послезавтра|завтра)${WORD_END}`,
     String.raw`${WORD_START}(?:во?\s+)?(?<weekday>${weekdayNames})${WORD_END}`,
@@ -95,13 +98,19 @@ const PATTERN = new RegExp(
   'giu',
 );
 
-export function parseQuickAdd(input: string, now: Date): QuickAddResult {
+export function parseQuickAdd(
+  input: string,
+  now: Date,
+  lists: readonly Pick<TaskListRead, 'id' | 'name'>[] = [],
+): QuickAddResult {
   const today = startOfDay(now);
   const tokens: QuickAddToken[] = [];
   const tags: string[] = [];
   let date: Date | null = null;
   let time: { hour: number; minute: number } | null = null;
   let priority = 0;
+  let listId: string | null = null;
+  const normalizeName = (name: string) => name.toLowerCase().replace(/ё/g, 'е');
 
   for (const match of input.matchAll(PATTERN)) {
     // Every alternative has named groups, so `groups` is always set.
@@ -112,7 +121,16 @@ export function parseQuickAdd(input: string, now: Date): QuickAddResult {
       tokens.push({ kind, start, end: start + text.length, text });
     };
 
-    if (groups.tag !== undefined) {
+    if (groups.list !== undefined) {
+      const name = normalizeName(groups.list);
+      const matching = lists.filter(
+        (list) => normalizeName(list.name.trim().split(/\s+/, 1).join('')) === name,
+      );
+      if (listId === null && matching.length === 1) {
+        for (const list of matching) listId = list.id;
+        keep('list');
+      }
+    } else if (groups.tag !== undefined) {
       const tag = normalizeTag(groups.tag);
       if (!tags.includes(tag)) tags.push(tag);
       keep('tag');
@@ -147,6 +165,7 @@ export function parseQuickAdd(input: string, now: Date): QuickAddResult {
     dueTime: time ? toTimeString(time.hour, time.minute) : null,
     tags,
     priority,
+    listId,
     tokens,
   };
 }
@@ -160,6 +179,7 @@ export function toTaskCreate(result: QuickAddResult): TaskCreate | null {
     due_time: result.dueTime,
     tags: result.tags,
     priority: result.priority,
+    ...(result.listId !== null ? { list_id: result.listId } : {}),
   };
 }
 

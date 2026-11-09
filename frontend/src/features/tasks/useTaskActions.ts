@@ -8,6 +8,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { TaskRead } from '../../api/schema';
 import { UNDO_TEXTS } from '../../constants/texts';
 import { removeTaskWithSubtasks } from '../../domain/taskCache';
+import { toLocalDateString } from '../../domain/dates';
+import { selectList } from '../../domain/smartLists';
 import { useToastStore } from '../../store/toastStore';
 import { taskKeys } from './taskQueries';
 import { useDeleteTask, useRestoreTask, useUpdateTask } from './useTasks';
@@ -63,5 +65,37 @@ export function useTaskActions() {
     remove.mutate(task.id, { onError: withdraw(toastId) });
   };
 
-  return { toggle, destroy };
+  /** One offer for the batch; failed writes roll back and are excluded from undo. */
+  const moveToToday = (tasks: readonly TaskRead[], now: Date) => {
+    const overdue = selectList(tasks, 'overdue', now);
+    if (overdue.length === 0) return;
+    const today = toLocalDateString(now);
+    const writes = overdue.map((task) => ({
+      task,
+      result: update.mutateAsync({ id: task.id, patch: { due_date: today } }).then(
+        () => true,
+        () => false,
+      ),
+    }));
+    const toastId = showToast(UNDO_TEXTS.movedToToday, {
+      duration: UNDO_MS,
+      deduplicate: false,
+      action: {
+        label: UNDO_TEXTS.undo,
+        undo: true,
+        run: () => {
+          for (const { task, result } of writes) {
+            void result.then((saved) => {
+              if (saved) update.mutate({ id: task.id, patch: { due_date: task.due_date } });
+            });
+          }
+        },
+      },
+    });
+    void Promise.all(writes.map(({ result }) => result)).then((saved) => {
+      if (!saved.some(Boolean)) withdraw(toastId)();
+    });
+  };
+
+  return { toggle, destroy, moveToToday };
 }

@@ -11,6 +11,8 @@ describe('mutationErrorToast', () => {
     ['update', { id: 't', patch: {} }, TOAST_TEXTS.updateFailed],
     ['delete', 't', TOAST_TEXTS.deleteFailed],
     ['restore', { id: 't' }, TOAST_TEXTS.restoreFailed],
+    ['updateList', { id: 'l', patch: { color: 'blue' } }, TOAST_TEXTS.updateListFailed],
+    ['deleteList', 'l', TOAST_TEXTS.deleteListFailed],
   ] as const)('%s failure', (kind, variables, expected) => {
     expect(mutationErrorToast({ kind }, variables, SERVER)).toBe(expected);
   });
@@ -43,6 +45,15 @@ describe('mutationErrorToast', () => {
   it('says so when the network is down, whatever the operation', () => {
     const offline = new ApiError(0, 'network_error', 'offline');
     expect(mutationErrorToast({ kind: 'update' }, {}, offline)).toBe(TOAST_TEXTS.offline);
+  });
+  it('reports a conflicting renamed list', () => {
+    expect(
+      mutationErrorToast(
+        { kind: 'updateList' },
+        { id: 'l', patch: { name: 'Дом' } },
+        new ApiError(409, 'conflict', 'taken'),
+      ),
+    ).toBe(TOAST_TEXTS.listNameTaken);
   });
 
   it('stays quiet for mutations that are not task writes', () => {

@@ -40,6 +40,7 @@ describe('empty and trivial input', () => {
       dueTime: null,
       tags: [],
       priority: 0,
+      listId: null,
       tokens: [],
     });
   });

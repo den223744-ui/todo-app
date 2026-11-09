@@ -3,9 +3,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError, type ApiClient } from '../../api/client';
 import { createQueryClient } from '../../api/queryClient';
-import type { TaskListRead } from '../../api/schema';
+import type { TaskListRead, TaskRead } from '../../api/schema';
+import { makeTask } from '../../test/makeTask';
+import { taskKeys } from '../tasks/taskQueries';
+import { hasPendingTaskMutations } from '../tasks/pendingMutations';
+import { hasPendingListMutations } from './pendingListMutations';
 import { makeList } from '../../test/makeList';
-import { LIST_COLORS, createListMutation } from './listMutations';
+import {
+  LIST_COLORS,
+  createListMutation,
+  updateListMutation,
+  deleteListMutation,
+} from './listMutations';
 import { listKeys } from './listQueries';
 
 const NOW = new Date('2026-11-08T12:00:00.000Z');
@@ -51,6 +60,119 @@ function setup(api: ApiClient, lists: TaskListRead[]) {
 
 afterEach(() => {
   queryClient.clear();
+});
+
+describe('updateListMutation', () => {
+  it('updates name, colour and position optimistically, then takes the server answer', async () => {
+    const server = deferred<TaskListRead>();
+    const api = fakeApi(vi.fn());
+    const update = vi.fn(() => server.promise);
+    api.updateList = update;
+    const work = makeList({ id: 'work' });
+    setup(api, [work]);
+    const observer = new MutationObserver(
+      queryClient,
+      updateListMutation({ api, queryClient, now: () => NOW }),
+    );
+    const done = observer.mutate({
+      id: 'work',
+      patch: { name: 'Новое', color: 'green', position: 3 },
+    });
+    await flush();
+    expect(cached()[0]).toMatchObject({
+      name: 'Новое',
+      color: 'green',
+      position: 3,
+      updated_at: NOW.toISOString(),
+    });
+    expect(hasPendingListMutations(queryClient)).toBe(true);
+    const saved = { ...work, name: 'Новое', color: 'green' as const, position: 3 };
+    server.resolve(saved);
+    await done;
+    expect(cached()).toEqual([saved]);
+    expect(update).toHaveBeenCalledWith('work', { name: 'Новое', color: 'green', position: 3 });
+    expect(hasPendingListMutations(queryClient)).toBe(false);
+  });
+  it('rolls back only the failed list, preserving another pending change and unrelated fields', async () => {
+    const first = deferred<TaskListRead>();
+    const api = fakeApi(vi.fn());
+    api.updateList = vi.fn(() => first.promise);
+    const work = makeList({ id: 'work', name: 'Работа' });
+    const home = makeList({ id: 'home', name: 'Дом' });
+    setup(api, [work, home]);
+    const observer = new MutationObserver(queryClient, updateListMutation({ api, queryClient }));
+    const done = observer.mutate({ id: 'work', patch: { name: 'Дом' } });
+    const rejected = expect(done).rejects.toBe(FAIL);
+    await flush();
+    queryClient.setQueryData(
+      listKeys.list(),
+      cached().map((list) => ({ ...list, color: 'red' })),
+    );
+    first.reject(FAIL);
+    await rejected;
+    expect(cached()).toEqual([
+      { ...work, color: 'red' },
+      { ...home, color: 'red' },
+    ]);
+  });
+});
+
+describe('deleteListMutation', () => {
+  it('removes the list and detaches its tasks at once, then refetches both caches', async () => {
+    const server = deferred<undefined>();
+    const api = fakeApi(vi.fn());
+    const remove = vi.fn(() => server.promise);
+    api.deleteList = remove;
+    setup(api, [makeList({ id: 'work' }), makeList({ id: 'home' })]);
+    const tasks = [
+      makeTask({ id: 'a', list_id: 'work' }),
+      makeTask({ id: 'b', list_id: 'home' }),
+      makeTask({ id: 'c' }),
+    ];
+    queryClient.setQueryData(taskKeys.list(), tasks);
+    const observer = new MutationObserver(queryClient, deleteListMutation({ api, queryClient }));
+    const done = observer.mutate('work');
+    await flush();
+    expect(cached().map((list) => list.id)).toEqual(['home']);
+    expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())).toEqual([
+      { ...tasks[0], list_id: null },
+      tasks[1],
+      tasks[2],
+    ]);
+    expect(hasPendingTaskMutations(queryClient)).toBe(true);
+    server.resolve(undefined);
+    await done;
+    expect(remove).toHaveBeenCalledWith('work');
+    expect(hasPendingTaskMutations(queryClient)).toBe(false);
+    expect(hasPendingListMutations(queryClient)).toBe(false);
+    expect(queryClient.getQueryState(taskKeys.list())?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(listKeys.list())?.isInvalidated).toBe(true);
+  });
+  it('restores list assignment on failure without losing task edits or new tasks/lists', async () => {
+    const server = deferred<undefined>();
+    const api = fakeApi(vi.fn());
+    api.deleteList = vi.fn(() => server.promise);
+    const work = makeList({ id: 'work' });
+    setup(api, [work]);
+    const task = makeTask({ id: 'a', list_id: 'work' });
+    queryClient.setQueryData(taskKeys.list(), [task]);
+    const observer = new MutationObserver(queryClient, deleteListMutation({ api, queryClient }));
+    const done = observer.mutate('work');
+    const rejected = expect(done).rejects.toBe(FAIL);
+    await flush();
+    queryClient.setQueryData(taskKeys.list(), [
+      { ...task, list_id: null, title: 'Changed' },
+      makeTask({ id: 'new' }),
+    ]);
+    queryClient.setQueryData(listKeys.list(), [makeList({ id: 'new-list' })]);
+    server.reject(FAIL);
+    await rejected;
+    expect(cached().map((list) => list.id)).toEqual(['new-list', 'work']);
+    expect(queryClient.getQueryData<TaskRead[]>(taskKeys.list())).toEqual([
+      { ...task, title: 'Changed' },
+      makeTask({ id: 'new' }),
+    ]);
+  });
 });
 
 describe('createListMutation', () => {

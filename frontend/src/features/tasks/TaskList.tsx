@@ -1,6 +1,8 @@
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { SEARCH_TEXTS, TEXTS } from '../../constants/texts';
 import type { TaskGroup } from '../../domain/taskGroups';
+import { dayHeading } from '../../domain/dayHeading';
+import { selectSubtasks } from '../../domain/subtasks';
 import type { AppLocation } from '../../domain/view';
 import { GroupBadge } from './GroupBadge';
 import { TaskRow } from './TaskRow';
@@ -19,14 +21,9 @@ interface TaskListProps {
   onStopEdit: () => void;
   lists?: readonly TaskListRead[] | undefined;
   onDelete?: ((task: TaskRead) => void) | undefined;
+  tasks?: readonly TaskRead[];
+  onMoveToToday?: ((task: TaskRead) => void) | undefined;
 }
-
-const dayFormat = new Intl.DateTimeFormat('ru-RU', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
 
 export function TaskList({
   groups,
@@ -41,6 +38,8 @@ export function TaskList({
   onStopEdit,
   lists = [],
   onDelete,
+  tasks = [],
+  onMoveToToday,
 }: TaskListProps) {
   const byId = new Map(lists.map((list) => [list.id, list]));
   return (
@@ -58,7 +57,7 @@ export function TaskList({
                   ? SEARCH_TEXTS.completed
                   : group.key === 'tomorrow'
                     ? TEXTS.tomorrow
-                    : dayFormat.format(new Date(`${group.key}T00:00:00`));
+                    : dayHeading(group.key, now);
         return (
           <section key={group.key} aria-label={title ?? TEXTS.taskList}>
             {title && (
@@ -88,6 +87,15 @@ export function TaskList({
                   onStopEdit={onStopEdit}
                   list={task.list_id ? byId.get(task.list_id) : undefined}
                   onDelete={onDelete}
+                  subtasks={selectSubtasks(tasks, task.id)}
+                  busyIds={busyIds}
+                  timeOnly={
+                    group.key === 'tomorrow' ||
+                    (!location.query.trim() &&
+                      location.view.kind === 'list' &&
+                      location.view.list === 'upcoming')
+                  }
+                  onMoveToToday={onMoveToToday}
                 />
               ))}
             </ul>

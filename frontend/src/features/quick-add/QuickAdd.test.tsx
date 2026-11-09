@@ -131,6 +131,50 @@ describe('QuickAdd', () => {
     queryClient.clear();
   });
 
+  it('highlights @lists, uses their id and lets the folder override the token', async () => {
+    const lists = [
+      makeList({ id: 'work', name: 'Работа' }),
+      makeList({ id: 'home', name: 'Личные дела' }),
+      makeList({ id: 'optimistic-1', name: 'Будущее' }),
+    ];
+    const request = vi
+      .spyOn(api, 'createTask')
+      .mockImplementation((task) =>
+        Promise.resolve(makeTask({ ...task, id: 'new', position: task.position ?? 1 })),
+      );
+    vi.spyOn(api, 'listTasks').mockResolvedValue([]);
+    const { queryClient, container } = renderWithClient(<QuickAdd />, [], lists);
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'Отчёт @РАБОТА @неизвестно @будущее');
+    expect(container.querySelectorAll('[data-token-kind="list"]')).toHaveLength(1);
+    expect(container.querySelector('[data-token-kind="list"]')).toHaveTextContent('@РАБОТА');
+    expect(screen.getByText(TEXTS.quickAddHint)).toHaveTextContent('@списки');
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+    expect(request.mock.calls[0]?.[0]).toMatchObject({
+      title: 'Отчёт @неизвестно @будущее',
+      list_id: 'work',
+    });
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: TEXTS.quickAddList }),
+      'home',
+    );
+    await userEvent.type(input, 'Звонок @работа{Enter}');
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(2);
+    });
+    expect(request.mock.calls[1]?.[0]).toMatchObject({ title: 'Звонок', list_id: 'home' });
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: TEXTS.quickAddList }), '');
+    await userEvent.type(input, 'Заметка @работа{Enter}');
+    await waitFor(() => {
+      expect(request).toHaveBeenCalledTimes(3);
+    });
+    expect(request.mock.calls[2]?.[0]).toMatchObject({ title: 'Заметка', list_id: null });
+    queryClient.clear();
+  });
+
   it('uses the current view at submit, preserving a draft across navigation', async () => {
     const created = makeTask({ id: 't1', title: 'Задача', tags: ['дом'] });
     const request = vi.spyOn(api, 'createTask').mockResolvedValue(created);

@@ -1,11 +1,14 @@
-import { motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useId, useRef } from 'react';
 
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { TEXTS } from '../../constants/texts';
 import { toLocalDateString } from '../../domain/dates';
 import { isOverdue } from '../../domain/smartLists';
+import { subtaskProgress } from '../../domain/subtasks';
 import { serializeLocation, type AppLocation } from '../../domain/view';
+import { useUiStore } from '../../store/uiStore';
+import { InlineSubtasks } from './InlineSubtasks';
 import { PriorityMark } from './PriorityMark';
 import { InlineTitleEditor } from './InlineTitleEditor';
 import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
@@ -27,6 +30,10 @@ interface TaskRowProps {
   list?: TaskListRead | undefined;
   /** Shown as a bin button on the selected row. */
   onDelete?: ((task: TaskRead) => void) | undefined;
+  subtasks?: readonly TaskRead[];
+  busyIds?: ReadonlySet<string>;
+  timeOnly?: boolean;
+  onMoveToToday?: ((task: TaskRead) => void) | undefined;
 }
 
 const dateFormat = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
@@ -44,7 +51,16 @@ export function TaskRow({
   onStopEdit,
   list,
   onDelete,
+  subtasks = [],
+  busyIds = new Set(),
+  timeOnly = false,
+  onMoveToToday,
 }: TaskRowProps) {
+  const reducedMotion = useReducedMotion();
+  const subtasksId = useId();
+  const expanded = useUiStore((state) => state.expandedTaskIds.has(task.id));
+  const toggleSubtasks = useUiStore((state) => state.toggleSubtasks);
+  const progress = subtaskProgress(subtasks);
   const completed = task.completed_at !== null;
   const overdue = isOverdue(task, toLocalDateString(now));
   const selected = location.taskId === task.id;
@@ -63,10 +79,11 @@ export function TaskRow({
   const locked = busy || unsaved;
   const today = toLocalDateString(now);
   const content = (
-    <span className="flex min-w-0 items-center gap-3">
-      <span className="flex min-w-0 flex-1 items-center gap-2">
+    // Narrow screens: the title gets its own line, the date goes under it.
+    <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 sm:flex-nowrap">
+      <span className="flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
         <span
-          className={`min-w-0 text-[13.5px] leading-5 wrap-anywhere ${completed ? 'text-ink-faint line-through' : 'text-ink'}`}
+          className={`min-w-0 text-[13.5px] leading-5 wrap-break-word ${completed ? 'text-ink-faint line-through' : 'text-ink'}`}
         >
           {task.title}
         </span>
@@ -95,12 +112,12 @@ export function TaskRow({
           ))}
         </span>
       )}
-      {task.due_date && (
+      {task.due_date && (!timeOnly || task.due_time) && (
         <time
           dateTime={task.due_time ? `${task.due_date}T${task.due_time}` : task.due_date}
-          className={`w-24 shrink-0 text-right text-xs tabular-nums ${overdue ? 'text-danger' : 'text-ink-muted'}`}
+          className={`shrink-0 text-left text-xs tabular-nums sm:w-24 sm:text-right ${overdue ? 'text-danger' : 'text-ink-muted'}`}
         >
-          {task.due_date === today
+          {timeOnly || task.due_date === today
             ? (task.due_time?.slice(0, 5) ?? '')
             : `${dateFormat.format(new Date(`${task.due_date}T00:00:00`))}${
                 task.due_time ? `, ${task.due_time.slice(0, 5)}` : ''
@@ -112,96 +129,171 @@ export function TaskRow({
 
   return (
     <motion.li
-      layout="position"
+      layout={reducedMotion ? false : 'position'}
       transition={{ layout: { duration: 0.22 } }}
-      className={`flex items-center ${selected ? 'bg-accent-soft' : 'hover:bg-subtle'}`}
+      className={`group/task ${selected ? 'bg-accent-soft' : 'hover:bg-subtle'}`}
     >
-      <label className="flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center pl-1">
-        <input
-          type="checkbox"
-          checked={completed}
-          // aria-disabled, not disabled: a disabled element loses keyboard focus.
-          aria-disabled={locked || undefined}
-          aria-label={completed ? TEXTS.reopenTask(task.title) : TEXTS.completeTask(task.title)}
-          onChange={() => {
-            if (!locked) onToggle(task);
-          }}
-          className="size-4 cursor-pointer accent-check aria-disabled:cursor-wait"
-        />
-      </label>
-      {unsaved ? (
-        <div aria-busy="true" className="min-w-0 flex-1 py-2.5 pr-4 opacity-70">
-          {content}
-        </div>
-      ) : editing ? (
-        <div className="min-w-0 flex-1 py-1.5 pr-4">
-          <InlineTitleEditor
-            task={task}
-            onSave={(patch) => {
-              onRename(task, patch);
+      <div className="flex items-center">
+        <label className="flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center pl-1">
+          <input
+            type="checkbox"
+            checked={completed}
+            // aria-disabled, not disabled: a disabled element loses keyboard focus.
+            aria-disabled={locked || undefined}
+            aria-label={completed ? TEXTS.reopenTask(task.title) : TEXTS.completeTask(task.title)}
+            onChange={() => {
+              if (!locked) onToggle(task);
             }}
-            onDone={onStopEdit}
+            className="size-4 cursor-pointer accent-check aria-disabled:cursor-wait"
           />
-        </div>
-      ) : (
-        <a
-          ref={linkRef}
-          data-task-link={task.id}
-          href={serializeLocation({ ...location, taskId: task.id })}
-          onDoubleClick={(event) => {
-            event.preventDefault();
-            onStartEdit(task.id);
-          }}
-          aria-current={selected ? 'true' : undefined}
-          onClick={(event) => {
-            if (
-              event.button !== 0 ||
-              event.ctrlKey ||
-              event.metaKey ||
-              event.shiftKey ||
-              event.altKey
-            )
-              return;
-            event.preventDefault();
-            onOpen(task.id);
-          }}
-          className="min-w-0 flex-1 rounded-lg py-2.5 pr-4"
-        >
-          {content}
-        </a>
-      )}
-      {selected && onDelete && !unsaved && !editing && (
-        <button
-          type="button"
-          aria-label={TEXTS.deleteTaskNamed(task.title)}
-          onClick={(event) => {
-            // Focus moves to the neighbouring task (or quick add) once this row is gone.
-            const row = event.currentTarget.closest('li');
-            const neighbour = (element: Element | null | undefined) =>
-              element?.querySelector<HTMLElement>('[data-task-link]') ?? null;
-            const next =
-              neighbour(row?.nextElementSibling) ??
-              neighbour(row?.previousElementSibling) ??
-              document.querySelector<HTMLElement>('[data-quick-add-input]');
-            onDelete(task);
-            requestAnimationFrame(() => next?.focus());
-          }}
-          className="mr-2 flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-subtle hover:text-danger"
-        >
-          <svg
-            className="size-[18px]"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+        </label>
+        {unsaved ? (
+          <div aria-busy="true" className="min-w-0 flex-1 py-2.5 pr-4 opacity-70">
+            {content}
+          </div>
+        ) : editing ? (
+          <div className="min-w-0 flex-1 py-1.5 pr-4">
+            <InlineTitleEditor
+              task={task}
+              onSave={(patch) => {
+                onRename(task, patch);
+              }}
+              onDone={onStopEdit}
+            />
+          </div>
+        ) : (
+          <a
+            ref={linkRef}
+            data-task-link={task.id}
+            href={serializeLocation({ ...location, taskId: task.id })}
+            onDoubleClick={(event) => {
+              event.preventDefault();
+              onStartEdit(task.id);
+            }}
+            aria-current={selected ? 'true' : undefined}
+            onClick={(event) => {
+              if (
+                event.button !== 0 ||
+                event.ctrlKey ||
+                event.metaKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return;
+              event.preventDefault();
+              onOpen(task.id);
+            }}
+            className="min-w-0 flex-1 rounded-lg py-2.5 pr-4"
           >
-            <path d="M4 6h12M8.2 6V4.4h3.6V6M5.6 6l.8 10h7.2l.8-10M8.6 9v4.4M11.4 9v4.4" />
-          </svg>
-        </button>
-      )}
+            {content}
+          </a>
+        )}
+        {progress.total > 0 && (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls={expanded ? subtasksId : undefined}
+            aria-label={expanded ? TEXTS.hideSubtasks(task.title) : TEXTS.showSubtasks(task.title)}
+            onClick={() => {
+              toggleSubtasks(task.id);
+            }}
+            className="mr-1 flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-xs tabular-nums text-ink-muted hover:text-ink"
+          >
+            <span>
+              {progress.done}/{progress.total}
+            </span>
+            <svg
+              className="size-3.5"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d={expanded ? 'm5 12 5-5 5 5' : 'm5 8 5 5 5-5'} />
+            </svg>
+          </button>
+        )}
+        {overdue && onMoveToToday && !unsaved && !editing && (
+          <button
+            type="button"
+            aria-label={TEXTS.moveToTodayNamed(task.title)}
+            aria-disabled={locked || undefined}
+            onClick={(event) => {
+              if (locked) return;
+              const row = event.currentTarget.closest('li');
+              const next =
+                row?.nextElementSibling?.querySelector<HTMLElement>('[data-task-link]') ??
+                row?.previousElementSibling?.querySelector<HTMLElement>('[data-task-link]');
+              onMoveToToday(task);
+              requestAnimationFrame(() => {
+                (
+                  linkRef.current ??
+                  next ??
+                  document.querySelector<HTMLElement>('[data-quick-add-input]')
+                )?.focus();
+              });
+            }}
+            className={`task-row-action mr-2 min-h-11 shrink-0 rounded-lg px-2 text-xs text-ink-muted hover:text-accent-ink ${selected ? 'is-selected' : ''}`}
+          >
+            {TEXTS.moveToToday}
+          </button>
+        )}
+        {selected && onDelete && !unsaved && !editing && (
+          <button
+            type="button"
+            aria-label={TEXTS.deleteTaskNamed(task.title)}
+            onClick={(event) => {
+              // Focus moves to the neighbouring task (or quick add) once this row is gone.
+              const row = event.currentTarget.closest('li');
+              const neighbour = (element: Element | null | undefined) =>
+                element?.querySelector<HTMLElement>('[data-task-link]') ?? null;
+              const next =
+                neighbour(row?.nextElementSibling) ??
+                neighbour(row?.previousElementSibling) ??
+                document.querySelector<HTMLElement>('[data-quick-add-input]');
+              onDelete(task);
+              requestAnimationFrame(() => next?.focus());
+            }}
+            className="mr-2 flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-subtle hover:text-danger"
+          >
+            <svg
+              className="size-[18px]"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 6h12M8.2 6V4.4h3.6V6M5.6 6l.8 10h7.2l.8-10M8.6 9v4.4M11.4 9v4.4" />
+            </svg>
+          </button>
+        )}
+      </div>
+      <AnimatePresence initial={false}>
+        {expanded && progress.total > 0 && (
+          <motion.div
+            key="subtasks"
+            initial={reducedMotion ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={reducedMotion ? {} : { height: 0, opacity: 0 }}
+            transition={{ duration: reducedMotion ? 0 : 0.22 }}
+            className="overflow-hidden"
+          >
+            <InlineSubtasks
+              id={subtasksId}
+              title={task.title}
+              subtasks={subtasks}
+              busyIds={busyIds}
+              onToggle={onToggle}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.li>
   );
 }

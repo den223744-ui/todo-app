@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { TaskListRead, TaskRead } from '../../api/schema';
+import type { TaskListRead, TaskRead, TaskListUpdate } from '../../api/schema';
 import { LIST_TITLES, TEXTS } from '../../constants/texts';
 import { countLists, countTags, type SmartList } from '../../domain/smartLists';
 import { compareLists, countByList } from '../../domain/taskLists';
@@ -11,6 +11,7 @@ import { ListFolderIcon } from './ListFolderIcon';
 import { NewListForm } from './NewListForm';
 import { SidebarLink } from './SidebarLink';
 import { SmartListIcon } from './SmartListIcon';
+import { SidebarListItem } from './SidebarListItem';
 
 /** Today first, as in the mockup. */
 const NAV_ORDER: readonly SmartList[] = ['today', 'inbox', 'upcoming', 'overdue', 'completed'];
@@ -23,6 +24,9 @@ interface SidebarProps {
   location: AppLocation;
   onNavigate: (view: View) => void;
   onCreateList?: (name: string) => void;
+  onUpdateList?: (id: string, patch: TaskListUpdate) => void;
+  onDeleteList?: (id: string) => void;
+  busyListIds?: ReadonlySet<string>;
 }
 
 export function Sidebar({
@@ -32,6 +36,9 @@ export function Sidebar({
   location,
   onNavigate,
   onCreateList,
+  onUpdateList,
+  onDeleteList,
+  busyListIds = new Set(),
 }: SidebarProps) {
   const listCounts = tasks ? countLists(tasks, now) : undefined;
   const tagCounts = tasks ? countTags(tasks) : [];
@@ -91,14 +98,31 @@ export function Sidebar({
                   <span className="min-w-0 flex-1 truncate">{list.name}</span>
                 </li>
               ) : (
-                <li key={list.id}>
-                  {link(
-                    { kind: 'taskList', listId: list.id },
-                    <ListFolderIcon color={list.color} />,
-                    list.name,
-                    perList?.get(list.id),
-                  )}
-                </li>
+                <SidebarListItem
+                  key={list.id}
+                  list={list}
+                  href={hrefFor({ kind: 'taskList', listId: list.id })}
+                  active={sameView({ kind: 'taskList', listId: list.id }, location.view)}
+                  count={perList?.get(list.id)}
+                  busy={busyListIds.has(list.id)}
+                  onNavigate={() => {
+                    onNavigate({ kind: 'taskList', listId: list.id });
+                  }}
+                  onUpdate={
+                    onUpdateList
+                      ? (patch) => {
+                          onUpdateList(list.id, patch);
+                        }
+                      : undefined
+                  }
+                  onDelete={
+                    onDeleteList
+                      ? () => {
+                          onDeleteList(list.id);
+                        }
+                      : undefined
+                  }
+                />
               ),
             )}
             {onCreateList && (

@@ -1,6 +1,26 @@
 @import '@fontsource-variable/roboto-condensed';
 @import 'tailwindcss';
 
+/* Actions remain in the tab order; touch has no hover to reveal them. */
+.task-row-action,
+.list-row-action {
+  opacity: 1;
+}
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .task-row-action,
+  .list-row-action {
+    opacity: 0;
+  }
+  .group\/task:hover .task-row-action,
+  .group\/task:focus-within .task-row-action,
+  .task-row-action.is-selected,
+  .list-row:hover .list-row-action,
+  .list-row:focus-within .list-row-action,
+  .list-row-action[aria-expanded='true'] {
+    opacity: 1;
+  }
+}
+
 /*
  * Design tokens. Warm cream neutrals, an orange accent (progress, highlights)
  * and a calm blue for checkboxes and links, as in the mockup. Components use
