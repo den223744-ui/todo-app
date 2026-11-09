@@ -7,6 +7,9 @@ import { makeTask } from '../src/test/makeTask';
 /** In-memory API for list/create/update/delete; no request reaches a real database. */
 async function fakeServer(page: Page, initial: TaskRead[]) {
   let tasks = [...initial];
+  // No real backend in CI: the lists request must be answered too, or the
+  // list stays on its skeleton (it waits for tasks and lists).
+  await page.route('**/api/lists**', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/tasks**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
