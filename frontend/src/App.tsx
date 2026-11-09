@@ -1,3 +1,5 @@
+import { AnimatePresence } from 'framer-motion';
+import { ViewTransition } from './components/ViewTransition';
 import { AppShell } from './components/AppShell';
 import { useMediaQuery } from './components/useMediaQuery';
 import { useUiStore } from './store/uiStore';
@@ -43,9 +45,17 @@ export function App() {
   const isToday = location.view.kind === 'list' && location.view.list === 'today';
   const today = toLocalDateString(now);
   const day = location.day ?? today;
+  const viewKey = JSON.stringify([location.view, day]);
 
   // The right column: an open task's details, else the day's timeline on Today.
-  const side = location.taskId ? <TaskDetailsContainer /> : isToday ? <TimelineContainer /> : null;
+  const side = (
+    <>
+      <AnimatePresence initial={false}>
+        {location.taskId && <TaskDetailsContainer key="details" />}
+      </AnimatePresence>
+      {!location.taskId && isToday && <TimelineContainer />}
+    </>
+  );
 
   return (
     <AppShell
@@ -73,16 +83,22 @@ export function App() {
             {!mobile && <SearchField />}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <h1 className="font-display text-[28px] leading-tight font-extrabold tracking-tight text-ink first-letter:uppercase md:text-[42px]">
-              {isToday ? (
-                <>
-                  {day === today && <span className="sr-only">{title}, </span>}
-                  {dateFormat.format(parseLocalDate(day) ?? now)}
-                </>
-              ) : (
-                title
-              )}
-            </h1>
+            <ViewTransition viewKey={viewKey} day={day}>
+              <h1
+                tabIndex={-1}
+                data-view-heading
+                className="font-display text-[28px] leading-tight font-extrabold tracking-tight text-ink first-letter:uppercase md:text-[42px]"
+              >
+                {isToday ? (
+                  <>
+                    {day === today && <span className="sr-only">{title}, </span>}
+                    {dateFormat.format(parseLocalDate(day) ?? now)}
+                  </>
+                ) : (
+                  title
+                )}
+              </h1>
+            </ViewTransition>
             {isToday && (
               <DayNav
                 day={day}
@@ -94,35 +110,41 @@ export function App() {
             )}
           </div>
         </div>
-        {isToday && tasks && <TodayStats tasks={tasks} now={now} day={day} />}
-        <QuickAdd />
-        {isToday && narrow && !location.query.trim() ? (
-          <>
-            <DayViewTabs />
-            <div
-              role="tabpanel"
-              id="day-panel-list"
-              aria-labelledby="day-tab-list"
-              hidden={dayView !== 'list'}
-              tabIndex={0}
-            >
-              <TaskListContainer />
-            </div>
-            <div
-              role="tabpanel"
-              id="day-panel-timeline"
-              aria-labelledby="day-tab-timeline"
-              hidden={dayView !== 'timeline'}
-              tabIndex={0}
-            >
-              {dayView === 'timeline' && <TimelineContainer inline />}
-            </div>
-          </>
-        ) : (
-          <TaskListContainer />
+        {isToday && tasks && (
+          <ViewTransition viewKey={viewKey} day={day}>
+            <TodayStats tasks={tasks} now={now} day={day} />
+          </ViewTransition>
         )}
+        <QuickAdd />
+        <ViewTransition viewKey={viewKey} day={day}>
+          {isToday && narrow && !location.query.trim() ? (
+            <>
+              <DayViewTabs />
+              <div
+                role="tabpanel"
+                id="day-panel-list"
+                aria-labelledby="day-tab-list"
+                hidden={dayView !== 'list'}
+                tabIndex={0}
+              >
+                <TaskListContainer snapshot={location} />
+              </div>
+              <div
+                role="tabpanel"
+                id="day-panel-timeline"
+                aria-labelledby="day-tab-timeline"
+                hidden={dayView !== 'timeline'}
+                tabIndex={0}
+              >
+                {dayView === 'timeline' && <TimelineContainer inline snapshot={location} />}
+              </div>
+            </>
+          ) : (
+            <TaskListContainer snapshot={location} />
+          )}
+        </ViewTransition>
       </div>
-      <Toaster />
+      {!(location.taskId && narrow) && <Toaster />}
       <UndoShortcut />
       <GlobalShortcuts />
       <CommandPalette />

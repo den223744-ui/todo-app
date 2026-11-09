@@ -252,7 +252,8 @@ export function SidebarListItem({
             setConfirming(false);
             onDelete?.();
             requestAnimationFrame(() => {
-              document.querySelector<HTMLElement>('[data-quick-add-input]')?.focus();
+              const target = document.querySelector<HTMLElement>('[data-sidebar-today]');
+              if (target && !target.closest('[role="dialog"]')) target.focus();
             });
           }}
         />

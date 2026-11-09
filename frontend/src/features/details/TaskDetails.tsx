@@ -1,3 +1,5 @@
+import { motion, useReducedMotion } from 'framer-motion';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
 import { useId, useState } from 'react';
 
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
@@ -52,6 +54,7 @@ export function TaskDetails({
   onCreateSubtask,
   onDelete,
 }: TaskDetailsProps) {
+  const reduced = useReducedMotion();
   const ids = useId();
   // Drafts follow changes made elsewhere, but never over the user's own edits.
   const titleDraft = useSyncedDraft(task.title);
@@ -76,21 +79,23 @@ export function TaskDetails({
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-2">
-        <input
-          type="checkbox"
+        <TaskCheckbox
           checked={completed}
           aria-disabled={busyIds.has(task.id) || undefined}
           aria-label={completed ? TEXTS.reopenTask(task.title) : TEXTS.completeTask(task.title)}
           onChange={() => {
             if (!busyIds.has(task.id)) onUpdate(task, { completed: !completed });
           }}
-          className="mt-2.5 size-4 shrink-0 cursor-pointer accent-check"
+          className="mt-2.5"
         />
         <div className="min-w-0 flex-1">
           <label htmlFor={`${ids}-title`} className="sr-only">
             {EDIT_TEXTS.title}
           </label>
-          <input
+          <motion.input
+            initial={false}
+            animate={{ textDecorationColor: completed ? 'var(--ink-faint)' : 'transparent' }}
+            transition={{ duration: reduced ? 0 : 0.18, ease: 'easeOut' }}
             id={`${ids}-title`}
             type="text"
             value={title}
@@ -113,8 +118,8 @@ export function TaskDetails({
                 setIssue(null);
               }
             }}
-            className={`w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-[22px] font-bold hover:border-line focus:border-check ${
-              completed ? 'text-ink-faint line-through' : ''
+            className={`w-full rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-[22px] font-bold hover:border-line focus:border-check line-through ${
+              completed ? 'text-ink-faint' : ''
             }`}
           />
           {issueFor('title') && (

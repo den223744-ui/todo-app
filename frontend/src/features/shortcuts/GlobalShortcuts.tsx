@@ -55,7 +55,9 @@ export function GlobalShortcuts() {
           'input, textarea, select, [contenteditable]:not([contenteditable="false"])',
         ),
       );
-      const modal = Boolean(document.querySelector('[aria-modal="true"], dialog[open]'));
+      const modal = [...document.querySelectorAll('[aria-modal="true"], dialog[open]')].some(
+        (element) => !element.closest('[aria-hidden="true"], [inert]'),
+      );
       const shortcut = resolveShortcut(event, {
         editable,
         paletteOpen: state.paletteOpen,

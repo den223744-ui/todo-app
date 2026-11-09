@@ -1,3 +1,6 @@
+import { AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
+import { taskPresentationKey } from './taskPresentation';
 import type { TaskListRead, TaskRead, TaskUpdate } from '../../api/schema';
 import { SEARCH_TEXTS, TEXTS } from '../../constants/texts';
 import type { TaskGroup } from '../../domain/taskGroups';
@@ -48,6 +51,7 @@ export function TaskList({
   onMoveToToday,
 }: TaskListProps) {
   const reorder = useReorderTasks();
+  const client = useQueryClient();
   const byId = new Map(lists.map((list) => [list.id, list]));
   return (
     // Each group is a labelled section; a plain div may not carry aria-label.
@@ -93,38 +97,40 @@ export function TaskList({
               }}
             >
               <ul className="@container divide-y divide-line rounded-2xl border border-line bg-transparent">
-                {group.tasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    sortable={
-                      sortable &&
-                      task.completed_at === null &&
-                      !task.id.startsWith(OPTIMISTIC_ID_PREFIX)
-                    }
-                    layoutVersion={layoutVersion}
-                    location={location}
-                    now={now}
-                    busy={busyIds.has(task.id)}
-                    onToggle={onToggle}
-                    onOpen={onOpen}
-                    editing={editingId === task.id}
-                    onStartEdit={onStartEdit}
-                    onRename={onRename}
-                    onStopEdit={onStopEdit}
-                    list={task.list_id ? byId.get(task.list_id) : undefined}
-                    onDelete={onDelete}
-                    subtasks={selectSubtasks(tasks, task.id)}
-                    busyIds={busyIds}
-                    timeOnly={
-                      group.key === 'tomorrow' ||
-                      (!location.query.trim() &&
-                        location.view.kind === 'list' &&
-                        location.view.list === 'upcoming')
-                    }
-                    onMoveToToday={onMoveToToday}
-                  />
-                ))}
+                <AnimatePresence initial={false}>
+                  {group.tasks.map((task) => (
+                    <TaskRow
+                      key={taskPresentationKey(client, task.id)}
+                      task={task}
+                      sortable={
+                        sortable &&
+                        task.completed_at === null &&
+                        !task.id.startsWith(OPTIMISTIC_ID_PREFIX)
+                      }
+                      layoutVersion={layoutVersion}
+                      location={location}
+                      now={now}
+                      busy={busyIds.has(task.id)}
+                      onToggle={onToggle}
+                      onOpen={onOpen}
+                      editing={editingId === task.id}
+                      onStartEdit={onStartEdit}
+                      onRename={onRename}
+                      onStopEdit={onStopEdit}
+                      list={task.list_id ? byId.get(task.list_id) : undefined}
+                      onDelete={onDelete}
+                      subtasks={selectSubtasks(tasks, task.id)}
+                      busyIds={busyIds}
+                      timeOnly={
+                        group.key === 'tomorrow' ||
+                        (!location.query.trim() &&
+                          location.view.kind === 'list' &&
+                          location.view.list === 'upcoming')
+                      }
+                      onMoveToToday={onMoveToToday}
+                    />
+                  ))}
+                </AnimatePresence>
               </ul>
             </SortableTaskGroup>
           </section>

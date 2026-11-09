@@ -161,9 +161,7 @@ test('quick add shows the hidden destination and opens the task from its toast o
   await expect(toasts.getByRole('button', { name: 'Показать' })).toHaveCount(0);
 });
 
-test('quick add to a visible user list names it and the plain toast lasts four seconds', async ({
-  page,
-}) => {
+test('quick add to a visible user list names it and Undo lasts five seconds', async ({ page }) => {
   await mockWorkspace(page);
   await page.goto('/?listId=work');
   const input = page.getByRole('textbox', { name: 'Новая задача' });
@@ -173,7 +171,12 @@ test('quick add to a visible user list names it and the plain toast lasts four s
   await expect(message).toBeVisible();
   await expect(page.getByRole('button', { name: 'Показать' })).toHaveCount(0);
   await page.clock.runFor(4_000);
-  await expect(message).toHaveCount(0);
+  await expect(message).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Отменить' })).toBeVisible();
+  await page.clock.runFor(1_000);
+  // At five seconds the offer is gone: the leaving toast is aria-hidden and inert
+  // at once, while its exit animation may still be running on the fake clock.
+  await expect(page.getByRole('button', { name: 'Отменить' })).toHaveCount(0);
 });
 
 test('quick add toast opens an overdue task on Today', async ({ page }) => {

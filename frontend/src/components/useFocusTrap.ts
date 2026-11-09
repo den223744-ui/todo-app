@@ -17,7 +17,19 @@ export function useFocusTrap(ref: RefObject<HTMLElement>, active: boolean): void
     if (!active || !container) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return;
-      const focusable = [...container.querySelectorAll<HTMLElement>(FOCUSABLE)];
+      const topModal = [...document.querySelectorAll<HTMLElement>('[aria-modal="true"]')]
+        .filter((element) => !element.closest('[aria-hidden="true"], [inert]'))
+        .at(-1);
+      if (topModal && topModal !== container) return;
+      // Only what Tab can reach: not hidden by CSS (display: none) and not taken
+      // out of the order (roving tabindex="-1" radios and tabs).
+      const focusable = [...container.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+        (element) =>
+          element.tabIndex >= 0 &&
+          !element.closest('[hidden], [inert], [aria-hidden="true"]') &&
+          // jsdom has no checkVisibility; browsers do.
+          (!('checkVisibility' in element) || element.checkVisibility()),
+      );
       const first = focusable[0];
       const last = focusable.at(-1);
       if (!first || !last) {

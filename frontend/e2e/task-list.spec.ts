@@ -94,17 +94,15 @@ test('mobile drawer, dark theme and long content fit 375px', async ({ page }, te
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   await expect(page.getByRole('main').getByRole('checkbox')).toHaveCount(3);
-  for (const item of await page
-    .getByRole('main')
-    .locator('li:visible, a:visible, time:visible, span:visible')
-    .all()) {
-    const bounds = await item.boundingBox();
-    expect(bounds).not.toBeNull();
-    if (bounds) {
-      expect(bounds.x).toBeGreaterThanOrEqual(0);
-      expect(bounds.x + bounds.width).toBeLessThanOrEqual(375);
-    }
-  }
+  // One pass in the page: animated nodes may come and go between separate calls.
+  const outside = await page.getByRole('main').evaluate(
+    (main) =>
+      Array.from(main.querySelectorAll<HTMLElement>('li, a, time, span'))
+        .filter((element) => element.checkVisibility())
+        .map((element) => element.getBoundingClientRect())
+        .filter((box) => box.width > 0 && (box.left < 0 || box.right > 375)).length,
+  );
+  expect(outside).toBe(0);
   await page.screenshot({ path: testInfo.outputPath('tasks-mobile-dark.png'), fullPage: true });
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await page.getByRole('dialog').getByRole('link', { name: 'Предстоящие 1' }).click();

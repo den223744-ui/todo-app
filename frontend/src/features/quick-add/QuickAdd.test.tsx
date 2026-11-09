@@ -100,8 +100,9 @@ describe('QuickAdd', () => {
       expect(useToastStore.getState().toasts).toEqual([
         expect.objectContaining({
           message: TEXTS.quickAddAdded(LIST_TITLES.upcoming, 'пн, 9 нояб.'),
-          duration: 4_000,
-          action: undefined, // Tomorrow is already visible at the bottom of Today.
+          duration: 5_000,
+          action: { label: 'Отменить', undo: true, run: expect.any(Function) as () => void },
+          secondaryAction: undefined, // Tomorrow is already visible at the bottom of Today.
         }),
       ]);
     });
@@ -247,11 +248,12 @@ describe('QuickAdd', () => {
     const toast = useToastStore.getState().toasts[0];
     expect(toast).toMatchObject({
       message: 'Добавлено в «Предстоящие», пт, 13 нояб.',
-      duration: 4_000,
-      action: { label: TEXTS.quickAddShow },
+      duration: 5_000,
+      action: { label: 'Отменить', undo: true },
+      secondaryAction: { label: TEXTS.quickAddShow },
     });
-    expect(toast?.action?.undo).toBeUndefined();
-    act(() => toast?.action?.run());
+    expect(toast?.secondaryAction?.undo).toBeUndefined();
+    act(() => toast?.secondaryAction?.run());
     expect(parseLocation(window.location.search)).toEqual({
       view: { kind: 'list', list: 'upcoming' },
       query: '',
@@ -276,9 +278,9 @@ describe('QuickAdd', () => {
       response.resolve(created);
     });
     await waitFor(() => {
-      expect(useToastStore.getState().toasts).toHaveLength(1);
+      expect(useToastStore.getState().toasts[0]?.secondaryAction).toBeDefined();
     });
-    act(() => useToastStore.getState().toasts[0]?.action?.run());
+    act(() => useToastStore.getState().toasts[0]?.secondaryAction?.run());
     expect(parseLocation(window.location.search)).toMatchObject({
       view: { kind: 'list', list: 'today' },
       taskId: 'saved',
@@ -287,7 +289,7 @@ describe('QuickAdd', () => {
     queryClient.clear();
   });
 
-  it('names the open user list and omits the action for its visible task', async () => {
+  it('names the open user list and omits Show for its visible task and keeps Undo', async () => {
     window.history.replaceState(null, '', '/?listId=work');
     const created = makeTask({ id: 'saved', title: 'Отчёт', list_id: 'work' });
     vi.spyOn(api, 'createTask').mockResolvedValue(created);
@@ -300,7 +302,11 @@ describe('QuickAdd', () => {
     await userEvent.type(screen.getByRole('textbox'), 'Отчёт{Enter}');
     await waitFor(() => {
       expect(useToastStore.getState().toasts).toEqual([
-        expect.objectContaining({ message: 'Добавлено в «Работа»', action: undefined }),
+        expect.objectContaining({
+          message: 'Добавлено в «Работа»',
+          action: { label: 'Отменить', undo: true, run: expect.any(Function) as () => void },
+          secondaryAction: undefined,
+        }),
       ]);
     });
     queryClient.clear();
@@ -322,10 +328,12 @@ describe('QuickAdd', () => {
       expect(useToastStore.getState().toasts).toHaveLength(2);
     });
     expect(
-      useToastStore.getState().toasts.map((toast) => [toast.message, toast.action, toast.duration]),
+      useToastStore
+        .getState()
+        .toasts.map((toast) => [toast.message, toast.action?.label, toast.duration]),
     ).toEqual([
-      ['Добавлено в «Сегодня»', undefined, 4_000],
-      ['Добавлено в «Сегодня»', undefined, 4_000],
+      ['Добавлено в «Сегодня»', 'Отменить', 5_000],
+      ['Добавлено в «Сегодня»', 'Отменить', 5_000],
     ]);
     queryClient.clear();
   });
@@ -337,7 +345,10 @@ describe('QuickAdd', () => {
     vi.spyOn(api, 'listTasks').mockResolvedValue([created]);
     const { queryClient } = renderWithClient(<QuickAdd />);
     await userEvent.type(screen.getByRole('textbox'), 'Задача{Enter}');
-    expect(useToastStore.getState().toasts).toEqual([]); // Only saved tasks get success feedback.
+    expect(useToastStore.getState().toasts[0]).toMatchObject({
+      message: 'Добавлено',
+      action: { undo: true },
+    });
     act(() => {
       navigateTo({ view: { kind: 'list', list: 'upcoming' } });
     });
@@ -345,7 +356,7 @@ describe('QuickAdd', () => {
       response.resolve(created);
     });
     await waitFor(() => {
-      expect(useToastStore.getState().toasts[0]?.action?.label).toBe(TEXTS.quickAddShow);
+      expect(useToastStore.getState().toasts[0]?.secondaryAction?.label).toBe(TEXTS.quickAddShow);
     });
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     queryClient.clear();

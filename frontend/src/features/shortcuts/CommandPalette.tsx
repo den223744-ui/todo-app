@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion';
 import { Command } from 'cmdk';
 import { NavigationCommands } from './NavigationCommands';
 import { TaskCommands } from './TaskCommands';
@@ -39,98 +40,108 @@ export function CommandPalette() {
     run(() => {
       useUiStore.getState().setDayView('list');
       navigate({ view, query: '', taskId: null, day: day ?? null });
+      requestAnimationFrame(() =>
+        [...document.querySelectorAll<HTMLElement>('[data-view-heading]')]
+          .find((heading) => !heading.closest('[aria-hidden="true"]'))
+          ?.focus(),
+      );
     });
   };
-  if (!open) return null;
   return (
-    <ShortcutDialog title={D_TEXTS.palette} onClose={close}>
-      <Command label={D_TEXTS.commandPlaceholder}>
-        <Command.Input
-          value={input}
-          onValueChange={setInput}
-          placeholder={D_TEXTS.commandPlaceholder}
-          aria-label={D_TEXTS.commandPlaceholder}
-          className="min-h-12 w-full border-b border-line bg-transparent px-4 outline-none"
-        />
-        <Command.List
-          aria-label={D_TEXTS.commands}
-          className="command-list max-h-[60dvh] overflow-y-auto p-2"
-        >
-          <Command.Empty className="p-4 text-sm text-ink-muted">{D_TEXTS.noCommands}</Command.Empty>
-          <Command.Group heading={D_TEXTS.actions}>
-            <Command.Item
-              value={D_TEXTS.newTask}
-              onSelect={() => {
-                run(focusQuickAdd);
-              }}
+    <AnimatePresence>
+      {open && (
+        <ShortcutDialog key="dialog" title={D_TEXTS.palette} onClose={close}>
+          <Command label={D_TEXTS.commandPlaceholder}>
+            <Command.Input
+              value={input}
+              onValueChange={setInput}
+              placeholder={D_TEXTS.commandPlaceholder}
+              aria-label={D_TEXTS.commandPlaceholder}
+              className="min-h-12 w-full border-b border-line bg-transparent px-4 outline-none"
+            />
+            <Command.List
+              aria-label={D_TEXTS.commands}
+              className="command-list max-h-[60dvh] overflow-y-auto p-2"
             >
-              {D_TEXTS.newTask}
-            </Command.Item>
-            <Command.Item
-              value={D_TEXTS.search}
-              onSelect={() => {
-                run(focusSearch);
-              }}
-            >
-              {D_TEXTS.search}
-            </Command.Item>
-            <Command.Item
-              value={D_TEXTS.help}
-              onSelect={() => {
-                run(() => {
-                  useUiStore.getState().setHelpOpen(true);
-                });
-              }}
-            >
-              {D_TEXTS.help}
-            </Command.Item>
-          </Command.Group>
-          <NavigationCommands tasks={tasks} lists={lists} onGo={go} />
-          {task && !task.id.startsWith(OPTIMISTIC_ID_PREFIX) && (
-            <TaskCommands task={task} run={run} />
-          )}
-          <Command.Group heading={D_TEXTS.theme}>
-            {THEMES.map((value) => (
-              <Command.Item
-                key={value}
-                value={`theme-${value}`}
-                aria-current={theme === value ? 'true' : undefined}
-                keywords={[D_TEXTS.themes[value]]}
-                onSelect={() => {
-                  run(() => {
-                    setTheme(value);
-                  });
-                }}
-              >
-                <span>{D_TEXTS.themes[value]}</span>
-                <span aria-hidden="true" className="ml-auto">
-                  {theme === value ? '✓' : ''}
-                </span>
-              </Command.Item>
-            ))}
-          </Command.Group>
-          {input.trim() && (
-            <Command.Group heading={D_TEXTS.tasks}>
-              {searchTopLevelTasks(tasks, input)
-                .filter((task) => !task.id.startsWith(OPTIMISTIC_ID_PREFIX))
-                .map((task) => (
+              <Command.Empty className="p-4 text-sm text-ink-muted">
+                {D_TEXTS.noCommands}
+              </Command.Empty>
+              <Command.Group heading={D_TEXTS.actions}>
+                <Command.Item
+                  value={D_TEXTS.newTask}
+                  onSelect={() => {
+                    run(focusQuickAdd);
+                  }}
+                >
+                  {D_TEXTS.newTask}
+                </Command.Item>
+                <Command.Item
+                  value={D_TEXTS.search}
+                  onSelect={() => {
+                    run(focusSearch);
+                  }}
+                >
+                  {D_TEXTS.search}
+                </Command.Item>
+                <Command.Item
+                  value={D_TEXTS.help}
+                  onSelect={() => {
+                    run(() => {
+                      useUiStore.getState().setHelpOpen(true);
+                    });
+                  }}
+                >
+                  {D_TEXTS.help}
+                </Command.Item>
+              </Command.Group>
+              <NavigationCommands tasks={tasks} lists={lists} onGo={go} />
+              {task && !task.id.startsWith(OPTIMISTIC_ID_PREFIX) && (
+                <TaskCommands task={task} run={run} />
+              )}
+              <Command.Group heading={D_TEXTS.theme}>
+                {THEMES.map((value) => (
                   <Command.Item
-                    key={task.id}
-                    value={`task-result-${task.id}`}
-                    keywords={[task.title]}
+                    key={value}
+                    value={`theme-${value}`}
+                    aria-current={theme === value ? 'true' : undefined}
+                    keywords={[D_TEXTS.themes[value]]}
                     onSelect={() => {
                       run(() => {
-                        navigate({ taskId: task.id });
+                        setTheme(value);
                       });
                     }}
                   >
-                    {task.title}
+                    <span>{D_TEXTS.themes[value]}</span>
+                    <span aria-hidden="true" className="ml-auto">
+                      {theme === value ? '✓' : ''}
+                    </span>
                   </Command.Item>
                 ))}
-            </Command.Group>
-          )}
-        </Command.List>
-      </Command>
-    </ShortcutDialog>
+              </Command.Group>
+              {input.trim() && (
+                <Command.Group heading={D_TEXTS.tasks}>
+                  {searchTopLevelTasks(tasks, input)
+                    .filter((task) => !task.id.startsWith(OPTIMISTIC_ID_PREFIX))
+                    .map((task) => (
+                      <Command.Item
+                        key={task.id}
+                        value={`task-result-${task.id}`}
+                        keywords={[task.title]}
+                        onSelect={() => {
+                          run(() => {
+                            navigate({ taskId: task.id });
+                          });
+                        }}
+                      >
+                        {task.title}
+                      </Command.Item>
+                    ))}
+                </Command.Group>
+              )}
+            </Command.List>
+          </Command>
+        </ShortcutDialog>
+      )}
+    </AnimatePresence>
   );
 }

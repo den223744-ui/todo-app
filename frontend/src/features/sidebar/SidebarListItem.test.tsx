@@ -129,17 +129,23 @@ describe('sidebar list actions', () => {
     expect(within(dialog).getByRole('button', { name: 'Отмена' })).toHaveFocus();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }));
     expect(onDelete).not.toHaveBeenCalled();
-    expect(trigger).toHaveFocus();
+    await waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
     await show();
     fireEvent(
       screen.getByRole('alertdialog'),
       new Event('cancel', { bubbles: false, cancelable: true }),
     );
-    expect(trigger).toHaveFocus();
+    await waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
     await show();
     dialog = screen.getByRole('alertdialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Удалить' }));
-    expect(onDelete).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(onDelete).toHaveBeenCalledOnce();
+    });
     expect(screen.queryByRole('alertdialog')).toBeNull();
   });
   it('closes on outside pointer and Tab; pending list writes cannot open the menu', async () => {

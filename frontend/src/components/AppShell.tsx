@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion';
 import type { ReactNode } from 'react';
 
 import { TEXTS } from '../constants/texts';
@@ -32,7 +33,13 @@ export function AppShell({ sidebar, details, children, mobileSearch }: AppShellP
       >
         {sidebar}
       </aside>
-      {drawerOpen && <MobileDrawer onClose={closeDrawer}>{sidebar}</MobileDrawer>}
+      <AnimatePresence initial={false}>
+        {drawerOpen && (
+          <MobileDrawer key="drawer" onClose={closeDrawer}>
+            {sidebar}
+          </MobileDrawer>
+        )}
+      </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center gap-x-2 border-b border-line bg-sidebar px-2 py-2 md:hidden">

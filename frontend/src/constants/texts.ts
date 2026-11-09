@@ -46,8 +46,9 @@ export const TEXTS = {
   noList: 'Без списка',
   tomorrow: 'Завтра',
   dayAfterTomorrow: 'Послезавтра',
-  showSubtasks: (title: string) => `Показать подзадачи: ${title}`,
-  hideSubtasks: (title: string) => `Скрыть подзадачи: ${title}`,
+  /** Starts with the visible counter (WCAG 2.5.3: the name contains the visible label). */
+  subtasksToggle: (done: number, total: number, expanded: boolean, title: string) =>
+    `${String(done)}/${String(total)}, ${expanded ? 'скрыть' : 'показать'} подзадачи: ${title}`,
   subtasksFor: (title: string) => `Подзадачи: ${title}`,
   moveToToday: 'На сегодня',
   moveToTodayNamed: (title: string) => `Перенести на сегодня: ${title}`,
@@ -220,6 +221,12 @@ export const TIMELINE_TEXTS = {
 
 export const UNDO_TEXTS = {
   undo: 'Отменить',
+  added: 'Добавлено',
+  reopened: (title: string) => `Возвращено: «${title}»`,
+  changed: 'Изменено',
+  dateChanged: 'Срок изменён',
+  movedToTomorrow: 'Перенесено на завтра',
+  movedToList: (name: string) => `Перемещено в «${name}»`,
   completed: (title: string) => `Выполнено: «${title}»`,
   deleted: (title: string) => `Удалено: «${title}»`,
   movedToToday: 'Перенесено на сегодня',

@@ -101,7 +101,7 @@ test('mouse ordering persists after reload; dragging carries expanded subtasks',
     makeTask({ id: 'child', title: 'Шаг', parent_id: 'c' }),
   ]);
   await page.goto('/?list=inbox');
-  await page.getByRole('button', { name: 'Показать подзадачи: Третья задача' }).click();
+  await page.getByRole('button', { name: /показать подзадачи: Третья задача$/ }).click();
   const first = await page.locator('[data-task-row="a"]').boundingBox();
   const last = await page.locator('[data-task-row="c"]').boundingBox();
   if (!first || !last) throw new Error('Missing handles');
@@ -312,14 +312,16 @@ test.describe('375px touch layout', () => {
     await expect(handle).toHaveCSS('opacity', '1');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
     await expect(page.locator('[data-task-link="a"]')).toHaveCSS('word-break', 'normal');
-    const whole = await page.locator('[data-task-link="a"] span.text-ink').evaluate((element) => {
-      const text = element.firstChild;
-      if (!text) return false;
-      const range = document.createRange();
-      range.setStart(text, 0);
-      range.setEnd(text, 'Приготовить'.length);
-      return range.getClientRects().length === 1;
-    });
+    const whole = await page
+      .locator('[data-task-link="a"] [data-task-title]')
+      .evaluate((element) => {
+        const text = element.firstChild;
+        if (!text) return false;
+        const range = document.createRange();
+        range.setStart(text, 0);
+        range.setEnd(text, 'Приготовить'.length);
+        return range.getClientRects().length === 1;
+      });
     expect(whole).toBe(true);
     await page.keyboard.press('/');
     await expect(page.getByRole('searchbox')).toBeFocused();

@@ -1,3 +1,6 @@
+import { useInertOnExit } from '../../components/useInertOnExit';
+import { TaskTitle } from '../../components/TaskTitle';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useRef } from 'react';
 
@@ -65,6 +68,7 @@ export function TaskRow({
   layoutVersion,
 }: TaskRowProps) {
   const reducedMotion = useReducedMotion();
+  const { ref: rowRef, present } = useInertOnExit<HTMLLIElement>();
   const subtasksId = useId();
   const expanded = useUiStore((state) => state.expandedTaskIds.has(task.id));
   const toggleSubtasks = useUiStore((state) => state.toggleSubtasks);
@@ -105,11 +109,12 @@ export function TaskRow({
     // gets its own line, the date goes under it. By the list's width, not the window's.
     <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 @md:flex-nowrap">
       <span className="flex min-w-0 flex-1 basis-full items-center gap-2 @md:basis-auto">
-        <span
-          className={`min-w-0 text-[13.5px] leading-5 wrap-break-word ${completed ? 'text-ink-faint line-through' : 'text-ink'}`}
+        <TaskTitle
+          completed={completed}
+          className="min-w-0 text-[13.5px] leading-5 wrap-break-word"
         >
           {task.title}
-        </span>
+        </TaskTitle>
         {task.priority > 0 && <PriorityMark priority={task.priority} />}
       </span>
       {(list || task.tags.length > 0) && (
@@ -151,8 +156,16 @@ export function TaskRow({
   );
 
   return (
-    <li
-      ref={sort.setNodeRef}
+    <motion.li
+      initial={reducedMotion || dragging ? false : { height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={reducedMotion || dragging ? {} : { height: 0, opacity: 0 }}
+      transition={{ duration: reducedMotion || dragging ? 0 : 0.2, ease: 'easeOut' }}
+      aria-hidden={!present || undefined}
+      ref={(element) => {
+        sort.setNodeRef(element);
+        rowRef.current = element;
+      }}
       data-task-row={task.id}
       style={{
         transform: CSS.Transform.toString(sort.transform),
@@ -164,12 +177,12 @@ export function TaskRow({
       onFocus={() => {
         selectTask(task.id);
       }}
-      className={`group/task rounded-xl ${sort.isDragging ? 'bg-surface' : ''}`}
+      className={`group/task overflow-clip rounded-xl ${sort.isDragging ? 'bg-surface' : ''}`}
     >
       <motion.div
         layout={reducedMotion || dragging ? false : 'position'}
         layoutDependency={layoutVersion}
-        transition={{ layout: { duration: 0.22 } }}
+        transition={{ layout: { type: 'tween', duration: 0.22, ease: 'easeOut' } }}
         className={
           selected ? 'rounded-xl outline-1 -outline-offset-1 outline-check' : 'hover:bg-subtle'
         }
@@ -204,8 +217,7 @@ export function TaskRow({
             </button>
           )}
           <label className="flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center pl-1">
-            <input
-              type="checkbox"
+            <TaskCheckbox
               checked={completed}
               // aria-disabled, not disabled: a disabled element loses keyboard focus.
               aria-disabled={locked || undefined}
@@ -213,7 +225,6 @@ export function TaskRow({
               onChange={() => {
                 if (!locked) onToggle(task);
               }}
-              className="size-4 cursor-pointer accent-check aria-disabled:cursor-wait"
             />
           </label>
           {unsaved ? (
@@ -233,7 +244,7 @@ export function TaskRow({
           ) : (
             <a
               ref={linkRef}
-              data-task-link={task.id}
+              data-task-link={present ? task.id : undefined}
               href={serializeLocation({ ...location, taskId: task.id })}
               aria-current={selected ? 'true' : undefined}
               onFocus={() => {
@@ -262,9 +273,7 @@ export function TaskRow({
               type="button"
               aria-expanded={expanded}
               aria-controls={expanded ? subtasksId : undefined}
-              aria-label={
-                expanded ? TEXTS.hideSubtasks(task.title) : TEXTS.showSubtasks(task.title)
-              }
+              aria-label={TEXTS.subtasksToggle(progress.done, progress.total, expanded, task.title)}
               onClick={() => {
                 toggleSubtasks(task.id);
               }}
@@ -301,7 +310,7 @@ export function TaskRow({
                 onMoveToToday(task);
                 requestAnimationFrame(() => {
                   (
-                    linkRef.current ??
+                    (linkRef.current?.closest('[aria-hidden="true"]') ? null : linkRef.current) ??
                     next ??
                     document.querySelector<HTMLElement>('[data-quick-add-input]')
                   )?.focus();
@@ -359,6 +368,6 @@ export function TaskRow({
           )}
         </AnimatePresence>
       </motion.div>
-    </li>
+    </motion.li>
   );
 }

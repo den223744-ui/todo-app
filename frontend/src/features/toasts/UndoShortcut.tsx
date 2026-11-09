@@ -33,7 +33,11 @@ export function UndoShortcut() {
         state.paletteOpen ||
         state.helpOpen ||
         state.drawerOpen ||
-        document.querySelector('[aria-modal="true"], dialog[open]')
+        [
+          ...document.querySelectorAll(
+            '[aria-modal="true"]:not([data-task-details]), dialog[open]',
+          ),
+        ].some((element) => !element.closest('[aria-hidden="true"], [inert]'))
       )
         return;
       const isUndo =

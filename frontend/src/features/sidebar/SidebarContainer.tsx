@@ -1,3 +1,5 @@
+import { TEXTS } from '../../constants/texts';
+import { useMediaQuery } from '../../components/useMediaQuery';
 import { useUiStore } from '../../store/uiStore';
 import { useMutationState } from '@tanstack/react-query';
 import { useCreateList, useLists, useUpdateList, useDeleteList } from '../lists/useLists';
@@ -11,6 +13,7 @@ import { Sidebar } from './Sidebar';
 
 /** Wires the sidebar to server data, the clock and the URL. */
 export function SidebarContainer() {
+  const mobile = useMediaQuery('(max-width: 767.98px)');
   const { data } = useTasks();
   const { data: lists } = useLists();
   const createList = useCreateList();
@@ -47,6 +50,13 @@ export function SidebarContainer() {
         closeDrawer();
         void deleteList.mutateAsync(id).then(
           () => {
+            requestAnimationFrame(() => {
+              document
+                .querySelector<HTMLElement>(
+                  mobile ? `button[aria-label="${TEXTS.openMenu}"]` : '[data-sidebar-today]',
+                )
+                ?.focus();
+            });
             const current = parseLocation(window.location.search);
             if (current.view.kind === 'taskList' && current.view.listId === id)
               navigate({

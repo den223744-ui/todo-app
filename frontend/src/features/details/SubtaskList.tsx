@@ -1,3 +1,8 @@
+import { AnimatedListItem } from '../../components/AnimatedListItem';
+import { AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
+import { taskPresentationKey } from '../tasks/taskPresentation';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
 import { useId, useState } from 'react';
 
 import type { TaskRead, TaskUpdate } from '../../api/schema';
@@ -27,6 +32,7 @@ export function SubtaskList({
   onCreate,
   onDelete,
 }: SubtaskListProps) {
+  const client = useQueryClient();
   const [draft, setDraft] = useState('');
   const [issue, setIssue] = useState<EditIssue | null>(null);
   const addId = useId();
@@ -59,52 +65,58 @@ export function SubtaskList({
         </span>
       </h3>
       <ul className="space-y-1">
-        {subtasks.map((subtask) => {
-          // Not saved yet: it has no server id to write to. Shown, but locked
-          // until the server answers (the row then remounts under its real id).
-          const unsaved = subtask.id.startsWith(OPTIMISTIC_ID_PREFIX);
-          const locked = unsaved || busyIds.has(subtask.id);
-          return (
-            <li
-              key={subtask.id}
-              aria-busy={unsaved || undefined}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="checkbox"
-                checked={subtask.completed_at !== null}
-                aria-disabled={locked || undefined}
-                aria-label={
-                  subtask.completed_at === null
-                    ? TEXTS.completeTask(subtask.title)
-                    : TEXTS.reopenTask(subtask.title)
-                }
-                onChange={() => {
-                  if (!locked) onUpdate(subtask, { completed: subtask.completed_at === null });
-                }}
-                className="size-4 shrink-0 cursor-pointer accent-check aria-disabled:cursor-default"
-              />
-              {unsaved ? (
-                <span className="min-w-0 flex-1 truncate px-1.5 py-1 text-sm text-ink-muted">
-                  {subtask.title}
-                </span>
-              ) : (
-                <SubtaskTitle subtask={subtask} onUpdate={onUpdate} />
-              )}
-              <button
-                type="button"
-                aria-label={EDIT_TEXTS.deleteSubtask(subtask.title)}
-                disabled={unsaved}
-                onClick={() => {
-                  onDelete(subtask);
-                }}
-                className="flex size-8 shrink-0 items-center justify-center rounded text-ink-muted hover:bg-subtle hover:text-danger disabled:invisible"
-              >
-                ×
-              </button>
-            </li>
-          );
-        })}
+        <AnimatePresence initial={false}>
+          {subtasks.map((subtask) => {
+            // Not saved yet: it has no server id to write to. Shown, but locked
+            // until the server answers (the row then remounts under its real id).
+            const unsaved = subtask.id.startsWith(OPTIMISTIC_ID_PREFIX);
+            const locked = unsaved || busyIds.has(subtask.id);
+            return (
+              <AnimatedListItem key={taskPresentationKey(client, subtask.id)} busy={unsaved}>
+                <TaskCheckbox
+                  checked={subtask.completed_at !== null}
+                  aria-disabled={locked || undefined}
+                  aria-label={
+                    subtask.completed_at === null
+                      ? TEXTS.completeTask(subtask.title)
+                      : TEXTS.reopenTask(subtask.title)
+                  }
+                  onChange={() => {
+                    if (!locked) onUpdate(subtask, { completed: subtask.completed_at === null });
+                  }}
+                />
+                {unsaved ? (
+                  <span className="min-w-0 flex-1 truncate px-1.5 py-1 text-sm text-ink-muted">
+                    {subtask.title}
+                  </span>
+                ) : (
+                  <SubtaskTitle subtask={subtask} onUpdate={onUpdate} />
+                )}
+                <button
+                  type="button"
+                  aria-label={EDIT_TEXTS.deleteSubtask(subtask.title)}
+                  disabled={unsaved}
+                  onClick={(event) => {
+                    const row = event.currentTarget.closest('li');
+                    const next =
+                      row?.nextElementSibling?.querySelector<HTMLElement>('input[type="text"]') ??
+                      row?.previousElementSibling?.querySelector<HTMLElement>(
+                        'input[type="text"]',
+                      ) ??
+                      document.querySelector<HTMLElement>(
+                        `input[aria-label="${EDIT_TEXTS.addSubtask}"]`,
+                      );
+                    onDelete(subtask);
+                    requestAnimationFrame(() => next?.focus());
+                  }}
+                  className="flex size-8 shrink-0 items-center justify-center rounded text-ink-muted hover:bg-subtle hover:text-danger disabled:invisible"
+                >
+                  ×
+                </button>
+              </AnimatedListItem>
+            );
+          })}
+        </AnimatePresence>
       </ul>
       {canAdd && (
         <div className="mt-2">

@@ -1,3 +1,5 @@
+import { TaskTitle } from '../../components/TaskTitle';
+import { TaskCheckbox } from '../../components/TaskCheckbox';
 import type { TaskRead } from '../../api/schema';
 import { TEXTS } from '../../constants/texts';
 import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
@@ -20,8 +22,7 @@ export function InlineSubtasks({ id, title, subtasks, busyIds, onToggle }: Inlin
         return (
           <li key={subtask.id} aria-busy={unsaved || undefined}>
             <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm">
-              <input
-                type="checkbox"
+              <TaskCheckbox
                 checked={completed}
                 aria-disabled={locked || undefined}
                 aria-label={
@@ -30,13 +31,10 @@ export function InlineSubtasks({ id, title, subtasks, busyIds, onToggle }: Inlin
                 onChange={() => {
                   if (!locked) onToggle(subtask);
                 }}
-                className="size-4 shrink-0 cursor-pointer accent-check aria-disabled:cursor-wait"
               />
-              <span
-                className={`min-w-0 wrap-anywhere ${completed ? 'text-ink-faint line-through' : 'text-ink-muted'}`}
-              >
+              <TaskTitle completed={completed} className="min-w-0 wrap-break-word text-ink-muted">
                 {subtask.title}
-              </span>
+              </TaskTitle>
             </label>
           </li>
         );

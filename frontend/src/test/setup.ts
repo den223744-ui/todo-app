@@ -6,6 +6,7 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach } from 'vitest';
 
 // jsdom has no geometry/scrolling implementation.
+if (typeof window !== 'undefined') window.scrollTo = () => {};
 if (typeof Element !== 'undefined' && !('scrollIntoView' in Element.prototype)) {
   Object.defineProperty(Element.prototype, 'scrollIntoView', {
     configurable: true,

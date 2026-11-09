@@ -31,6 +31,7 @@ import {
   fieldsWrittenLater,
   pendingTaskWrites,
 } from './pendingMutations';
+import { preserveTaskKey } from './taskPresentation';
 import { taskKeys } from './taskQueries';
 import { enqueueTaskWrite } from './writeQueue';
 
@@ -97,6 +98,7 @@ export function createTaskMutation(
       return { optimisticId };
     },
     onSuccess: (created, _input, context) => {
+      preserveTaskKey(deps.queryClient, created.id, context.optimisticId);
       write((tasks) => replaceTask(tasks, context.optimisticId, created));
     },
     onError: (_error, _input, context) => {

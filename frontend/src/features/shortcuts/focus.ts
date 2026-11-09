@@ -23,7 +23,9 @@ export function focusTask(id: string | null): void {
     )
       return;
     const link = [...document.querySelectorAll<HTMLElement>('[data-task-link]')].find(
-      (element) => element.dataset.taskLink === id,
+      (element) =>
+        element.dataset.taskLink === id &&
+        !element.closest('[hidden], [inert], [aria-hidden="true"]'),
     );
     if (link) {
       link.focus({ preventScroll: true });
@@ -34,7 +36,7 @@ export function focusTask(id: string | null): void {
 
 export function focusAfterTask(id: string): void {
   const links = [...document.querySelectorAll<HTMLElement>('[data-task-link]')].filter(
-    (link) => !link.closest('[hidden]'),
+    (link) => !link.closest('[hidden], [inert], [aria-hidden="true"]'),
   );
   const index = links.findIndex((link) => link.dataset.taskLink === id);
   const neighbour = links[index + 1] ?? links[index - 1];

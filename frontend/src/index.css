@@ -85,10 +85,10 @@
   --line: #ece4de;
   --ink: #26221f;
   --ink-muted: #6b6461;
-  --ink-faint: #7a7370;
+  --ink-faint: #716a67;
   --accent: #ed7431; /* fill: progress ring, now-markers */
   --accent-hover: #d9621f;
-  --accent-fg: #ffffff;
+  --accent-fg: #26221f;
   --accent-ink: #b0480f; /* orange text and icons */
   --accent-soft: #fdeadf;
   --check: #4f69a6; /* checked checkbox, focus ring */
@@ -279,5 +279,26 @@
   :focus-visible {
     outline: 2px solid var(--check);
     outline-offset: 2px;
+  }
+}
+
+/* Deliberately outside layers so outline-none utilities cannot hide keyboard focus. */
+:focus-visible {
+  outline: 2px solid var(--check);
+  outline-offset: 2px;
+}
+.task-checkbox:focus-visible {
+  outline-offset: 3px;
+}
+[cmdk-root]:has([cmdk-input]:focus-visible) .command-list [cmdk-item][data-selected='true'] {
+  outline: 2px solid var(--check);
+  outline-offset: -2px;
+}
+@media (forced-colors: active) {
+  .task-checkbox {
+    appearance: auto;
+  }
+  .task-checkbox + svg {
+    visibility: hidden;
   }
 }

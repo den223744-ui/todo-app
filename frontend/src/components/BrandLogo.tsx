@@ -3,15 +3,14 @@ import { motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import { TEXTS } from '../constants/texts';
 
 const LETTER = {
-  rest: { y: 0, rotate: 0 },
+  rest: { opacity: 1 },
   play: (index: number) => ({
-    y: [0, -5, 1.5, 0],
-    rotate: [0, index % 2 === 0 ? -9 : 9, index % 2 === 0 ? 3 : -3, 0],
-    transition: { duration: 0.55, delay: index * 0.05, ease: 'easeOut' as const },
+    opacity: [1, 0.65, 1],
+    transition: { duration: 0.16, delay: index * 0.02, ease: 'easeOut' as const },
   }),
 };
 
-/** The wordmark; a click makes its letters hop in a little wave (not with reduced motion). */
+/** The wordmark; a click softly fades its letters in a short wave (not with reduced motion). */
 export function BrandLogo({ className = '' }: { className?: string }) {
   const controls = useAnimationControls();
   const reduceMotion = useReducedMotion();

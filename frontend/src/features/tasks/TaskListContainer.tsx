@@ -17,8 +17,9 @@ import { useLists } from '../lists/useLists';
 import { useTaskActions } from './useTaskActions';
 import { useTasks, useUpdateTask } from './useTasks';
 import { focusAfterTask } from '../shortcuts/focus';
+import type { AppLocation } from '../../domain/view';
 
-export function TaskListContainer() {
+export function TaskListContainer({ snapshot }: { snapshot?: AppLocation }) {
   const { data, isPending, isError, refetch } = useTasks();
   const update = useUpdateTask();
   const actions = useTaskActions();
@@ -30,7 +31,9 @@ export function TaskListContainer() {
     }).filter((id): id is string => id !== null),
   );
   const now = useNow();
-  const [location, navigate] = useAppLocation();
+  const [current, navigate] = useAppLocation();
+  // An exiting view keeps its original filters until the cross-fade finishes.
+  const location = snapshot ?? current;
   const editingId = useUiStore((state) => state.editingTaskId);
   const startEditing = useUiStore((state) => state.startEditing);
   const stopEditing = useUiStore((state) => state.stopEditing);
@@ -76,42 +79,42 @@ export function TaskListContainer() {
       {isPending ? (
         <TaskListSkeleton />
       ) : (
-        data &&
-        (groups.length === 0 ? (
-          <TaskListEmpty location={location} />
-        ) : (
-          <TaskList
-            dayClosed={closed}
-            groups={groups}
-            now={now}
-            location={location}
-            busyIds={busyIds}
-            onToggle={(task) => {
-              if (task.parent_id === null && useUiStore.getState().selectedTaskId === task.id)
+        data && (
+          <>
+            {groups.length === 0 && <TaskListEmpty location={location} />}
+            <TaskList
+              dayClosed={closed}
+              groups={groups}
+              now={now}
+              location={location}
+              busyIds={busyIds}
+              onToggle={(task) => {
+                if (task.parent_id === null && useUiStore.getState().selectedTaskId === task.id)
+                  focusAfterTask(task.id);
+                actions.toggle(task);
+              }}
+              onOpen={(taskId) => {
+                navigate({ taskId });
+              }}
+              editingId={editingId}
+              onStartEdit={startEditing}
+              onRename={(task, patch) => {
+                update.mutate({ id: task.id, patch });
+              }}
+              onStopEdit={stopEditing}
+              lists={lists}
+              tasks={data}
+              onMoveToToday={(task) => {
+                actions.moveToToday([task], new Date());
+              }}
+              onDelete={(task) => {
                 focusAfterTask(task.id);
-              actions.toggle(task);
-            }}
-            onOpen={(taskId) => {
-              navigate({ taskId });
-            }}
-            editingId={editingId}
-            onStartEdit={startEditing}
-            onRename={(task, patch) => {
-              update.mutate({ id: task.id, patch });
-            }}
-            onStopEdit={stopEditing}
-            lists={lists}
-            tasks={data}
-            onMoveToToday={(task) => {
-              actions.moveToToday([task], new Date());
-            }}
-            onDelete={(task) => {
-              focusAfterTask(task.id);
-              actions.destroy(task);
-              navigate({ taskId: null });
-            }}
-          />
-        ))
+                actions.destroy(task);
+                navigate({ taskId: null });
+              }}
+            />
+          </>
+        )
       )}
     </div>
   );

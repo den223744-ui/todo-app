@@ -62,7 +62,9 @@ describe('undo', () => {
         ['t1', { completed: false }],
       ]);
     });
-    expect(within(toasts).queryByText('Выполнено: «Полить цветы»')).toBeNull();
+    await waitFor(() => {
+      expect(within(toasts).queryByText('Выполнено: «Полить цветы»')).toBeNull();
+    });
     queryClient.clear();
   });
 
@@ -84,16 +86,19 @@ describe('undo', () => {
     queryClient.clear();
   });
 
-  it('reopening a task offers no undo', async () => {
+  it('reopening a task offers undo that completes it again', async () => {
     const done = makeTask({ id: 'd1', title: 'Готово', completed_at: '2026-11-09T09:00:00Z' });
     window.history.replaceState(null, '', '/?list=completed');
     vi.spyOn(api, 'listTasks').mockResolvedValue([done]);
-    vi.spyOn(api, 'updateTask').mockResolvedValue({ ...done, completed_at: null });
+    const update = vi.spyOn(api, 'updateTask').mockResolvedValue({ ...done, completed_at: null });
     const { queryClient } = renderWithClient(<App />, [done]);
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Вернуть в работу: Готово' }));
 
-    expect(screen.queryByRole('button', { name: 'Отменить' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Отменить' }));
+    await waitFor(() => {
+      expect(update).toHaveBeenLastCalledWith('d1', { completed: true });
+    });
     queryClient.clear();
   });
 

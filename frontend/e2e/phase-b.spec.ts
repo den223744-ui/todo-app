@@ -129,7 +129,7 @@ test('inline subtasks expand by keyboard, lock pending writes, roll back and per
     } else await route.fallback();
   });
   await page.goto('/?list=inbox');
-  const trigger = page.getByRole('button', { name: /^(Показать|Скрыть) подзадачи: Проект$/ });
+  const trigger = page.getByRole('button', { name: /(показать|скрыть) подзадачи: Проект$/ });
   await expect(trigger).toContainText('1/2');
   await trigger.focus();
   await trigger.press('Enter');
@@ -149,7 +149,7 @@ test('inline subtasks expand by keyboard, lock pending writes, roll back and per
   await expect(children.getByRole('checkbox', { name: 'Вернуть в работу: Шаг' })).toBeChecked();
   await page.screenshot({ path: info.outputPath('subtasks-desktop.png'), fullPage: true });
   await page.reload();
-  await page.getByRole('button', { name: 'Показать подзадачи: Проект' }).click();
+  await page.getByRole('button', { name: /показать подзадачи: Проект$/ }).click();
   await expect(page.getByRole('checkbox', { name: 'Вернуть в работу: Шаг' })).toBeChecked();
 });
 
@@ -310,7 +310,7 @@ test('touch list menu and reduced-motion subtasks remain usable at 375px', async
     makeTask({ id: 'c', title: 'Шаг', parent_id: 'p' }),
   ]);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Показать подзадачи: Проект' }).click();
+  await page.getByRole('button', { name: /показать подзадачи: Проект$/ }).click();
   const children = page.getByRole('list', { name: 'Подзадачи: Проект' });
   await expect(children).toBeVisible();
   await expect(children.locator('..')).toHaveCSS('opacity', '1');

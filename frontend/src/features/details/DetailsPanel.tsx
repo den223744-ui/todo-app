@@ -1,3 +1,6 @@
+import { useInertOnExit } from '../../components/useInertOnExit';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Toaster } from '../toasts/Toaster';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 import { IconButton } from '../../components/IconButton';
@@ -18,11 +21,12 @@ interface DetailsPanelProps {
  * on narrow ones. Esc anywhere inside closes it; focus moves in when it opens.
  */
 export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) {
+  const { ref: panelRef, present } = useInertOnExit<HTMLElement>();
+  const reduced = useReducedMotion();
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const panelRef = useRef<HTMLElement>(null);
   // Below lg the panel covers the page: there it is a modal dialog.
   const modal = useMediaQuery('(max-width: 1023.98px)');
-  useFocusTrap(panelRef, modal);
+  useFocusTrap(panelRef, modal && present);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -34,10 +38,17 @@ export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) 
     if (modal && !panelRef.current?.contains(document.activeElement)) {
       headingRef.current?.focus();
     }
-  }, [modal]);
+  }, [modal, panelRef]);
 
   return (
-    <aside
+    <motion.aside
+      data-task-details
+      initial={reduced ? false : { x: 24, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={reduced ? {} : { x: 24, opacity: 0 }}
+      transition={{ duration: reduced ? 0 : 0.2, ease: 'easeOut' }}
+      style={!present && !modal ? { position: 'absolute', right: 0, top: 16, bottom: 16 } : {}}
+      aria-hidden={!present || undefined}
       ref={panelRef}
       role={modal ? 'dialog' : undefined}
       aria-modal={modal || undefined}
@@ -64,6 +75,7 @@ export function DetailsPanel({ taskKey, onClose, children }: DetailsPanelProps) 
         </IconButton>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
-    </aside>
+      {modal && present && <Toaster />}
+    </motion.aside>
   );
 }

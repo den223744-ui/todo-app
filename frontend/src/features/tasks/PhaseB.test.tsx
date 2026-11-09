@@ -84,7 +84,7 @@ describe('phase B task interactions', () => {
     const { queryClient, update } = open([parent, child, unsaved, done]);
     const request = deferred<TaskRead>();
     update.mockImplementationOnce(() => request.promise);
-    const trigger = screen.getByRole('button', { name: 'Показать подзадачи: Проект' });
+    const trigger = screen.getByRole('button', { name: /показать подзадачи: Проект$/ });
     expect(trigger).toHaveTextContent('1/3');
     expect(screen.queryByRole('checkbox', { name: 'Выполнить: Шаг' })).toBeNull();
     trigger.focus();
@@ -128,7 +128,7 @@ describe('phase B task interactions', () => {
       makeTask({ id: 'c', parent_id: 'p', title: 'Шаг' }),
     ];
     const { queryClient, update } = open(tasks, '/');
-    await userEvent.click(screen.getByRole('button', { name: 'Показать подзадачи: Проект' }));
+    await userEvent.click(screen.getByRole('button', { name: /показать подзадачи: Проект$/ }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Выполнить: Шаг' }));
     await waitFor(() => {
       expect(update).toHaveBeenCalledWith('c', { completed: true });
@@ -140,7 +140,7 @@ describe('phase B task interactions', () => {
     act(() => {
       navigateTo({ view: { kind: 'list', list: 'today' } });
     });
-    expect(screen.getByRole('button', { name: 'Скрыть подзадачи: Проект' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /скрыть подзадачи: Проект$/ })).toHaveAttribute(
       'aria-expanded',
       'true',
     );
@@ -240,7 +240,7 @@ describe('phase B task interactions', () => {
     queryClient.clear();
   });
 
-  it('uses short headings and time only in day groups; search keeps dates', () => {
+  it('uses short headings and time only in day groups; search keeps dates', async () => {
     const tasks = [
       makeTask({ id: 'a', due_date: toLocalDateString(addDays(now, 1)), due_time: '10:00:00' }),
       makeTask({ id: 'b', due_date: toLocalDateString(addDays(now, 2)) }),
@@ -258,7 +258,9 @@ describe('phase B task interactions', () => {
     act(() => {
       navigateTo({ query: 'a' });
     });
-    expect(container.querySelector('time')).toHaveTextContent('10 нояб., 10:00');
+    await waitFor(() => {
+      expect(container.querySelector('time')).toHaveTextContent('10 нояб., 10:00');
+    });
     queryClient.clear();
   });
 });

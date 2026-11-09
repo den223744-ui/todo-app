@@ -214,7 +214,7 @@ export function Timeline({
                       onClick={() => {
                         onOpen(task.id);
                       }}
-                      className={`w-full truncate rounded-lg border border-line px-2.5 py-1.5 text-left text-xs text-ink hover:bg-subtle ${task.completed_at ? 'line-through opacity-60' : ''}`}
+                      className={`w-full truncate rounded-lg border border-line px-2.5 py-1.5 text-left text-xs text-ink hover:bg-subtle ${task.completed_at ? 'line-through' : ''}`}
                     >
                       {task.title}
                     </button>

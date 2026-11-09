@@ -5,17 +5,25 @@ import { useTasks } from '../tasks/useTasks';
 import { useNow } from '../time/useNow';
 import { Timeline } from './Timeline';
 import { useTimelineMove } from './useTimelineMove';
+import type { AppLocation } from '../../domain/view';
 
 /**
  * The right column on wide screens while no task is open: the timeline of the
  * day the Today screen shows. A task opened from it takes its place.
  */
-export function TimelineContainer({ inline = false }: { inline?: boolean }) {
+export function TimelineContainer({
+  inline = false,
+  snapshot,
+}: {
+  inline?: boolean;
+  snapshot?: AppLocation;
+}) {
   const actions = useTimelineMove();
   const { data } = useTasks();
   const { data: lists } = useLists();
   const now = useNow();
-  const [location, navigate] = useAppLocation();
+  const [current, navigate] = useAppLocation();
+  const location = snapshot ?? current;
   const today = toLocalDateString(now);
 
   return (

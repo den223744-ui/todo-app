@@ -79,7 +79,7 @@ export function TimelineBlock({
         onClick={() => {
           if (!drag.isDragging) onOpen(task.id);
         }}
-        className={`flex h-full w-full items-center justify-between gap-2 rounded-lg border px-2.5 text-left text-xs ${done ? 'opacity-60' : ''} ${drag.isDragging ? 'shadow-soft' : ''}`}
+        className={`flex h-full w-full items-center justify-between gap-2 rounded-lg border px-2.5 text-left text-xs ${done ? 'text-ink-muted' : ''} ${drag.isDragging ? 'shadow-soft' : ''}`}
         style={{
           borderColor: list ? `var(--list-${list.color})` : 'var(--line)',
           color: list ? `var(--list-${list.color}-ink)` : 'var(--ink)',
@@ -87,10 +87,7 @@ export function TimelineBlock({
         }}
       >
         <span className={`truncate font-medium ${done ? 'line-through' : ''}`}>{task.title}</span>
-        <span
-          className="shrink-0 opacity-75 tabular-nums"
-          aria-live={drag.isDragging ? 'polite' : 'off'}
-        >
+        <span className="shrink-0 tabular-nums" aria-live={drag.isDragging ? 'polite' : 'off'}>
           {drag.isDragging ? (
             `${formatTimelineTime(preview)}–${formatTimelineTime(preview + duration)}`
           ) : (

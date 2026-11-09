@@ -285,7 +285,10 @@ describe('phase D shortcuts and command surfaces', () => {
     expect(screen.getByRole('textbox', { name: 'Новая задача' })).not.toHaveFocus();
     key('KeyK', { ctrlKey: true });
     expect(screen.queryByRole('dialog', { name: 'Палитра команд' })).toBeNull();
+    // Close, then the scrollable list (focusable so it scrolls by keyboard), then back.
     await userEvent.keyboard('{Tab}{Tab}');
+    expect(within(dialog).getByRole('region', { name: 'Горячие клавиши' })).toHaveFocus();
+    await userEvent.keyboard('{Tab}');
     expect(within(dialog).getByRole('button', { name: 'Закрыть' })).toHaveFocus();
     await userEvent.keyboard('{Escape}');
     expect(link('a')).toHaveFocus();

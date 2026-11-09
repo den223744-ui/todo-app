@@ -4,10 +4,10 @@ import { LIST_TITLES, QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
 import { quickAddFeedback } from '../../domain/quickAddFeedback';
 import { prepareQuickAdd } from '../../domain/quickAddInput';
 import { compareLists } from '../../domain/taskLists';
-import { useToastStore } from '../../store/toastStore';
 import { useLists } from '../lists/useLists';
 import { useAppLocation } from '../navigation/useAppLocation';
-import { useCreateTask, useTasks } from '../tasks/useTasks';
+import { useTasks } from '../tasks/useTasks';
+import { useUndoableCreate } from '../tasks/useUndoableCreate';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
 import { useNow } from '../time/useNow';
 import { HighlightedInput } from './HighlightedInput';
@@ -48,10 +48,9 @@ export function QuickAdd() {
   const composingRef = useRef(false);
   const id = useId();
   const [location, navigate] = useAppLocation();
-  const showToast = useToastStore((state) => state.showToast);
   const now = useNow();
   const { data } = useTasks();
-  const create = useCreateTask();
+  const create = useUndoableCreate();
   const { data: lists } = useLists();
   // Saving may finish after navigation: feedback describes the screen open then.
   const contextRef = useRef({ location, lists });
@@ -93,38 +92,33 @@ export function QuickAdd() {
         if (event.currentTarget.contains(document.activeElement)) inputRef.current?.focus();
         // mutateAsync, not mutate: mutate's per-call callbacks only fire for the
         // latest call, so a failure of an earlier, still running create would be lost.
-        create.mutateAsync(task).then(
-          (created) => {
-            const context = contextRef.current;
-            const feedback = quickAddFeedback(
-              created,
-              context.lists ?? [],
-              context.location,
-              new Date(),
-            );
-            showToast(
-              TEXTS.quickAddAdded(
-                feedback.listName ?? LIST_TITLES[feedback.section],
-                feedback.dateLabel,
-              ),
-              {
-                duration: 4_000,
-                deduplicate: false,
-                ...(!feedback.visible && {
-                  action: {
-                    label: TEXTS.quickAddShow,
-                    run: () => {
-                      navigate(feedback.destination);
-                    },
+        create(task, (created) => {
+          const context = contextRef.current;
+          const feedback = quickAddFeedback(
+            created,
+            context.lists ?? [],
+            context.location,
+            new Date(),
+          );
+          return {
+            message: TEXTS.quickAddAdded(
+              feedback.listName ?? LIST_TITLES[feedback.section],
+              feedback.dateLabel,
+            ),
+            options: {
+              ...(!feedback.visible && {
+                secondaryAction: {
+                  label: TEXTS.quickAddShow,
+                  run: () => {
+                    navigate(feedback.destination);
                   },
-                }),
-              },
-            );
-          },
-          () => {
-            setValue((current) => (current === '' ? draft : current));
-          },
-        );
+                },
+              }),
+            },
+          };
+        }).catch(() => {
+          setValue((current) => (current === '' ? draft : current));
+        });
       }}
     >
       <label htmlFor={id} className="sr-only">

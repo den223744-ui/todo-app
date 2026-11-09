@@ -1,3 +1,4 @@
+import { LIST_TITLES } from '../../constants/texts';
 import type { MouseEvent, ReactNode } from 'react';
 
 interface SidebarLinkProps {
@@ -32,6 +33,7 @@ export function SidebarLink({
 
   return (
     <a
+      data-sidebar-today={label === LIST_TITLES.today || undefined}
       href={href}
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
