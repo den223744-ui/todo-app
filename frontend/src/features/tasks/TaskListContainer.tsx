@@ -1,6 +1,8 @@
 import { useMutationState } from '@tanstack/react-query';
 
 import { TEXTS } from '../../constants/texts';
+import { isDayClosed } from '../../domain/dayClosed';
+import { DayClosed } from './DayClosed';
 import { useUiStore } from '../../store/uiStore';
 import { selectTaskGroups } from '../../domain/taskGroups';
 import { selectList } from '../../domain/smartLists';
@@ -34,9 +36,10 @@ export function TaskListContainer() {
   const { data: lists } = useLists();
   const groups = selectTaskGroups(data ?? [], lists ?? [], location, now);
   const overdue = selectList(data ?? [], 'overdue', now);
+  const closed = isDayClosed(data ?? [], location, now);
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="mt-4 space-y-4 md:mt-6">
       {location.view.kind === 'list' &&
         location.view.list === 'overdue' &&
         !location.query.trim() &&
@@ -68,6 +71,7 @@ export function TaskListContainer() {
           </button>
         </div>
       )}
+      {!isPending && closed && <DayClosed />}
       {isPending ? (
         <TaskListSkeleton />
       ) : (
@@ -76,6 +80,7 @@ export function TaskListContainer() {
           <TaskListEmpty location={location} />
         ) : (
           <TaskList
+            dayClosed={closed}
             groups={groups}
             now={now}
             location={location}

@@ -4,6 +4,7 @@ import type { TaskRead, TaskUpdate } from '../../api/schema';
 import { EDIT_ISSUES, EDIT_TEXTS, TEXTS } from '../../constants/texts';
 import { TITLE_MAX_LENGTH, codePoints } from '../../domain/limits';
 import type { EditIssue } from '../../domain/taskEdit';
+import { subtaskProgress } from '../../domain/subtasks';
 import { OPTIMISTIC_ID_PREFIX } from '../tasks/taskMutations';
 import { SubtaskTitle } from './SubtaskTitle';
 
@@ -29,6 +30,7 @@ export function SubtaskList({
   const [draft, setDraft] = useState('');
   const [issue, setIssue] = useState<EditIssue | null>(null);
   const addId = useId();
+  const { done, total } = subtaskProgress(subtasks);
 
   const add = () => {
     const title = draft.trim();
@@ -47,8 +49,14 @@ export function SubtaskList({
 
   return (
     <section aria-labelledby={`${addId}-heading`}>
-      <h3 id={`${addId}-heading`} className="mb-1.5 text-xs font-medium text-ink-muted">
+      <h3
+        id={`${addId}-heading`}
+        className="mb-2 flex items-center justify-between font-display text-base font-bold"
+      >
         {EDIT_TEXTS.subtasks}
+        <span className="font-sans text-xs font-normal text-ink-muted">
+          {EDIT_TEXTS.subtaskProgress(done, total)}
+        </span>
       </h3>
       <ul className="space-y-1">
         {subtasks.map((subtask) => {

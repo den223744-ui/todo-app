@@ -11,6 +11,8 @@ interface TimelineProps {
   today: string;
   now: Date;
   onOpen: (taskId: string) => void;
+  /** The «Таймлайн» label on top; off where a tab above already names it. */
+  showLabel?: boolean;
 }
 
 /** Pixels per hour on the grid. */
@@ -30,7 +32,15 @@ const clock = (minutes: number) => `${pad(Math.floor(minutes / 60))}:${pad(minut
  * as blocks (coloured by their list), a "now" line on today, and the tasks
  * without a time listed underneath. A block opens the task.
  */
-export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProps) {
+export function Timeline({
+  tasks,
+  lists,
+  day,
+  today,
+  now,
+  onOpen,
+  showLabel = true,
+}: TimelineProps) {
   const layout = layoutTimeline(tasks, day);
   const byId = new Map(lists.map((list) => [list.id, list]));
   const hours = Array.from(
@@ -46,22 +56,24 @@ export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProp
 
   return (
     <section aria-label={TIMELINE_TEXTS.region} className="flex min-h-0 flex-1 flex-col">
-      <div className="px-4 pt-4">
-        <div className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-1.5 text-sm font-semibold text-ink">
-          <svg
-            className="size-4"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M3 3v10M7 5v6M11 4v8M14 6v4" />
-          </svg>
-          {TIMELINE_TEXTS.tab}
+      {showLabel && (
+        <div className="px-4 pt-4">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-1.5 text-sm font-semibold text-ink">
+            <svg
+              className="size-4"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M3 3v10M7 5v6M11 4v8M14 6v4" />
+            </svg>
+            {TIMELINE_TEXTS.tab}
+          </div>
         </div>
-      </div>
+      )}
       <div className="flex items-baseline justify-between px-4 pt-4 pb-3">
         <h2 className="font-display text-base font-bold text-ink first-letter:uppercase">
           {day === today ? `${TIMELINE_TEXTS.today} · ` : ''}
@@ -106,6 +118,7 @@ export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProp
                 >
                   <button
                     type="button"
+                    data-timeline-task={task.id}
                     onClick={() => {
                       onOpen(task.id);
                     }}
@@ -153,6 +166,7 @@ export function Timeline({ tasks, lists, day, today, now, onOpen }: TimelineProp
                 <li key={task.id}>
                   <button
                     type="button"
+                    data-timeline-task={task.id}
                     onClick={() => {
                       onOpen(task.id);
                     }}

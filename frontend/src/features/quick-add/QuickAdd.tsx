@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { LIST_TITLES, QUICK_ADD_ISSUES, TEXTS } from '../../constants/texts';
 import { quickAddFeedback } from '../../domain/quickAddFeedback';
@@ -23,6 +23,26 @@ import { ListPicker } from './ListPicker';
  * (SPEC: a failed write is rolled back and reported with a toast).
  */
 export function QuickAdd() {
+  const formRef = useRef<HTMLFormElement>(null);
+  // Share the actual dock height (including errors/safe area) with scroll padding and toasts.
+  useLayoutEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const root = document.documentElement;
+    const measure = () => {
+      root.style.setProperty(
+        '--quick-add-height',
+        `${String(form.getBoundingClientRect().height)}px`,
+      );
+    };
+    measure();
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
+    observer?.observe(form);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty('--quick-add-height');
+    };
+  }, []);
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const composingRef = useRef(false);
@@ -51,8 +71,9 @@ export function QuickAdd() {
 
   return (
     <form
+      ref={formRef}
       aria-label={TEXTS.quickAdd}
-      className="mt-6 space-y-2"
+      className="fixed inset-x-0 bottom-0 z-20 space-y-2 border-t border-line bg-canvas px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] md:static md:mt-6 md:border-0 md:bg-transparent md:p-0"
       onSubmit={(event) => {
         event.preventDefault();
         if (composingRef.current || data === undefined) return;
@@ -137,7 +158,7 @@ export function QuickAdd() {
           {TEXTS.quickAddSubmit}
         </button>
       </div>
-      <p id={`${id}-hint`} className="text-xs leading-5 text-ink-muted">
+      <p id={`${id}-hint`} className="hidden text-xs leading-5 text-ink-muted md:block">
         {TEXTS.quickAddHint}
       </p>
       {issue && (

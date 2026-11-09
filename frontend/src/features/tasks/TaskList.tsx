@@ -8,6 +8,7 @@ import { GroupBadge } from './GroupBadge';
 import { TaskRow } from './TaskRow';
 
 interface TaskListProps {
+  dayClosed?: boolean;
   groups: TaskGroup[];
   location: AppLocation;
   now: Date;
@@ -26,6 +27,7 @@ interface TaskListProps {
 }
 
 export function TaskList({
+  dayClosed = false,
   groups,
   location,
   now,
@@ -60,8 +62,8 @@ export function TaskList({
                     : dayHeading(group.key, now);
         return (
           <section key={group.key} aria-label={title ?? TEXTS.taskList}>
-            {title && (
-              <div className="mb-3 flex items-center gap-3">
+            {title && (!dayClosed || group.key === 'tomorrow') && (
+              <div className="mb-2 flex items-center gap-3 md:mb-3">
                 <GroupBadge list={group.list} />
                 <h2 className="font-display text-[22px] font-bold tracking-tight text-ink first-letter:uppercase">
                   {title}

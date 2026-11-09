@@ -3,6 +3,7 @@ import { STATS_TEXTS } from '../../constants/texts';
 import { toLocalDateString } from '../../domain/dates';
 import { countLists, selectDay, selectOpenOn } from '../../domain/smartLists';
 import { progressOf } from '../../domain/taskLists';
+import { DayStat } from './DayStat';
 
 interface TodayStatsProps {
   tasks: readonly TaskRead[];
@@ -29,12 +30,16 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
   return (
     <section
       aria-label={STATS_TEXTS.region}
-      className="@container mt-6 rounded-2xl border border-line bg-transparent"
+      className="@container mt-3 rounded-2xl border border-line bg-transparent md:mt-6"
     >
       {/* Laid out by the card's own width: a grid when narrow, one row with dividers when wide. */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 @xl:flex @xl:items-center @xl:gap-0 @xl:divide-x @xl:divide-line">
-        <div className="col-span-2 flex items-center gap-3 @xl:flex-1 @xl:pr-4">
-          <svg className="size-11 shrink-0 -rotate-90" viewBox="0 0 44 44" aria-hidden="true">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 md:grid md:grid-cols-2 md:gap-x-4 md:gap-y-3 md:px-5 md:py-4 md:@xl:flex md:@xl:items-center md:@xl:gap-0 md:@xl:divide-x md:@xl:divide-line">
+        <div className="col-span-2 flex items-center gap-2 md:gap-3 md:@xl:flex-1 md:@xl:pr-4">
+          <svg
+            className="size-7 shrink-0 -rotate-90 md:size-11"
+            viewBox="0 0 44 44"
+            aria-hidden="true"
+          >
             <circle
               cx="22"
               cy="22"
@@ -56,22 +61,31 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
             />
           </svg>
           <div>
-            <p className="text-[15px] font-semibold text-ink">{STATS_TEXTS.done(done, total)}</p>
-            <p className="text-xs whitespace-nowrap text-ink-muted">{STATS_TEXTS.doneHint}</p>
+            <p className="text-xs whitespace-nowrap font-semibold text-ink md:text-[15px]">
+              {STATS_TEXTS.done(done, total)}
+            </p>
+            <p className="hidden text-xs whitespace-nowrap text-ink-muted md:block">
+              {STATS_TEXTS.doneHint}
+            </p>
           </div>
         </div>
-        <Stat
+        <DayStat
           icon={CALENDAR}
           value={dueThatDay}
           label={isToday ? STATS_TEXTS.dueToday : STATS_TEXTS.dueThatDay}
         />
-        <Stat
+        <DayStat
           icon={ALERT}
           value={counts.overdue}
           label={STATS_TEXTS.overdue}
           tone="text-accent-ink"
         />
-        <Stat icon={BANG} value={urgent} label={STATS_TEXTS.highPriority} />
+        <DayStat
+          icon={BANG}
+          value={urgent}
+          label={STATS_TEXTS.highPriority}
+          mobileLabel={STATS_TEXTS.important}
+        />
       </div>
     </section>
   );
@@ -80,35 +94,3 @@ export function TodayStats({ tasks, now, day }: TodayStatsProps) {
 const CALENDAR = 'M4 5.5h12v10.5H4zM4 8.5h12M7 3.5v3M13 3.5v3';
 const ALERT = 'M10 3.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM10 6.8v3.6M10 13.2v.1';
 const BANG = 'M10 3.2v9M10 16v.4';
-
-function Stat({
-  icon,
-  value,
-  label,
-  tone = 'text-ink-muted',
-}: {
-  icon: string;
-  value: number;
-  label: string;
-  tone?: string;
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-3 @xl:flex-1 @xl:px-4">
-      <svg
-        className={`size-7 shrink-0 ${tone}`}
-        viewBox="0 0 20 20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        aria-hidden="true"
-      >
-        <path d={icon} />
-      </svg>
-      <div>
-        <p className="text-[15px] font-semibold text-ink tabular-nums">{value}</p>
-        <p className="text-xs whitespace-nowrap text-ink-muted">{label}</p>
-      </div>
-    </div>
-  );
-}

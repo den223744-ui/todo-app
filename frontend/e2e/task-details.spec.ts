@@ -67,8 +67,8 @@ test('edit a task in the detail panel, add a subtask, and it survives a reload',
 
   await panel.getByLabel('Заметки').fill('Кухня, прокладка 1/2"');
   // The radios are visually hidden; people click the visible label.
-  await panel.getByText('Высокий приоритет').click();
-  await expect(panel.getByRole('radio', { name: 'Высокий приоритет' })).toBeChecked();
+  await panel.getByText('!!!', { exact: true }).click();
+  await expect(panel.getByRole('radio', { name: 'Высокий' })).toBeChecked();
   await panel.getByLabel('Теги').fill('ремонт');
   await panel.getByLabel('Теги').press('Enter');
   await panel.getByLabel('Новая подзадача').fill('Купить прокладку');

@@ -80,7 +80,7 @@ describe('TaskDetailsContainer', () => {
     expect(within(panel).getByLabelText('Заметки')).toHaveValue('Кухня');
     expect(within(panel).getByLabelText('Дата')).toHaveValue('2026-11-09');
     expect(within(panel).getByLabelText('Время')).toHaveValue('18:00');
-    expect(within(panel).getByRole('radio', { name: 'Низкий приоритет' })).toBeChecked();
+    expect(within(panel).getByRole('radio', { name: 'Низкий' })).toBeChecked();
     expect(within(panel).getByText('#дом')).toBeInTheDocument();
     expect(
       within(panel).getByLabelText('Название подзадачи: Купить прокладку'),
@@ -128,7 +128,7 @@ describe('TaskDetailsContainer', () => {
   it('changes priority, date, time and clears the date', async () => {
     const { panel, update, queryClient } = open('p');
 
-    await userEvent.click(within(panel).getByRole('radio', { name: 'Высокий приоритет' }));
+    await userEvent.click(within(panel).getByRole('radio', { name: 'Высокий' }));
     fireEvent.change(within(panel).getByLabelText('Дата'), { target: { value: '2026-11-12' } });
     const time = within(panel).getByLabelText('Время');
     fireEvent.change(time, { target: { value: '09:30' } });

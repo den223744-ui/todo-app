@@ -1,6 +1,15 @@
 @import '@fontsource-variable/roboto-condensed';
 @import 'tailwindcss';
 
+/* Compact task properties retain a stable label column, including on phones. */
+.detail-property {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+}
+
 /* Actions remain in the tab order; touch has no hover to reveal them. */
 .task-row-action,
 .list-row-action {

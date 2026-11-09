@@ -17,7 +17,12 @@ const rowLink = (taskId: string) =>
 /** Focus the task's row link again after the panel closes. */
 function focusTaskRow(taskId: string) {
   requestAnimationFrame(() => {
-    rowLink(taskId)?.focus();
+    const row = rowLink(taskId);
+    const target =
+      row && !row.closest('[hidden]')
+        ? row
+        : document.querySelector<HTMLElement>(`[data-timeline-task="${CSS.escape(taskId)}"]`);
+    target?.focus();
   });
 }
 

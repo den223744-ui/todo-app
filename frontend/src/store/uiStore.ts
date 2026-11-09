@@ -5,6 +5,8 @@
 import { create } from 'zustand';
 
 interface UiState {
+  dayView: 'list' | 'timeline';
+  setDayView: (view: 'list' | 'timeline') => void;
   /** Mobile navigation drawer. */
   drawerOpen: boolean;
   openDrawer: () => void;
@@ -18,6 +20,10 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>()((set) => ({
+  dayView: 'list',
+  setDayView: (dayView) => {
+    set({ dayView });
+  },
   drawerOpen: false,
   openDrawer: () => {
     set({ drawerOpen: true });

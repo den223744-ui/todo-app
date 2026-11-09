@@ -86,4 +86,20 @@ describe('Timeline', () => {
 
     expect(onOpen.mock.calls).toEqual([['sync'], ['any']]);
   });
+
+  it('can leave out its own label where a tab above already names it', () => {
+    render(
+      <Timeline
+        day={TODAY}
+        today={TODAY}
+        now={NOW}
+        lists={[]}
+        tasks={[]}
+        onOpen={vi.fn()}
+        showLabel={false}
+      />,
+    );
+
+    expect(screen.queryByText('Таймлайн')).toBeNull();
+  });
 });

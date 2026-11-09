@@ -1,4 +1,6 @@
 import { AppShell } from './components/AppShell';
+import { useMediaQuery } from './components/useMediaQuery';
+import { useUiStore } from './store/uiStore';
 import { greeting } from './constants/texts';
 import { parseLocalDate, toLocalDateString } from './domain/dates';
 import { TaskDetailsContainer } from './features/details/TaskDetailsContainer';
@@ -7,6 +9,8 @@ import { DayNav } from './features/navigation/DayNav';
 import { useAppLocation } from './features/navigation/useAppLocation';
 import { viewTitle } from './features/navigation/viewTitle';
 import { SearchField } from './features/search/SearchField';
+import { MobileSearch } from './features/search/MobileSearch';
+import { DayViewTabs } from './features/tasks/DayViewTabs';
 import { Toaster } from './features/toasts/Toaster';
 import { UndoShortcut } from './features/toasts/UndoShortcut';
 import { QuickAdd } from './features/quick-add/QuickAdd';
@@ -24,6 +28,9 @@ const dateFormat = new Intl.DateTimeFormat('ru-RU', {
 });
 
 export function App() {
+  const mobile = useMediaQuery('(max-width: 767.98px)');
+  const narrow = useMediaQuery('(max-width: 1023.98px)');
+  const dayView = useUiStore((state) => state.dayView);
   const [location, navigate] = useAppLocation();
   const { data: lists } = useLists();
   const now = useNow();
@@ -37,11 +44,15 @@ export function App() {
   const side = location.taskId ? <TaskDetailsContainer /> : isToday ? <TimelineContainer /> : null;
 
   return (
-    <AppShell sidebar={<SidebarContainer />} details={side}>
-      <div className="mx-auto w-full max-w-4xl px-4 py-6 md:px-10 md:py-8">
+    <AppShell
+      sidebar={<SidebarContainer />}
+      details={side}
+      mobileSearch={mobile ? <MobileSearch /> : null}
+    >
+      <div className="mx-auto w-full max-w-4xl px-4 pt-3 pb-[calc(var(--quick-add-height,84px)+16px)] md:px-10 md:py-8">
         <div>
           <div className="flex flex-col-reverse gap-4 md:flex-row md:items-center md:justify-between">
-            <p className="flex items-center gap-2 text-sm text-ink-muted">
+            <p className="hidden items-center gap-2 text-sm text-ink-muted md:flex">
               <svg
                 className="size-5 text-accent"
                 viewBox="0 0 20 20"
@@ -55,10 +66,10 @@ export function App() {
               </svg>
               {greeting(now.getHours())}
             </p>
-            <SearchField />
+            {!mobile && <SearchField />}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <h1 className="font-display text-[34px] leading-tight font-extrabold tracking-tight text-ink first-letter:uppercase md:text-[42px]">
+            <h1 className="font-display text-[28px] leading-tight font-extrabold tracking-tight text-ink first-letter:uppercase md:text-[42px]">
               {isToday ? (
                 <>
                   {day === today && <span className="sr-only">{title}, </span>}
@@ -81,7 +92,31 @@ export function App() {
         </div>
         {isToday && tasks && <TodayStats tasks={tasks} now={now} day={day} />}
         <QuickAdd />
-        <TaskListContainer />
+        {isToday && narrow && !location.query.trim() ? (
+          <>
+            <DayViewTabs />
+            <div
+              role="tabpanel"
+              id="day-panel-list"
+              aria-labelledby="day-tab-list"
+              hidden={dayView !== 'list'}
+              tabIndex={0}
+            >
+              <TaskListContainer />
+            </div>
+            <div
+              role="tabpanel"
+              id="day-panel-timeline"
+              aria-labelledby="day-tab-timeline"
+              hidden={dayView !== 'timeline'}
+              tabIndex={0}
+            >
+              {dayView === 'timeline' && <TimelineContainer inline />}
+            </div>
+          </>
+        ) : (
+          <TaskListContainer />
+        )}
       </div>
       <Toaster />
       <UndoShortcut />

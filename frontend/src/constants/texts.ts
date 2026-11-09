@@ -37,6 +37,10 @@ export const TEXTS = {
   listEmpty: 'В этом списке пока нет задач',
   dayEmpty: 'На этот день задач нет',
   dayEmptyHint: 'Добавьте задачу — она будет запланирована на этот день.',
+  dayClosed: 'Все дела на сегодня сделаны',
+  dayClosedHint: 'Отдыхайте или запланируйте что-то на завтра',
+  dayViews: 'Вид задач на день',
+  listTab: 'Список',
   listEmptyHint: 'Добавьте задачу — она попадёт в этот список.',
   listFallbackTitle: 'Список',
   noList: 'Без списка',
@@ -132,17 +136,21 @@ export const EDIT_TEXTS = {
   notFoundHint: 'Возможно, она удалена или открыта ссылка из другого браузера.',
   title: 'Название',
   notes: 'Заметки',
+  noteHeading: 'Заметка',
+  due: 'Срок',
   notesPlaceholder: 'Добавьте детали…',
   dueDate: 'Дата',
   dueTime: 'Время',
   clearDate: 'Убрать дату',
   priority: 'Приоритет',
   priorityNone: 'Нет',
+  priorityNames: ['Без приоритета', 'Низкий', 'Средний', 'Высокий'],
   tags: 'Теги',
   addTag: 'Добавить тег',
   addTagPlaceholder: 'Новый тег',
   removeTag: (tag: string) => `Убрать тег ${tag}`,
   subtasks: 'Подзадачи',
+  subtaskProgress: (done: number, total: number) => `${String(done)} из ${String(total)}`,
   addSubtask: 'Новая подзадача',
   addSubtaskPlaceholder: 'Добавить подзадачу…',
   subtaskTitle: (title: string) => `Название подзадачи: ${title}`,
@@ -153,6 +161,8 @@ export const EDIT_TEXTS = {
 } as const;
 
 export const SEARCH_TEXTS = {
+  open: 'Открыть поиск',
+  close: 'Закрыть поиск',
   label: 'Поиск по задачам',
   placeholder: 'Поиск по всем задачам',
   found: 'Найдено',
@@ -241,6 +251,7 @@ export const STATS_TEXTS = {
   dueThatDay: 'на этот день',
   overdue: 'просрочено',
   highPriority: 'высокий приоритет',
+  important: 'важные',
 } as const;
 
 /** Greeting above the date, by the local hour: morning 5–11, day 12–17, evening otherwise. */
