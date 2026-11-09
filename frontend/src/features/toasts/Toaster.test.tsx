@@ -32,6 +32,7 @@ describe('failed writes show a toast', () => {
     window.history.replaceState(null, '', '/?list=inbox');
     const task = makeTask({ id: 't1', title: 'Сделать тесты' });
     vi.spyOn(api, 'listTasks').mockResolvedValue([task]);
+    vi.spyOn(api, 'listLists').mockResolvedValue([]);
     vi.spyOn(api, 'updateTask').mockRejectedValue(new ApiError(500, 'internal_error', 'boom'));
     renderApp();
 
