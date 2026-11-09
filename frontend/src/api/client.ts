@@ -45,7 +45,7 @@ export const CLIENT_ERROR_CODES = {
   invalidResponse: 'invalid_response',
 } as const;
 
-export const SESSION_REQUIRED = 'session_required';
+const SESSION_REQUIRED = 'session_required';
 
 export class ApiError extends Error {
   readonly status: number;

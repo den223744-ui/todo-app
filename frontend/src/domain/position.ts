@@ -6,7 +6,7 @@
  * neighbours get that close, the whole list is renumbered (1, 2, 3, ...).
  */
 
-export const POSITION_STEP = 1;
+const POSITION_STEP = 1;
 
 /** Position between two neighbours; null means "no neighbour on that side". */
 export function positionBetween(prev: number | null, next: number | null): number {

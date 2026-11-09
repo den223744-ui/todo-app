@@ -53,17 +53,7 @@ export const TEXTS = {
   moveToToday: 'На сегодня',
   moveToTodayNamed: (title: string) => `Перенести на сегодня: ${title}`,
   moveAllToToday: (count: number) => `Перенести все на сегодня (${String(count)})`,
-  taskCount: (count: number) => {
-    const ten = count % 10;
-    const hundred = count % 100;
-    const word =
-      ten === 1 && hundred !== 11
-        ? 'задача'
-        : ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14)
-          ? 'задачи'
-          : 'задач';
-    return `${String(count)} ${word}`;
-  },
+  taskCount: (count: number) => `${String(count)} ${plural(count, 'задача', 'задачи', 'задач')}`,
   completeTask: (title: string) => `Выполнить: ${title}`,
   deleteTaskNamed: (title: string) => `Удалить задачу: ${title}`,
   reopenTask: (title: string) => `Вернуть в работу: ${title}`,
@@ -100,7 +90,7 @@ export const EMPTY_LIST_TEXTS: Record<SmartList, { title: string; hint: string }
 };
 
 /** Russian plural form: 1 задача, 2 задачи, 5 задач, 21 задача, 11 задач. */
-export function plural(count: number, one: string, few: string, many: string): string {
+function plural(count: number, one: string, few: string, many: string): string {
   const mod10 = count % 10;
   const mod100 = count % 100;
   if (mod10 === 1 && mod100 !== 11) return one;
