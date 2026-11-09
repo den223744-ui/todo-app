@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import type { TaskRead } from '../../api/schema';
-import { D_TEXTS } from '../../constants/texts';
+import { DRAG_TEXTS } from '../../constants/texts';
 import { useUiStore } from '../../store/uiStore';
 
 interface Props {
@@ -42,19 +42,19 @@ export function SortableTaskGroup({ tasks, onMove, children }: Props) {
       sensors={sensors}
       collisionDetection={closestCenter}
       accessibility={{
-        screenReaderInstructions: { draggable: D_TEXTS.dragInstructions },
+        screenReaderInstructions: { draggable: DRAG_TEXTS.dragInstructions },
         announcements: {
-          onDragStart: ({ active }) => D_TEXTS.dragStart(title(active.id)),
+          onDragStart: ({ active }) => DRAG_TEXTS.dragStart(title(active.id)),
           onDragOver: ({ active, over }) =>
             over
-              ? D_TEXTS.dragOver(
+              ? DRAG_TEXTS.dragOver(
                   title(active.id),
                   tasks.findIndex((task) => task.id === over.id) + 1,
                   tasks.length,
                 )
               : undefined,
-          onDragEnd: ({ active }) => D_TEXTS.dragEnd(title(active.id)),
-          onDragCancel: () => D_TEXTS.dragCancel,
+          onDragEnd: ({ active }) => DRAG_TEXTS.dragEnd(title(active.id)),
+          onDragCancel: () => DRAG_TEXTS.dragCancel,
         },
       }}
       onDragStart={() => {

@@ -58,7 +58,7 @@ function open(tasks: TaskRead[], url = '/?list=inbox') {
   };
 }
 
-describe('phase B task interactions', () => {
+describe('inline subtasks and rescheduling', () => {
   beforeEach(() => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     vi.useFakeTimers({ toFake: ['Date'] });

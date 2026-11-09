@@ -17,7 +17,7 @@ import { InlineTitleEditor } from './InlineTitleEditor';
 import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { D_TEXTS } from '../../constants/texts';
+import { DRAG_TEXTS } from '../../constants/texts';
 import { GripIcon } from '../../components/icons/GripIcon';
 
 interface TaskRowProps {
@@ -204,8 +204,8 @@ export function TaskRow({
               ref={sort.setActivatorNodeRef}
               {...sort.attributes}
               {...sort.listeners}
-              aria-label={D_TEXTS.dragHandle(task.title)}
-              aria-roledescription={D_TEXTS.sortable}
+              aria-label={DRAG_TEXTS.dragHandle(task.title)}
+              aria-roledescription={DRAG_TEXTS.sortable}
               data-shortcut-arrows
               aria-disabled={locked || reorderBusy || undefined}
               onClick={(event) => {

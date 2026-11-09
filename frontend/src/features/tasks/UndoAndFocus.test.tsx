@@ -56,7 +56,7 @@ function open(initial: TaskRead[] = [], url = '/?list=inbox') {
   };
 }
 
-describe('phase E undo and focus', () => {
+describe('undo and focus after actions', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'ResizeObserver',

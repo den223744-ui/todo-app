@@ -14,7 +14,7 @@ import { SmartListIcon } from './SmartListIcon';
 import { SidebarListItem } from './SidebarListItem';
 import { ThemePicker } from '../theme/ThemePicker';
 import { useUiStore } from '../../store/uiStore';
-import { D_TEXTS } from '../../constants/texts';
+import { SHORTCUT_TEXTS } from '../../constants/texts';
 
 /** Today first, as in the mockup. */
 const NAV_ORDER: readonly SmartList[] = ['today', 'inbox', 'upcoming', 'overdue', 'completed'];
@@ -173,7 +173,7 @@ export function Sidebar({
           className="hidden min-h-11 items-center gap-2 rounded-lg border border-line px-2.5 text-xs text-ink-muted hover:text-ink md:flex"
         >
           <span aria-hidden="true">?</span>
-          {D_TEXTS.help}
+          {SHORTCUT_TEXTS.help}
         </button>
       </footer>
     </div>

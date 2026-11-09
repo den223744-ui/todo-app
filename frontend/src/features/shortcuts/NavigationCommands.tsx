@@ -1,6 +1,6 @@
 import { Command } from 'cmdk';
 import type { TaskListRead, TaskRead } from '../../api/schema';
-import { D_TEXTS, LIST_TITLES } from '../../constants/texts';
+import { LIST_TITLES, PALETTE_TEXTS } from '../../constants/texts';
 import { addDays, toLocalDateString } from '../../domain/dates';
 import { countTags, SMART_LISTS } from '../../domain/smartLists';
 import { compareLists } from '../../domain/taskLists';
@@ -15,7 +15,7 @@ interface Props {
 
 export function NavigationCommands({ tasks, lists, onGo }: Props) {
   return (
-    <Command.Group heading={D_TEXTS.go}>
+    <Command.Group heading={PALETTE_TEXTS.go}>
       {SMART_LISTS.map((list) => (
         <Command.Item
           key={list}
@@ -30,12 +30,12 @@ export function NavigationCommands({ tasks, lists, onGo }: Props) {
       ))}
       <Command.Item
         value="go-tomorrow"
-        keywords={[D_TEXTS.tomorrowView]}
+        keywords={[PALETTE_TEXTS.tomorrowView]}
         onSelect={() => {
           onGo({ kind: 'list', list: 'today' }, toLocalDateString(addDays(new Date(), 1)));
         }}
       >
-        {D_TEXTS.tomorrowView}
+        {PALETTE_TEXTS.tomorrowView}
       </Command.Item>
       {[...lists]
         .sort(compareLists)

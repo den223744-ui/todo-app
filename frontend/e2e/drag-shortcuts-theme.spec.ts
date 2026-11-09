@@ -333,6 +333,6 @@ test.describe('375px touch layout', () => {
       .click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.getByRole('button', { name: 'Закрыть меню' }).click();
-    await page.screenshot({ path: info.outputPath('phase-d-mobile.png'), fullPage: true });
+    await page.screenshot({ path: info.outputPath('drag-mobile.png'), fullPage: true });
   });
 });

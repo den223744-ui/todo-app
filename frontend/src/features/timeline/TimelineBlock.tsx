@@ -6,7 +6,7 @@ import {
   pixelsToMinutes,
   SLOT_MINUTES,
 } from '../../domain/timeline';
-import { D_TEXTS, durationLabel } from '../../constants/texts';
+import { durationLabel, DRAG_TEXTS } from '../../constants/texts';
 import type { TaskListRead, TaskRead } from '../../api/schema';
 
 interface Props {
@@ -61,7 +61,7 @@ export function TimelineBlock({
         data-timeline-task={task.id}
         data-shortcut-arrows
         aria-describedby={instructionsId}
-        aria-roledescription={D_TEXTS.draggable}
+        aria-roledescription={DRAG_TEXTS.draggable}
         onKeyDown={(event) => {
           if (
             !onShift ||

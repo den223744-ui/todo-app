@@ -268,41 +268,16 @@ export function greeting(hour: number): string {
   return 'Добрый вечер';
 }
 
-export const D_TEXTS = {
+/** Theme switch in the sidebar. */
+export const THEME_TEXTS = {
   theme: 'Тема',
   themes: { light: 'Светлая', dark: 'Тёмная', system: 'Как в системе' },
+} as const;
+
+/** The «?» overlay with every shortcut. */
+export const SHORTCUT_TEXTS = {
   help: 'Горячие клавиши',
   close: 'Закрыть',
-  palette: 'Палитра команд',
-  commandPlaceholder: 'Команда или название задачи…',
-  noCommands: 'Ничего не найдено',
-  commands: 'Команды',
-  sortable: 'Сортируемая задача',
-  draggable: 'Перемещаемый блок задачи',
-  actions: 'Действия',
-  go: 'Перейти',
-  task: 'Задача',
-  tasks: 'Задачи',
-  newTask: 'Новая задача',
-  search: 'Поиск',
-  complete: 'Выполнить',
-  reopen: 'Вернуть',
-  today: 'На сегодня',
-  tomorrow: 'На завтра',
-  tomorrowView: 'Завтра',
-  delete: 'Удалить',
-  movedTime: (time: string) => `Перенесено на ${time}`,
-  movedDate: (day: string) => `Перенесено на ${day}`,
-  dragHandle: (title: string) => `Переместить «${title}»`,
-  dragInstructions:
-    'Чтобы взять задачу, нажмите Пробел или Enter. Стрелки вверх и вниз меняют порядок внутри группы. Пробел или Enter — поставить, Escape — отменить.',
-  dragStart: (title: string) => `Взята задача «${title}».`,
-  dragOver: (title: string, position: number, total: number) =>
-    `«${title}»: позиция ${String(position)} из ${String(total)}.`,
-  dragEnd: (title: string) => `Задача «${title}» перемещена.`,
-  dragCancel: 'Перемещение отменено.',
-  timelineInstructions:
-    'Стрелки вверх и вниз — перенести на 15 минут, с Shift — на час. Мышью тяните блок по вертикали, на сенсорном экране удерживайте перед переносом.',
   keyColumn: 'Клавиша',
   actionColumn: 'Действие',
   shortcutGroups: [
@@ -338,4 +313,46 @@ export const D_TEXTS = {
       ],
     },
   ],
+} as const;
+
+/** The Ctrl/Cmd+K command palette. */
+export const PALETTE_TEXTS = {
+  palette: 'Палитра команд',
+  commandPlaceholder: 'Команда или название задачи…',
+  noCommands: 'Ничего не найдено',
+  commands: 'Команды',
+  actions: 'Действия',
+  go: 'Перейти',
+  task: 'Задача',
+  tasks: 'Задачи',
+  newTask: 'Новая задача',
+  search: 'Поиск',
+  complete: 'Выполнить',
+  reopen: 'Вернуть',
+  today: 'На сегодня',
+  tomorrow: 'На завтра',
+  tomorrowView: 'Завтра',
+  delete: 'Удалить',
+} as const;
+
+/** Drag & drop: handles and screen reader announcements (list and timeline). */
+export const DRAG_TEXTS = {
+  sortable: 'Сортируемая задача',
+  draggable: 'Перемещаемый блок задачи',
+  dragHandle: (title: string) => `Переместить «${title}»`,
+  dragInstructions:
+    'Чтобы взять задачу, нажмите Пробел или Enter. Стрелки вверх и вниз меняют порядок внутри группы. Пробел или Enter — поставить, Escape — отменить.',
+  dragStart: (title: string) => `Взята задача «${title}».`,
+  dragOver: (title: string, position: number, total: number) =>
+    `«${title}»: позиция ${String(position)} из ${String(total)}.`,
+  dragEnd: (title: string) => `Задача «${title}» перемещена.`,
+  dragCancel: 'Перемещение отменено.',
+  timelineInstructions:
+    'Стрелки вверх и вниз — перенести на 15 минут, с Shift — на час. Мышью тяните блок по вертикали, на сенсорном экране удерживайте перед переносом.',
+} as const;
+
+/** Toasts after a task is moved to another time or day. */
+export const MOVE_TEXTS = {
+  movedTime: (time: string) => `Перенесено на ${time}`,
+  movedDate: (day: string) => `Перенесено на ${day}`,
 } as const;

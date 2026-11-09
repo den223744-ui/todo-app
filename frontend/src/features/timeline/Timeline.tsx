@@ -5,7 +5,7 @@ import { layoutTimeline } from '../../domain/timeline';
 import { pixelsToMinutes, shiftedTime, SLOT_MINUTES } from '../../domain/timeline';
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useEffect, useId, useLayoutEffect, useRef } from 'react';
-import { D_TEXTS } from '../../constants/texts';
+import { DRAG_TEXTS } from '../../constants/texts';
 import { useUiStore } from '../../store/uiStore';
 import { TimelineBlock } from './TimelineBlock';
 
@@ -89,12 +89,12 @@ export function Timeline({
       sensors={sensors}
       accessibility={{
         announcements: {
-          onDragStart: () => D_TEXTS.timelineInstructions,
+          onDragStart: () => DRAG_TEXTS.timelineInstructions,
           onDragEnd: () => '',
           onDragOver: () => '',
-          onDragCancel: () => D_TEXTS.dragCancel,
+          onDragCancel: () => DRAG_TEXTS.dragCancel,
         },
-        screenReaderInstructions: { draggable: D_TEXTS.timelineInstructions },
+        screenReaderInstructions: { draggable: DRAG_TEXTS.timelineInstructions },
       }}
       onDragStart={() => {
         setDragging(true);
@@ -118,7 +118,7 @@ export function Timeline({
     >
       <section aria-label={TIMELINE_TEXTS.region} className="flex min-h-0 flex-1 flex-col">
         <p id={instructionsId} className="sr-only">
-          {D_TEXTS.timelineInstructions}
+          {DRAG_TEXTS.timelineInstructions}
         </p>
         {showLabel && (
           <div className="px-4 pt-4">

@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { workspace } from './fixtures/phase-e';
+import { workspace } from './fixtures/workspace';
 
 test.use({ timezoneId: 'UTC' });
 const tags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];

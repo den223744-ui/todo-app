@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import type { TaskRead } from '../../api/schema';
 import { canonicalTime } from '../../domain/dates';
 import { shiftedTime, SLOT_MINUTES } from '../../domain/timeline';
-import { D_TEXTS, UNDO_TEXTS } from '../../constants/texts';
+import { UNDO_TEXTS, MOVE_TEXTS } from '../../constants/texts';
 import { useToastStore } from '../../store/toastStore';
 import { UNDO_MS } from '../tasks/useTaskActions';
 import { useUpdateTask } from '../tasks/useTasks';
@@ -44,7 +44,7 @@ export function useTimelineMove() {
     operation.at = Date.now();
     const sequence = ++operation.sequence;
     series.current = operation;
-    operation.toastId = toasts.showToast(D_TEXTS.movedTime(time.slice(0, 5)), {
+    operation.toastId = toasts.showToast(MOVE_TEXTS.movedTime(time.slice(0, 5)), {
       duration: UNDO_MS,
       action: {
         label: UNDO_TEXTS.undo,

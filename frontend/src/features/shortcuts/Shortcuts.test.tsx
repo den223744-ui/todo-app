@@ -64,7 +64,7 @@ async function select(id: string) {
   });
 }
 
-describe('phase D shortcuts and command surfaces', () => {
+describe('keyboard shortcuts and the command palette', () => {
   beforeEach(() => {
     useUiStore.setState({
       selectedTaskId: null,

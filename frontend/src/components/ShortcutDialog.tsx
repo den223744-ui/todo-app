@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useFocusTrap } from './useFocusTrap';
 import { IconButton } from './IconButton';
 import { CloseIcon } from './icons/CloseIcon';
-import { D_TEXTS } from '../constants/texts';
+import { SHORTCUT_TEXTS } from '../constants/texts';
 
 export function ShortcutDialog({
   title,
@@ -65,7 +65,7 @@ export function ShortcutDialog({
           <h2 id={id} className="font-display text-xl font-bold">
             {title}
           </h2>
-          <IconButton label={D_TEXTS.close} onClick={onClose}>
+          <IconButton label={SHORTCUT_TEXTS.close} onClick={onClose}>
             <CloseIcon />
           </IconButton>
         </div>

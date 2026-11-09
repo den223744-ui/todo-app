@@ -1,7 +1,7 @@
 import { Command } from 'cmdk';
 import { useMutationState } from '@tanstack/react-query';
 import type { TaskRead } from '../../api/schema';
-import { D_TEXTS } from '../../constants/texts';
+import { PALETTE_TEXTS } from '../../constants/texts';
 import { addDays, toLocalDateString } from '../../domain/dates';
 import { useAppLocation } from '../navigation/useAppLocation';
 import { useTaskActions } from '../tasks/useTaskActions';
@@ -20,7 +20,7 @@ export function TaskCommands({ task, run }: { task: TaskRead; run: (action: () =
   const commands = [
     {
       value: 'task-toggle',
-      label: task.completed_at ? D_TEXTS.reopen : D_TEXTS.complete,
+      label: task.completed_at ? PALETTE_TEXTS.reopen : PALETTE_TEXTS.complete,
       action: () => {
         focusAfterTask(task.id);
         actions.toggle(task);
@@ -28,21 +28,21 @@ export function TaskCommands({ task, run }: { task: TaskRead; run: (action: () =
     },
     {
       value: 'task-today',
-      label: D_TEXTS.today,
+      label: PALETTE_TEXTS.today,
       action: () => {
         actions.schedule(task, toLocalDateString(new Date()));
       },
     },
     {
       value: 'task-tomorrow',
-      label: D_TEXTS.tomorrow,
+      label: PALETTE_TEXTS.tomorrow,
       action: () => {
         actions.schedule(task, toLocalDateString(addDays(new Date(), 1)));
       },
     },
     {
       value: 'task-delete',
-      label: D_TEXTS.delete,
+      label: PALETTE_TEXTS.delete,
       action: () => {
         focusAfterTask(task.id);
         actions.destroy(task);
@@ -51,7 +51,7 @@ export function TaskCommands({ task, run }: { task: TaskRead; run: (action: () =
     },
   ];
   return (
-    <Command.Group heading={D_TEXTS.task}>
+    <Command.Group heading={PALETTE_TEXTS.task}>
       {commands.map((command) => (
         <Command.Item
           key={command.value}
