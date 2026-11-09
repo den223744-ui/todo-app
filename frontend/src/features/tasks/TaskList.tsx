@@ -6,6 +6,10 @@ import { selectSubtasks } from '../../domain/subtasks';
 import type { AppLocation } from '../../domain/view';
 import { GroupBadge } from './GroupBadge';
 import { TaskRow } from './TaskRow';
+import { canReorderGroup, reorderSiblings } from '../../domain/reorder';
+import { SortableTaskGroup } from './SortableTaskGroup';
+import { useReorderTasks } from './useReorderTasks';
+import { OPTIMISTIC_ID_PREFIX } from './taskMutations';
 
 interface TaskListProps {
   dayClosed?: boolean;
@@ -43,11 +47,20 @@ export function TaskList({
   tasks = [],
   onMoveToToday,
 }: TaskListProps) {
+  const reorder = useReorderTasks();
   const byId = new Map(lists.map((list) => [list.id, list]));
   return (
     // Each group is a labelled section; a plain div may not carry aria-label.
     <div className="space-y-7">
       {groups.map((group) => {
+        const sortable = canReorderGroup(location, group.key);
+        const siblings = reorderSiblings(group).filter(
+          (task) => !task.id.startsWith(OPTIMISTIC_ID_PREFIX),
+        );
+        const layoutVersion = group.tasks
+          .map((task) => `${task.id}:${task.completed_at ?? ''}`)
+          .sort()
+          .join('|');
         const title =
           group.list !== undefined
             ? (group.list?.name ?? TEXTS.noList)
@@ -73,34 +86,47 @@ export function TaskList({
                 </span>
               </div>
             )}
-            <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-transparent">
-              {group.tasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  location={location}
-                  now={now}
-                  busy={busyIds.has(task.id)}
-                  onToggle={onToggle}
-                  onOpen={onOpen}
-                  editing={editingId === task.id}
-                  onStartEdit={onStartEdit}
-                  onRename={onRename}
-                  onStopEdit={onStopEdit}
-                  list={task.list_id ? byId.get(task.list_id) : undefined}
-                  onDelete={onDelete}
-                  subtasks={selectSubtasks(tasks, task.id)}
-                  busyIds={busyIds}
-                  timeOnly={
-                    group.key === 'tomorrow' ||
-                    (!location.query.trim() &&
-                      location.view.kind === 'list' &&
-                      location.view.list === 'upcoming')
-                  }
-                  onMoveToToday={onMoveToToday}
-                />
-              ))}
-            </ul>
+            <SortableTaskGroup
+              tasks={sortable ? siblings : []}
+              onMove={(id, index) => {
+                void reorder(siblings, id, index);
+              }}
+            >
+              <ul className="@container divide-y divide-line rounded-2xl border border-line bg-transparent">
+                {group.tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    sortable={
+                      sortable &&
+                      task.completed_at === null &&
+                      !task.id.startsWith(OPTIMISTIC_ID_PREFIX)
+                    }
+                    layoutVersion={layoutVersion}
+                    location={location}
+                    now={now}
+                    busy={busyIds.has(task.id)}
+                    onToggle={onToggle}
+                    onOpen={onOpen}
+                    editing={editingId === task.id}
+                    onStartEdit={onStartEdit}
+                    onRename={onRename}
+                    onStopEdit={onStopEdit}
+                    list={task.list_id ? byId.get(task.list_id) : undefined}
+                    onDelete={onDelete}
+                    subtasks={selectSubtasks(tasks, task.id)}
+                    busyIds={busyIds}
+                    timeOnly={
+                      group.key === 'tomorrow' ||
+                      (!location.query.trim() &&
+                        location.view.kind === 'list' &&
+                        location.view.list === 'upcoming')
+                    }
+                    onMoveToToday={onMoveToToday}
+                  />
+                ))}
+              </ul>
+            </SortableTaskGroup>
           </section>
         );
       })}

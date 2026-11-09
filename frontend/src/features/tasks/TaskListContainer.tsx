@@ -16,6 +16,7 @@ import { taskKeys } from './taskQueries';
 import { useLists } from '../lists/useLists';
 import { useTaskActions } from './useTaskActions';
 import { useTasks, useUpdateTask } from './useTasks';
+import { focusAfterTask } from '../shortcuts/focus';
 
 export function TaskListContainer() {
   const { data, isPending, isError, refetch } = useTasks();
@@ -86,6 +87,8 @@ export function TaskListContainer() {
             location={location}
             busyIds={busyIds}
             onToggle={(task) => {
+              if (task.parent_id === null && useUiStore.getState().selectedTaskId === task.id)
+                focusAfterTask(task.id);
               actions.toggle(task);
             }}
             onOpen={(taskId) => {
@@ -103,6 +106,7 @@ export function TaskListContainer() {
               actions.moveToToday([task], new Date());
             }}
             onDelete={(task) => {
+              focusAfterTask(task.id);
               actions.destroy(task);
               navigate({ taskId: null });
             }}

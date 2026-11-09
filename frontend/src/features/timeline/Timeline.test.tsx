@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { makeList } from '../../test/makeList';
 import { makeTask } from '../../test/makeTask';
 import { Timeline } from './Timeline';
+import { useUiStore } from '../../store/uiStore';
 
 const TODAY = '2026-11-09';
 const NOW = new Date(2026, 10, 9, 13, 36);
@@ -48,6 +49,28 @@ function renderTimeline(day = TODAY) {
 }
 
 describe('Timeline', () => {
+  it('clears the drag flag if navigation unmounts an active timeline', () => {
+    const { unmount } = render(
+      <Timeline day={TODAY} today={TODAY} now={NOW} tasks={[]} lists={[]} onOpen={vi.fn()} />,
+    );
+    useUiStore.setState({ dragging: true });
+    unmount();
+    expect(useUiStore.getState().dragging).toBe(false);
+  });
+  it('positions the viewport after tasks arrive and preserves scrolling across time edits', () => {
+    const props = { day: TODAY, today: TODAY, now: NOW, lists: [], onOpen: vi.fn() };
+    const { container, rerender } = render(<Timeline {...props} tasks={[]} ready={false} />);
+    const viewport = container.querySelector<HTMLElement>('[data-timeline-scroll]') as HTMLElement;
+    expect(viewport.scrollTop).toBe(8 * 56);
+    const early = makeTask({ id: 'early', due_date: TODAY, due_time: '02:00:00' });
+    rerender(<Timeline {...props} tasks={[early]} ready />);
+    expect(viewport.scrollTop).toBe(2 * 56);
+    viewport.scrollTop = 180;
+    rerender(<Timeline {...props} tasks={[{ ...early, due_time: '02:15:00' }]} ready />);
+    expect(viewport.scrollTop).toBe(180);
+    rerender(<Timeline {...props} day="2026-11-10" tasks={[]} ready />);
+    expect(viewport.scrollTop).toBe(8 * 56);
+  });
   it('shows the day, its timed tasks as blocks and the untimed ones below', () => {
     const { region } = renderTimeline();
 

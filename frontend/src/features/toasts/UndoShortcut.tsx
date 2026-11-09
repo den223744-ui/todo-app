@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { useToastStore } from '../../store/toastStore';
+import { useUiStore } from '../../store/uiStore';
 
 /**
  * Text fields with text in them keep their own Ctrl/Cmd+Z (undo typing). An
@@ -24,6 +25,17 @@ export function UndoShortcut() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      const state = useUiStore.getState();
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        state.dragging ||
+        state.paletteOpen ||
+        state.helpOpen ||
+        state.drawerOpen ||
+        document.querySelector('[aria-modal="true"], dialog[open]')
+      )
+        return;
       const isUndo =
         (event.ctrlKey || event.metaKey) &&
         !event.shiftKey &&

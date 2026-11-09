@@ -4,12 +4,14 @@ import { useAppLocation } from '../navigation/useAppLocation';
 import { useTasks } from '../tasks/useTasks';
 import { useNow } from '../time/useNow';
 import { Timeline } from './Timeline';
+import { useTimelineMove } from './useTimelineMove';
 
 /**
  * The right column on wide screens while no task is open: the timeline of the
  * day the Today screen shows. A task opened from it takes its place.
  */
 export function TimelineContainer({ inline = false }: { inline?: boolean }) {
+  const actions = useTimelineMove();
   const { data } = useTasks();
   const { data: lists } = useLists();
   const now = useNow();
@@ -25,6 +27,9 @@ export function TimelineContainer({ inline = false }: { inline?: boolean }) {
       }
     >
       <Timeline
+        ready={data !== undefined}
+        onMove={actions.move}
+        onShift={actions.shift}
         tasks={data ?? []}
         lists={lists ?? []}
         day={location.day ?? today}

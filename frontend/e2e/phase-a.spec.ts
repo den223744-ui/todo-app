@@ -200,7 +200,7 @@ test('quick add toast opens an overdue task on Today', async ({ page }) => {
 
 for (const reducedMotion of ['no-preference', 'reduce'] as const) {
   for (const day of ['2026-11-09', '2026-11-13']) {
-    test(`completion moves to the end of each group, preserving focus and Undo (${day}, ${reducedMotion})`, async ({
+    test(`completion moves to the end of each group, focuses its neighbour and keeps Undo (${day}, ${reducedMotion})`, async ({
       page,
     }) => {
       const tasks = [
@@ -265,7 +265,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
       await checkbox.click();
       await expect(checkbox).toBeChecked();
       expect(await ids()).toEqual(['open-b', 'done-a', 'open-a', 'done-b']);
-      await expect(checkbox).toBeFocused();
+      await expect(group.locator('[data-task-link="open-b"]')).toBeFocused();
       await expect(row).toHaveAttribute('data-kept', 'yes');
       await page.clock.runFor(32);
       if (reducedMotion === 'reduce') await expect(row).toHaveCSS('transform', 'none');
@@ -283,7 +283,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
       await page.keyboard.press('Control+z');
       await expect(checkbox).not.toBeChecked();
       expect(await ids()).toEqual(['open-a', 'open-b', 'done-a', 'done-b']);
-      await expect(checkbox).toBeFocused();
+      await expect(group.locator('[data-task-link="open-b"]')).toBeFocused();
     });
   }
 }

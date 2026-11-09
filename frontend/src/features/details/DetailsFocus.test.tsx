@@ -8,11 +8,13 @@ import { App } from '../../App';
 import type { TaskRead } from '../../api/schema';
 import { makeTask } from '../../test/makeTask';
 import { renderWithClient } from '../../test/renderWithClient';
+import { useUiStore } from '../../store/uiStore';
 
 const A = makeTask({ id: 'a', title: 'Первая', position: 1 });
 const B = makeTask({ id: 'b', title: 'Вторая', position: 2 });
 
 function openInApp(taskId: string, tasks: TaskRead[]) {
+  useUiStore.setState({ selectedTaskId: null });
   window.history.replaceState(null, '', `/?list=inbox&task=${taskId}`);
   let store = [...tasks];
   vi.spyOn(api, 'listTasks').mockImplementation(() => Promise.resolve(store));

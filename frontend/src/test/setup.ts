@@ -5,6 +5,14 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach } from 'vitest';
 
+// jsdom has no geometry/scrolling implementation.
+if (typeof Element !== 'undefined' && !('scrollIntoView' in Element.prototype)) {
+  Object.defineProperty(Element.prototype, 'scrollIntoView', {
+    configurable: true,
+    value: () => {},
+  });
+}
+
 afterEach(async () => {
   if (typeof document !== 'undefined') {
     const { cleanup } = await import('@testing-library/react');

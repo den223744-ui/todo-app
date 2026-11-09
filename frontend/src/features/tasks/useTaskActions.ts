@@ -6,7 +6,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { TaskRead } from '../../api/schema';
-import { UNDO_TEXTS } from '../../constants/texts';
+import { D_TEXTS, UNDO_TEXTS } from '../../constants/texts';
 import { removeTaskWithSubtasks } from '../../domain/taskCache';
 import { toLocalDateString } from '../../domain/dates';
 import { selectList } from '../../domain/smartLists';
@@ -97,5 +97,23 @@ export function useTaskActions() {
     });
   };
 
-  return { toggle, destroy, moveToToday };
+  const schedule = (task: TaskRead, day: string) => {
+    if (task.due_date === day) return;
+    const toastId = showToast(D_TEXTS.movedDate(day), {
+      duration: UNDO_MS,
+      action: {
+        label: UNDO_TEXTS.undo,
+        undo: true,
+        run: () => {
+          update.mutate({
+            id: task.id,
+            patch: { due_date: task.due_date, due_time: task.due_time },
+          });
+        },
+      },
+    });
+    update.mutate({ id: task.id, patch: { due_date: day } }, { onError: withdraw(toastId) });
+  };
+
+  return { toggle, destroy, moveToToday, schedule };
 }

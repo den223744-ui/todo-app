@@ -260,3 +260,75 @@ export function greeting(hour: number): string {
   if (hour >= 12 && hour < 18) return 'Добрый день';
   return 'Добрый вечер';
 }
+
+export const D_TEXTS = {
+  theme: 'Тема',
+  themes: { light: 'Светлая', dark: 'Тёмная', system: 'Как в системе' },
+  help: 'Горячие клавиши',
+  close: 'Закрыть',
+  palette: 'Палитра команд',
+  commandPlaceholder: 'Команда или название задачи…',
+  noCommands: 'Ничего не найдено',
+  commands: 'Команды',
+  sortable: 'Сортируемая задача',
+  draggable: 'Перемещаемый блок задачи',
+  actions: 'Действия',
+  go: 'Перейти',
+  task: 'Задача',
+  tasks: 'Задачи',
+  newTask: 'Новая задача',
+  search: 'Поиск',
+  complete: 'Выполнить',
+  reopen: 'Вернуть',
+  today: 'На сегодня',
+  tomorrow: 'На завтра',
+  tomorrowView: 'Завтра',
+  delete: 'Удалить',
+  movedTime: (time: string) => `Перенесено на ${time}`,
+  movedDate: (day: string) => `Перенесено на ${day}`,
+  dragHandle: (title: string) => `Переместить «${title}»`,
+  dragInstructions:
+    'Чтобы взять задачу, нажмите Пробел или Enter. Стрелки вверх и вниз меняют порядок внутри группы. Пробел или Enter — поставить, Escape — отменить.',
+  dragStart: (title: string) => `Взята задача «${title}».`,
+  dragOver: (title: string, position: number, total: number) =>
+    `«${title}»: позиция ${String(position)} из ${String(total)}.`,
+  dragEnd: (title: string) => `Задача «${title}» перемещена.`,
+  dragCancel: 'Перемещение отменено.',
+  timelineInstructions:
+    'Стрелки вверх и вниз — перенести на 15 минут, с Shift — на час. Мышью тяните блок по вертикали, на сенсорном экране удерживайте перед переносом.',
+  keyColumn: 'Клавиша',
+  actionColumn: 'Действие',
+  shortcutGroups: [
+    {
+      title: 'Навигация',
+      rows: [
+        ['N', 'Новая задача'],
+        ['/', 'Поиск'],
+        ['J / ↓', 'Следующая задача'],
+        ['K / ↑', 'Предыдущая задача'],
+        ['Enter', 'Открыть детали'],
+        ['Esc', 'Снять выделение'],
+      ],
+    },
+    {
+      title: 'Задачи',
+      rows: [
+        ['X', 'Выполнить / вернуть'],
+        ['E', 'Редактировать название'],
+        ['Backspace / Delete', 'Удалить'],
+        ['Alt + ↑ / ↓', 'Переместить в списке'],
+        ['Пробел / Enter', 'Взять / поставить за ручку'],
+        ['↑ / ↓', 'На таймлайне: 15 минут'],
+        ['Shift + ↑ / ↓', 'На таймлайне: 60 минут'],
+      ],
+    },
+    {
+      title: 'Общие',
+      rows: [
+        ['Mod + K', 'Палитра команд'],
+        ['Mod + Z', 'Отменить действие'],
+        ['?', 'Горячие клавиши'],
+      ],
+    },
+  ],
+} as const;

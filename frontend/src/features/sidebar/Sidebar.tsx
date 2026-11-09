@@ -12,6 +12,9 @@ import { NewListForm } from './NewListForm';
 import { SidebarLink } from './SidebarLink';
 import { SmartListIcon } from './SmartListIcon';
 import { SidebarListItem } from './SidebarListItem';
+import { ThemePicker } from '../theme/ThemePicker';
+import { useUiStore } from '../../store/uiStore';
+import { D_TEXTS } from '../../constants/texts';
 
 /** Today first, as in the mockup. */
 const NAV_ORDER: readonly SmartList[] = ['today', 'inbox', 'upcoming', 'overdue', 'completed'];
@@ -160,6 +163,19 @@ export function Sidebar({
           )}
         </nav>
       </div>
+      <footer className="mt-auto flex flex-col items-start gap-3 border-t border-line px-7 py-4">
+        <ThemePicker />
+        <button
+          type="button"
+          onClick={() => {
+            useUiStore.getState().setHelpOpen(true);
+          }}
+          className="hidden min-h-11 items-center gap-2 rounded-lg border border-line px-2.5 text-xs text-ink-muted hover:text-ink md:flex"
+        >
+          <span aria-hidden="true">?</span>
+          {D_TEXTS.help}
+        </button>
+      </footer>
     </div>
   );
 }

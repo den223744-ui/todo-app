@@ -5,6 +5,15 @@
 import { create } from 'zustand';
 
 interface UiState {
+  selectedTaskId: string | null;
+  selectTask: (id: string | null) => void;
+  paletteOpen: boolean;
+  helpOpen: boolean;
+  dragging: boolean;
+  reorderBusy: boolean;
+  setPaletteOpen: (open: boolean) => void;
+  setHelpOpen: (open: boolean) => void;
+  setDragging: (dragging: boolean) => void;
   dayView: 'list' | 'timeline';
   setDayView: (view: 'list' | 'timeline') => void;
   /** Mobile navigation drawer. */
@@ -20,6 +29,23 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>()((set) => ({
+  selectedTaskId: null,
+  selectTask: (selectedTaskId) => {
+    set({ selectedTaskId });
+  },
+  paletteOpen: false,
+  helpOpen: false,
+  dragging: false,
+  reorderBusy: false,
+  setPaletteOpen: (paletteOpen) => {
+    set({ paletteOpen });
+  },
+  setHelpOpen: (helpOpen) => {
+    set({ helpOpen });
+  },
+  setDragging: (dragging) => {
+    set({ dragging });
+  },
   dayView: 'list',
   setDayView: (dayView) => {
     set({ dayView });

@@ -32,12 +32,13 @@ function focusTaskRow(taskId: string) {
  * while the row is still there.
  */
 function focusTargetAfterDelete(taskId: string): HTMLElement | null {
-  const row = rowLink(taskId)?.closest('li');
-  const neighbour = (element: Element | null | undefined) =>
-    element?.querySelector<HTMLElement>('[data-task-link]') ?? null;
+  const rows = [...document.querySelectorAll<HTMLElement>('[data-task-link]')].filter(
+    (row) => !row.closest('[hidden]'),
+  );
+  const index = rows.findIndex((row) => row.dataset.taskLink === taskId);
   return (
-    neighbour(row?.nextElementSibling) ??
-    neighbour(row?.previousElementSibling) ??
+    rows[index + 1] ??
+    rows[index - 1] ??
     document.querySelector<HTMLElement>('[data-quick-add-input]')
   );
 }

@@ -128,6 +128,52 @@ describe('TaskRow', () => {
   );
 });
 
+describe('the row bin', () => {
+  const renderRow = (location = DEFAULT_LOCATION) => {
+    const onDelete = vi.fn();
+    const onStartEdit = vi.fn();
+    render(
+      <ul>
+        <TaskRow
+          task={makeTask({ id: 't1', title: 'Позвонить' })}
+          now={now}
+          location={location}
+          busy={false}
+          {...editProps}
+          onStartEdit={onStartEdit}
+          onToggle={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={onDelete}
+        />
+      </ul>,
+    );
+    return { onDelete, onStartEdit };
+  };
+
+  it('stays hidden when the row is only focused, so the row does not shift under the pointer', () => {
+    renderRow();
+    fireEvent.focus(screen.getByRole('link'));
+    expect(screen.queryByRole('button', { name: /Удалить задачу/ })).toBeNull();
+  });
+
+  it('ignores the second click of a double click, which renames instead', () => {
+    const { onDelete, onStartEdit } = renderRow({ ...DEFAULT_LOCATION, taskId: 't1' });
+    const bin = screen.getByRole('button', { name: /Удалить задачу/ });
+    fireEvent.click(bin, { detail: 2 });
+    fireEvent.doubleClick(bin);
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(onStartEdit).toHaveBeenCalledWith('t1');
+    fireEvent.click(bin, { detail: 1 });
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not rename on a double click of the checkbox', () => {
+    const { onStartEdit } = renderRow();
+    fireEvent.doubleClick(screen.getByRole('checkbox'));
+    expect(onStartEdit).not.toHaveBeenCalled();
+  });
+});
+
 describe('a task the server has not saved yet', () => {
   it('cannot be opened, renamed or completed', async () => {
     const onToggle = vi.fn();

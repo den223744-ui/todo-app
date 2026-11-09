@@ -6,6 +6,7 @@
  * covers 08:00–22:00 and grows to fit earlier or later tasks.
  */
 import type { TaskRead } from '../api/schema';
+import { canonicalTime } from './dates';
 
 export const SLOT_MINUTES = 30;
 const DEFAULT_START_HOUR = 8;
@@ -32,9 +33,25 @@ export interface TimelineLayout {
   plannedMinutes: number;
 }
 
-function minutesOf(time: string): number {
+export function minutesOf(time: string): number {
   const [hours = 0, minutes = 0] = time.split(':').map(Number);
   return hours * 60 + minutes;
+}
+
+export function pixelsToMinutes(pixels: number, pixelsPerHour: number): number {
+  return Math.round((pixels * 60) / pixelsPerHour / 15) * 15;
+}
+
+export function clampTimelineStart(start: number, duration: number): number {
+  return Math.max(0, Math.min(start, 1440 - duration));
+}
+
+export function formatTimelineTime(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+export function shiftedTime(time: string, duration: number, delta: number): string {
+  return canonicalTime(formatTimelineTime(clampTimelineStart(minutesOf(time) + delta, duration)));
 }
 
 export function layoutTimeline(tasks: readonly TaskRead[], day: string): TimelineLayout {

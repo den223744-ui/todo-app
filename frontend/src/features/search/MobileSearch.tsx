@@ -23,6 +23,7 @@ export function MobileSearch() {
           label={SEARCH_TEXTS.open}
           aria-expanded={expanded}
           aria-controls={id}
+          data-search-trigger
           onClick={() => {
             setOpen(true);
           }}

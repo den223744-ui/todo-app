@@ -20,6 +20,10 @@ import { TodayStats } from './features/tasks/TodayStats';
 import { useTasks } from './features/tasks/useTasks';
 import { useNow } from './features/time/useNow';
 import { TimelineContainer } from './features/timeline/TimelineContainer';
+import { GlobalShortcuts } from './features/shortcuts/GlobalShortcuts';
+import { CommandPalette } from './features/shortcuts/CommandPalette';
+import { ShortcutHelp } from './features/shortcuts/ShortcutHelp';
+import { ThemeSync } from './features/theme/ThemeSync';
 
 const dateFormat = new Intl.DateTimeFormat('ru-RU', {
   weekday: 'long',
@@ -120,6 +124,10 @@ export function App() {
       </div>
       <Toaster />
       <UndoShortcut />
+      <GlobalShortcuts />
+      <CommandPalette />
+      <ShortcutHelp />
+      <ThemeSync />
     </AppShell>
   );
 }

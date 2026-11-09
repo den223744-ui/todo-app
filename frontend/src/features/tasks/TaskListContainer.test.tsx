@@ -249,7 +249,7 @@ describe('TaskListContainer', () => {
   });
 
   it.each(['2026-11-08', '2026-11-10'])(
-    'moves an optimistic completion to the end of its group on %s, retaining focus and rolling back order on error',
+    'moves an optimistic completion to the end on %s, focuses its neighbour and rolls back order on error',
     async (day) => {
       window.history.replaceState(null, '', `/?day=${day}`);
       const tasks = [
@@ -297,14 +297,14 @@ describe('TaskListContainer', () => {
       await userEvent.click(checkbox);
       await waitFor(() => expect(checkbox).toBeChecked());
       expect(titles()).toEqual(['open-b', 'done-a', 'open-a', 'done-b']);
-      expect(checkbox).toHaveFocus();
+      await waitFor(() => expect(group.getByRole('link', { name: /open-b/ })).toHaveFocus());
       expect(checkbox.closest('li')).toBe(row);
       act(() => {
         response.reject(new Error('offline'));
       });
       await waitFor(() => expect(checkbox).not.toBeChecked());
       expect(titles()).toEqual(['open-a', 'open-b', 'done-a', 'done-b']);
-      expect(checkbox).toHaveFocus();
+      expect(group.getByRole('link', { name: /open-b/ })).toHaveFocus();
       queryClient.clear();
     },
   );

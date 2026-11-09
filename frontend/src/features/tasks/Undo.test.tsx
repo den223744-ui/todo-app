@@ -66,14 +66,16 @@ describe('undo', () => {
     queryClient.clear();
   });
 
-  it('Ctrl+Z right after ticking the checkbox (focus stays on it) undoes the completion', async () => {
+  it('Ctrl+Z after completing the last task works from the empty quick add field', async () => {
     // On Today a completed task stays in the list (it moves to the group end).
     const dueToday = { ...TASK, due_date: toLocalDateString(new Date()) };
     const { update, queryClient } = openApp('/', [dueToday, SUB]);
     const checkbox = screen.getByRole('checkbox', { name: 'Выполнить: Полить цветы' });
 
     await userEvent.click(checkbox);
-    expect(checkbox).toHaveFocus();
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Новая задача' })).toHaveFocus(),
+    );
     await userEvent.keyboard('{Control>}z{/Control}');
 
     await waitFor(() => {

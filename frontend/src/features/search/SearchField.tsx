@@ -38,6 +38,7 @@ export function SearchField({
       </label>
       <input
         ref={input}
+        data-search-input
         id={id}
         type="search"
         value={draft}
