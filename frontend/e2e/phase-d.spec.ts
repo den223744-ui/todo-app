@@ -128,7 +128,14 @@ test('handle keyboard sorting, cancellation and Alt arrows use the same saved or
   // dnd-kit announces the pick-up, then at once the position in the same live region.
   await expect(handle).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText('«Вторая задача»: позиция', { exact: false })).toBeAttached();
-  await page.keyboard.press('ArrowUp');
+  // The sensor starts listening a moment after the pick-up: on a slow machine the
+  // first arrow can come too early, so repeat it (extra presses stop at the top).
+  await expect(async () => {
+    await page.keyboard.press('ArrowUp');
+    await expect(page.getByText('«Вторая задача»: позиция 1 из 3', { exact: false })).toBeAttached({
+      timeout: 500,
+    });
+  }).toPass();
   await page.keyboard.press('Space');
   await expect.poll(() => order(page)).toEqual(['b', 'a', 'c']);
   await expect(handle).not.toHaveAttribute('aria-disabled', 'true');
