@@ -25,7 +25,6 @@ export function ThemePicker() {
             role="radio"
             aria-checked={value === theme}
             aria-label={D_TEXTS.themes[value]}
-            title={D_TEXTS.themes[value]}
             tabIndex={value === theme ? 0 : -1}
             onClick={() => {
               setTheme(value);
@@ -46,9 +45,18 @@ export function ThemePicker() {
                 ?.querySelectorAll<HTMLButtonElement>('button')
                 [next]?.focus();
             }}
-            className={`flex size-11 items-center justify-center rounded-md border ${value === theme ? 'border-check text-check' : 'border-transparent text-ink-muted hover:text-ink'}`}
+            className={`group/theme relative flex size-11 items-center justify-center rounded-md border ${value === theme ? 'border-check text-check' : 'border-transparent text-ink-muted hover:text-ink'}`}
           >
             <Icon />
+            {/* Our own tooltip: at once on hover and on keyboard focus (the native
+                title shows late and only for the mouse). The name is already in
+                aria-label, so screen readers skip this copy. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink opacity-0 shadow-soft transition-opacity duration-150 group-hover/theme:opacity-100 group-focus-visible/theme:opacity-100 motion-reduce:transition-none"
+            >
+              {D_TEXTS.themes[value]}
+            </span>
           </button>
         );
       })}
